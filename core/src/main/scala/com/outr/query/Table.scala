@@ -5,7 +5,7 @@ import org.powerscala.reflect._
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Table {
+abstract class Table(val tableName: String) {
   implicit def thisTable = this
 
   lazy val columns = getClass.fields.collect {
