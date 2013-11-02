@@ -14,12 +14,6 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
   val dataSource = JdbcConnectionPool.create(mode.url, user, password)
 
-  def create(ifNotExist: Boolean, tables: Table*) = {
-    val s = session
-    val statement = s.connection.createStatement()
-    tables.foreach(t => statement.execute(createTableSQL(ifNotExist, t)))
-  }
-
   def createTableSQL(ifNotExist: Boolean, table: Table) = {
     val b = new StringBuilder
 

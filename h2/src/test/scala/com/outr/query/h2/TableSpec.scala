@@ -17,7 +17,10 @@ class TableSpec extends Specification {
       sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER, name VARCHAR(2147483647), date BIGINT)"
     }
     "create the table" in {
-      TestDatastore.create(ifNotExist = false, TestTable) must not(throwA[SQLException])
+      TestDatastore.create() must not(throwA[SQLException])
+    }
+    "insert a record" in {
+
     }
     "create a simple query" in {
       import TestTable._
