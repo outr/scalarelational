@@ -8,6 +8,8 @@ import java.sql.SQLException
  * @author Matt Hicks <matt@outr.com>
  */
 class TableSpec extends Specification {
+  import TestDatastore._
+
   "TestTable" should {
     "have two columns" in {
       TestTable.columns must have size 3
@@ -17,14 +19,14 @@ class TableSpec extends Specification {
       sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER, name VARCHAR(2147483647), date BIGINT)"
     }
     "create the table" in {
-      TestDatastore.create() must not(throwA[SQLException])
+      TestDatastore.create(ifNotExist = false) must not(throwA[SQLException])
     }
     "insert a record" in {
-
+      val id = insert(test.name("Matt Hicks")).toList.head
+      id mustEqual 1
     }
     "create a simple query" in {
-      import TestTable._
-      val q = select(id, name).from(TestTable)
+      val q = select(test.id, test.name).from(test)
       q.columns must have size 2
     }
   }
@@ -32,6 +34,12 @@ class TableSpec extends Specification {
 
 object TestDatastore extends H2Datastore {
   val test = TestTable
+
+  def main(args: Array[String]): Unit = {
+    create()
+    val id = insert(test.name("Matt Hicks")).toList.head
+    println(s"ID: $id")
+  }
 }
 
 object TestTable extends Table("test") {

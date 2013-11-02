@@ -9,5 +9,6 @@ case class Column[T](name: String,
                      autoIncrement: Boolean = false,
                      primaryKey: Boolean = false,
                      unique: Boolean = false)
-                    (implicit val manifest: Manifest[T], table: Table) {
+                    (implicit val manifest: Manifest[T], val table: Table) {
+  def apply(value: T) = ColumnValue[T](this, value)
 }

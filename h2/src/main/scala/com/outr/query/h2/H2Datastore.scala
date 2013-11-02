@@ -1,8 +1,11 @@
 package com.outr.query.h2
 
-import com.outr.query.{Column, Table, Datastore}
+import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import org.powerscala.reflect.EnhancedClass
+import com.outr.query.Column
+import com.outr.query.Insert
+import java.sql.Statement
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -24,6 +27,12 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     b.append(table.tableName)
     b.append('(')
     b.append(table.columns.map(c => column2SQL(c)).mkString(", "))
+
+    table.columns.find(c => c.primaryKey) match {
+      case Some(primary) => b.append(s", PRIMARY KEY (${primary.name})")
+      case None => // No primary key for this table
+    }
+
     b.append(')')
 
     b.toString()
@@ -34,6 +43,15 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     b.append(column.name)
     b.append(' ')
     b.append(columnType(column.manifest.runtimeClass))
+    if (column.notNull) {
+      b.append(" NOT NULL")
+    }
+    if (column.autoIncrement) {
+      b.append(" AUTO_INCREMENT")
+    }
+    if (column.unique) {
+      b.append(" UNIQUE")
+    }
     b.toString()
   }
 
@@ -42,5 +60,31 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case "Long" => "BIGINT"
     case "String" => s"VARCHAR(${Int.MaxValue})"
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
+  }
+
+  def value2SQLValue[T](cv: ColumnValue[T]) = cv.value
+  def sqlValue2Value[T](c: Column[T], value: Any) = value
+
+  def exec(query: Query) = {
+    val columns = query.columns.map(c => s"${c.table.tableName}.${c.name}").mkString(", ")
+    val sql = s"SELECT $columns FROM ${query.table.tableName}"
+    val ps = session.connection.prepareStatement(sql)
+    val resultSet = ps.executeQuery()
+    new QueryResultsIterator(resultSet, query)
+  }
+
+  def exec(insert: Insert) = {
+    val table = insert.values.head.column.table
+    val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
+    val columnValues = insert.values.map(cv => value2SQLValue(cv))
+    val placeholder = columnValues.map(v => "?").mkString(", ")
+    val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
+    val ps = session.connection.prepareStatement(insertString, Statement.RETURN_GENERATED_KEYS)
+    columnValues.zipWithIndex.foreach {
+      case (value, index) => ps.setObject(index + 1, value)
+    }
+    ps.executeUpdate()
+    val keys = ps.getGeneratedKeys
+    new GeneratedKeysIterator(keys)
   }
 }
