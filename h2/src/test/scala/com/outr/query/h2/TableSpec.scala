@@ -2,7 +2,6 @@ package com.outr.query.h2
 
 import org.specs2.mutable._
 import com.outr.query._
-import java.sql.SQLException
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -16,12 +15,13 @@ class TableSpec extends Specification {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, TestTable)
-      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER, name VARCHAR(2147483647), date BIGINT)"
+      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY (id))"
     }
     "create the table" in {
-      TestDatastore.create(ifNotExist = false) must not(throwA[SQLException])
+      TestDatastore.create(ifNotExist = false) must not(throwA[Throwable])
     }
     "insert a record" in {
+      create()
       val id = insert(test.name("Matt Hicks")).toList.head
       id mustEqual 1
     }
@@ -32,7 +32,7 @@ class TableSpec extends Specification {
   }
 }
 
-object TestDatastore extends H2Datastore {
+object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   val test = TestTable
 
   def main(args: Array[String]): Unit = {
