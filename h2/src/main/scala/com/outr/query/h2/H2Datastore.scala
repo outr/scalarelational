@@ -76,26 +76,15 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     var args = List.empty[Any]
 
-    def condition2String(condition: Condition) = condition match {
-      case c: DirectCondition[_] => {
-        args = c.value :: args
-        s"${c.column.name} ${c.operator.symbol} ?"
-      }
-      case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
-      case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
-    }
-
     // Generate SQL
-    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}")
-    query.whereBlock match {
-      case null => // Nothing to do, no where block
-      case where: SingleWhereBlock => sql.append(s" WHERE ${condition2String(where.condition)}")
-    }
+    val (where, whereArgs) = where2SQL(query.whereBlock)
+    args = args ::: whereArgs
+    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$where")
 
     val ps = session.connection.prepareStatement(sql.toString())
 
     // Populate args
-    args.reverse.zipWithIndex.foreach {
+    args.zipWithIndex.foreach {
       case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
     }
 
@@ -120,5 +109,59 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     ps.executeUpdate()
     val keys = ps.getGeneratedKeys
     new GeneratedKeysIterator(keys)
+  }
+
+  def exec(update: Update) = {
+    var args = List.empty[Any]
+    val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
+    val setArgs = update.values.map(cv => cv.value)
+    args = args ::: setArgs
+
+    val (where, whereArgs) = where2SQL(update.whereBlock)
+    args = args ::: whereArgs
+    val sql = s"UPDATE ${update.table.tableName} SET $sets$where"
+    val ps = session.connection.prepareStatement(sql)
+
+    // Populate args
+    args.zipWithIndex.foreach {
+      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+    }
+
+    ps.executeUpdate()
+  }
+
+  def exec(delete: Delete) = {
+    var args = List.empty[Any]
+
+    val (where, whereArgs) = where2SQL(delete.whereBlock)
+    args = args ::: whereArgs
+    val sql = s"DELETE FROM ${delete.table.tableName}$where"
+    val ps = session.connection.prepareStatement(sql)
+
+    // Populate args
+    args.zipWithIndex.foreach {
+      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+    }
+
+    ps.executeUpdate()
+  }
+
+  private def where2SQL(whereBlock: WhereBlock) = {
+    var args = List.empty[Any]
+
+    def condition2String(condition: Condition) = condition match {
+      case c: DirectCondition[_] => {
+        args = c.value :: args
+        s"${c.column.name} ${c.operator.symbol} ?"
+      }
+      case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
+      case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
+    }
+
+    val sql = whereBlock match {
+      case null => "" // Nothing to do, no where block
+      case where: SingleWhereBlock => s" WHERE ${condition2String(where.condition)}"
+    }
+    sql -> args
   }
 }

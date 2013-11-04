@@ -50,8 +50,41 @@ class TableSpec extends Specification {
 //      val results = exec(query).toList
 //      results must have size 2
 //    }
-    // TODO: delete a record
-    // TODO: update a record
+    "update 'John Doe' to 'Joe Doe'" in {
+      val updated = exec(update(test.name("Joe Doe")) where(test.name === "John Doe"))
+      updated mustEqual 1
+    }
+    "verify that 'John Doe' no longer exists" in {
+      val results = exec(select(test.name).from(test).where(test.name === "John Doe")).toList
+      results must have size 0
+    }
+    "verify that 'Joe Doe' does exist" in {
+      val results = exec(select(test.name).from(test).where(test.name === "Joe Doe")).toList
+      results must have size 1
+    }
+    "verify that 'Jane Doe' wasn't modified" in {
+      val results = exec(select(test.name).from(test).where(test.name === "Jane Doe")).toList
+      results must have size 1
+    }
+    "delete 'Joe Doe' from the database" in {
+      val deleted = exec(delete(test) where test.name === "Joe Doe")
+      deleted mustEqual 1
+    }
+    "verify there is just one record left in the database" in {
+      val results = exec(select(test.id, test.name).from(test)).toList
+      results must have size 1
+      val jane = results.head
+      jane(test.id) mustEqual 2
+      jane(test.name) mustEqual "Jane Doe"
+    }
+    "delete everything from the database" in {
+      val deleted = exec(delete(test))
+      deleted mustEqual 1
+    }
+    "verify there are no records left in the database" in {
+      val results = exec(select(test.id, test.name).from(test)).toList
+      results must have size 0
+    }
   }
 }
 

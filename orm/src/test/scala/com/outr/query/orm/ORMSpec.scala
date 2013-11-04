@@ -42,6 +42,8 @@ class ORMSpec extends Specification {
       jane.id mustEqual Some(2)
       jane.name mustEqual "Jane Doe"
     }
+    // TODO: update a record
+    // TODO: delete a record
   }
 }
 

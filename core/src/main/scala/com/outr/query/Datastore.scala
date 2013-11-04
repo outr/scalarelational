@@ -31,6 +31,8 @@ trait Datastore {
   def select(columns: Column[_]*) = Query(columns.toList)
   def select(columns: List[Column[_]]) = Query(columns)
   def insert(values: ColumnValue[_]*) = exec(Insert(values.toList))
+  def update(values: ColumnValue[_]*) = Update(values.toList, values.head.column.table)
+  def delete(table: Table) = Delete(table)
 
   def dataSource: DataSource
   def sessionTimeout = 5.0
@@ -86,6 +88,8 @@ trait Datastore {
 
   def exec(query: Query): QueryResultsIterator
   def exec(insert: Insert): Iterator[Long]
+  def exec(update: Update): Int
+  def exec(delete: Delete): Int
 
   def createTableSQL(ifNotExist: Boolean, table: Table): String
 
