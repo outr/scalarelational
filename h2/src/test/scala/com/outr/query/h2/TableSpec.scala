@@ -15,19 +15,25 @@ class TableSpec extends Specification {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, TestTable)
-      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY (id))"
+      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id))"
     }
     "create the table" in {
-      TestDatastore.create(ifNotExist = false) must not(throwA[Throwable])
+      create() must not(throwA[Throwable])
     }
     "insert a record" in {
-      create()
       val id = insert(test.name("Matt Hicks")).toList.head
       id mustEqual 1
     }
     "create a simple query" in {
       val q = select(test.id, test.name).from(test)
       q.columns must have size 2
+    }
+    "query the record back out" in {
+      val results = exec(select(test.id, test.name).from(test)).toList
+      results must have size 1
+      val result = results.head
+      result[Int](test.id) mustEqual 1
+      result[String](test.name) mustEqual "Matt Hicks"
     }
   }
 }

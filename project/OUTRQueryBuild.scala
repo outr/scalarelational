@@ -22,7 +22,8 @@ object OUTRQueryBuild extends Build {
           Some("releases" at nexus + "service/local/staging/deploy/maven2")
     },
     publishArtifact in Test := false,
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    testOptions in Test += Tests.Argument("sequential")
   )
 
   private def createSettings(_name: String) = baseSettings ++ Seq(name := _name)
