@@ -33,12 +33,13 @@ object OUTRQueryBuild extends Build {
     .aggregate(core, orm, h2)
 
   lazy val core = Project("core", file("core"), settings = createSettings("outrquery-core"))
-  lazy val orm = Project("orm", file("orm"), settings = createSettings("outrquery-orm"))
-    .dependsOn(core)
 
   // Implementations
   lazy val h2 = Project("h2", file("h2"), settings = createSettings("outrquery-h2"))
     .dependsOn(core)
+
+  lazy val orm = Project("orm", file("orm"), settings = createSettings("outrquery-orm"))
+    .dependsOn(core, h2)
 }
 
 object Dependencies {

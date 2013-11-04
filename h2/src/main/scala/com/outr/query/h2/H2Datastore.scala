@@ -6,6 +6,7 @@ import org.powerscala.reflect.EnhancedClass
 import com.outr.query.Column
 import com.outr.query.Insert
 import java.sql.Statement
+import java.io.NotSerializableException
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -64,13 +65,40 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 
-  def value2SQLValue[T](cv: ColumnValue[T]) = cv.value
+  def value2SQLValue(value: Any) = value match {
+    case o: Option[_] => o.getOrElse(null)
+    case _ => value
+  }
   def sqlValue2Value[T](c: Column[T], value: Any) = value
 
   def exec(query: Query) = {
     val columns = query.columns.map(c => s"${c.table.tableName}.${c.name}").mkString(", ")
-    val sql = s"SELECT $columns FROM ${query.table.tableName}"
-    val ps = session.connection.prepareStatement(sql)
+
+    var args = List.empty[Any]
+
+    def condition2String(condition: Condition) = condition match {
+      case c: DirectCondition[_] => {
+        args = c.value :: args
+        s"${c.column.name} ${c.operator.symbol} ?"
+      }
+      case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
+      case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
+    }
+
+    // Generate SQL
+    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}")
+    query.whereBlock match {
+      case null => // Nothing to do, no where block
+      case where: SingleWhereBlock => sql.append(s" WHERE ${condition2String(where.condition)}")
+    }
+
+    val ps = session.connection.prepareStatement(sql.toString())
+
+    // Populate args
+    args.reverse.zipWithIndex.foreach {
+      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+    }
+
     val resultSet = ps.executeQuery()
     new QueryResultsIterator(resultSet, query)
   }
@@ -78,12 +106,16 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def exec(insert: Insert) = {
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
-    val columnValues = insert.values.map(cv => value2SQLValue(cv))
+    val columnValues = insert.values.map(cv => value2SQLValue(cv.value))
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     val ps = session.connection.prepareStatement(insertString, Statement.RETURN_GENERATED_KEYS)
     columnValues.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
+      case (value, index) => try {
+        ps.setObject(index + 1, value)
+      } catch {
+        case exc: NotSerializableException => throw new RuntimeException(s"Index: $index (zero-based) is not serializable for insert($columnNames)", exc)
+      }
     }
     ps.executeUpdate()
     val keys = ps.getGeneratedKeys

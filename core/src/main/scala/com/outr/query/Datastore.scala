@@ -4,12 +4,13 @@ import javax.sql.DataSource
 
 import org.powerscala.reflect._
 import java.sql.ResultSet
-import scala.collection.immutable.ListMap
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait Datastore {
+  implicit val thisDatastore = this
+
   private var _sessions = Map.empty[Thread, DatastoreSession]
 
   lazy val tables = getClass.fields.collect {
@@ -29,18 +30,7 @@ trait Datastore {
 
   def select(columns: Column[_]*) = Query(columns.toList)
   def select(columns: List[Column[_]]) = Query(columns)
-  def insert(values: ColumnValue[_]*) = {
-    var map = ListMap[Column[_], ColumnValue[_]](values.map(cv => cv.column -> cv): _*)
-    val table = values.head.column.table
-    table.columns.foreach {
-      case c => {
-        if (c.default.nonEmpty && !map.contains(c)) {
-          map += c -> ColumnValue[Any](c.asInstanceOf[Column[Any]], c.default.get)
-        }
-      }
-    }
-    exec(Insert(map.values.toList))
-  }
+  def insert(values: ColumnValue[_]*) = exec(Insert(values.toList))
 
   def dataSource: DataSource
   def sessionTimeout = 5.0
@@ -115,7 +105,7 @@ case class QueryResult(table: Table, values: List[ColumnValue[_]]) {
   def apply[T](column: Column[T]) = values.find(cv => cv.column == column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result.")).value.asInstanceOf[T]
 }
 
-class QueryResultsIterator(rs: ResultSet, query: Query) extends Iterator[QueryResult] {
+class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
   def hasNext = rs.next()
   def next() = {
     val values = query.columns.zipWithIndex.map {
