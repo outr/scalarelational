@@ -32,8 +32,8 @@ class TableSpec extends Specification {
       val results = exec(select(test.id, test.name).from(test)).toList
       results must have size 1
       val result = results.head
-      result[Int](test.id) mustEqual 1
-      result[String](test.name) mustEqual "Matt Hicks"
+      result(test.id) mustEqual 1
+      result(test.name) mustEqual "Matt Hicks"
     }
   }
 }
