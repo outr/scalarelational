@@ -16,9 +16,7 @@ class ORMTable[T] private[orm](val table: Table)(implicit manifest: Manifest[T])
   }.flatten.toMap
 
   def insert(instance: T): T = {
-    val values = mappedColumns.map {
-      case (column, caseValue) => ColumnValue[Any](column, caseValue[Any](instance.asInstanceOf[AnyRef]))
-    }.toList
+    val values = instance2Values(instance)
     val insert = Insert(values)
     table.datastore.exec(insert).toList.headOption match {
       case Some(id) => clazz.copy[T](instance, Map(table.autoIncrement.get.name -> id))
@@ -26,6 +24,36 @@ class ORMTable[T] private[orm](val table: Table)(implicit manifest: Manifest[T])
     }
   }
   def query(query: Query) = new ORMResultsIterator[T](table.datastore.exec(query), this)
+  def update(instance: T): T = {
+    val values = instance2Values(instance)
+    val conditions = Conditions(primaryKeys(instance).map(cv => cv.column === cv.value), ConnectType.And)
+    val update = Update(values, table).where(conditions)
+    val updated = table.datastore.exec(update)
+    if (updated != 1) {
+      throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${table.primaryKeys.map(c => c.name).mkString(", ")}")
+    }
+    instance
+  }
+  def delete(instance: T) = {
+    val conditions = Conditions(primaryKeys(instance).map(cv => cv.column === cv.value), ConnectType.And)
+    val delete = Delete(table).where(conditions)
+    val deleted = table.datastore.exec(delete)
+    if (deleted != 1) {
+      throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but exptected to delete 1 record. Primary Keys: ${table.primaryKeys.map(c => c.name).mkString(", ")}")
+    }
+  }
+
+  def primaryKeys(instance: T) = if (table.primaryKeys.nonEmpty) {
+    table.primaryKeys.collect {
+      case c if mappedColumns.contains(c.asInstanceOf[Column[Any]]) => ColumnValue(c.asInstanceOf[Column[Any]], mappedColumns(c.asInstanceOf[Column[Any]])[Any](instance.asInstanceOf[AnyRef]))
+    }
+  } else {
+    throw new RuntimeException(s"No primary keys defined for ${table.tableName}")
+  }
+
+  def instance2Values(instance: T) = mappedColumns.map {
+    case (column, caseValue) => ColumnValue[Any](column, caseValue[Any](instance.asInstanceOf[AnyRef]))
+  }.toList
 
   protected[orm] def result2Instance(result: QueryResult): T = {
     val args = result.values.collect {

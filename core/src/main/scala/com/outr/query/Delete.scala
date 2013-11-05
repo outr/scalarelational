@@ -15,7 +15,11 @@ case class Delete(table: Table,
     }
   }
   def where(condition: Condition): Delete = where(SingleWhereBlock(condition))
-  def where(conditions: Conditions): Delete = where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
+  def where(conditions: Conditions): Delete = if (conditions.list.tail.isEmpty) {
+    where(SingleWhereBlock(conditions.list.head))
+  } else {
+    where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
+  }
   def and(condition: Condition): Delete = where(SingleWhereBlock(condition), ConnectType.And)
   def or(condition: Condition): Delete = where(SingleWhereBlock(condition), ConnectType.Or)
   // TODO: cleanup the where clauses functionality - perhaps just have Conditionals?

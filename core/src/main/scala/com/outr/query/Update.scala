@@ -16,7 +16,11 @@ case class Update(values: List[ColumnValue[_]],
     }
   }
   def where(condition: Condition): Update = where(SingleWhereBlock(condition))
-  def where(conditions: Conditions): Update = where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
+  def where(conditions: Conditions): Update = if (conditions.list.tail.isEmpty) {
+    where(SingleWhereBlock(conditions.list.head))
+  } else {
+    where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
+  }
   def and(condition: Condition): Update = where(SingleWhereBlock(condition), ConnectType.And)
   def or(condition: Condition): Update = where(SingleWhereBlock(condition), ConnectType.Or)
   // TODO: cleanup the where clauses functionality - perhaps just have Conditionals?

@@ -29,11 +29,8 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     b.append('(')
     b.append(table.columns.map(c => column2SQL(c)).mkString(", "))
 
-    val primaryKeys = table.columns.collect {
-      case c if c.primaryKey => c.name
-    }
-    if (primaryKeys.nonEmpty) {
-      b.append(s", PRIMARY KEY(${primaryKeys.mkString(", ")})")
+    if (table.primaryKeys.nonEmpty) {
+      b.append(s", PRIMARY KEY(${table.primaryKeys.map(c => c.name).mkString(", ")})")
     }
 
     b.append(')')

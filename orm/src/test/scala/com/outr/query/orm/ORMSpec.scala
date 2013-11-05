@@ -42,8 +42,17 @@ class ORMSpec extends Specification {
       jane.id mustEqual Some(2)
       jane.name mustEqual "Jane Doe"
     }
-    // TODO: update a record
-    // TODO: delete a record
+    "update 'Jane Doe' to 'Janie Doe'" in {
+      val jane = person.query(select(personTable.*) from personTable where personTable.name === "Jane Doe").toList.head
+      person.update(jane.copy(name = "Janie Doe"))
+      val janie = person.query(select(personTable.*) from personTable where personTable.name === "Janie Doe").toList.head
+      janie.name mustEqual "Janie Doe"
+    }
+    "delete 'Janie Doe' from the database" in {
+      val janie = person.query(select(personTable.*) from personTable where personTable.name === "Janie Doe").toList.head
+      person.delete(janie) must not(throwA[Throwable])
+    }
+    // TODO: Lazy and LazyList
   }
 }
 
