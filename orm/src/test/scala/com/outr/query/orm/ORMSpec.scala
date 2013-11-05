@@ -68,7 +68,6 @@ class ORMSpec extends Specification {
       companies must have size 1
       val microsoft = companies.head
       microsoft.name mustEqual "Microsoft"
-      println(microsoft.owner)
       microsoft.owner.loaded mustEqual false
       val bill = microsoft.owner()
       bill.name mustEqual "Bill Gates"

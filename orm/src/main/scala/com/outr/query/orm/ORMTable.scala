@@ -114,7 +114,6 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
         caseValue.name -> value
       }
     }.toMap
-    println(s"result2Instance: $args")
     clazz.copy[T](null.asInstanceOf[T], args, requireValues = false)
   }
 }
