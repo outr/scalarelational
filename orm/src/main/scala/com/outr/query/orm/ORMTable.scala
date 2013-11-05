@@ -15,7 +15,7 @@ import com.outr.query.Insert
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class ORM[T](tableName: String)(implicit val manifest: Manifest[T], datastore: Datastore) extends Table(tableName = tableName)(datastore) {
+abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T], datastore: Datastore) extends Table(tableName = tableName)(datastore) {
   lazy val clazz: EnhancedClass = manifest.runtimeClass
   lazy val mappedColumns = clazz.caseValues.map {
     case cv => column[Any](cv.name).map(c => c -> cv)

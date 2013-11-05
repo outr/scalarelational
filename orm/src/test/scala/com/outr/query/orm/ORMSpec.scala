@@ -58,7 +58,7 @@ class ORMSpec extends Specification {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  val person = new ORM[Person]("person") {
+  val person = new ORMTable[Person]("person") {
     val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
     val name = Column[String]("name", unique = true)
     val date = Column[Long]("date")
