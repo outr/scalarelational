@@ -6,6 +6,7 @@ import org.powerscala.reflect._
 import java.sql.ResultSet
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
+import org.powerscala.concurrent.{Time, Executor}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -21,6 +22,15 @@ trait Datastore extends Listenable {
     case f if f.hasType(classOf[Table]) => f[Table](this)
   }
 
+  private var lastUpdated = System.nanoTime()
+  val updater = Executor.scheduleWithFixedDelay(1.0, 1.0) {
+    val current = System.nanoTime()
+    val delta = Time.fromNanos(current - lastUpdated)
+    update(delta)
+    lastUpdated = current
+  }
+
+  def sessions = _sessions.values
   def session = synchronized {
     _sessions.get(Thread.currentThread()) match {
       case Some(s) => s
@@ -78,22 +88,24 @@ trait Datastore extends Listenable {
     transactionLayers.set(transactionLayers.get() + 1)            // Increment the transaction layer
     val previousAutoCommit = session.connection.getAutoCommit
     session.connection.setAutoCommit(false)
-    try {
-      val result = f
-      if (isTop) {
-        session.connection.commit()
-      }
-      result
-    } catch {
-      case t: Throwable => {
+    active {
+      try {
+        val result = f
         if (isTop) {
-          session.connection.rollback()
+          session.connection.commit()
         }
-        throw t
+        result
+      } catch {
+        case t: Throwable => {
+          if (isTop) {
+            session.connection.rollback()
+          }
+          throw t
+        }
+      } finally {
+        transactionLayers.set(transactionLayers.get() - 1)          // Decrement the transaction layer
+        session.connection.setAutoCommit(previousAutoCommit)
       }
-    } finally {
-      transactionLayers.set(transactionLayers.get() - 1)          // Decrement the transaction layer
-      session.connection.setAutoCommit(previousAutoCommit)
     }
   }
 
@@ -129,6 +141,26 @@ trait Datastore extends Listenable {
       case None => throw new RuntimeException(s"Unable to convert $value (${value.getClass}) to ${c.classType} for ${c.table.tableName}.${c.name}")
     }
   }
+  protected def update(delta: Double) = {
+    sessions.foreach {
+      case session => session.update(delta)
+    }
+  }
+  def active[T](f: => T): T = {
+    val s = session
+    s.checkIn()
+    s.activeQueries.incrementAndGet()
+    try {
+      f
+    } finally {
+      s.activeQueries.decrementAndGet()
+    }
+  }
+  def dispose() = {
+    sessions.foreach {
+      case session => session.dispose()
+    }
+  }
 }
 
 class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Int] {
@@ -143,6 +175,7 @@ case class QueryResult(table: Table, values: List[ColumnValue[_]]) {
 class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
   def hasNext = rs.next()
   def next() = {
+    query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.columns.zipWithIndex.map {
       case (column, index) => ColumnValue[Any](column.asInstanceOf[Column[Any]], rs.getObject(index + 1))
     }

@@ -69,7 +69,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 
-  def exec(query: Query) = {
+  def exec(query: Query) = active {
     val columns = query.columns.map(c => s"${c.table.tableName}.${c.name}").mkString(", ")
 
     var args = List.empty[Any]
@@ -90,7 +90,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     new QueryResultsIterator(resultSet, query)
   }
 
-  def exec(insert: Insert) = {
+  def exec(insert: Insert) = active {
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
     val columnValues = insert.values.map(cv => value2SQLValue(cv.column, cv.value))
@@ -109,7 +109,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     new GeneratedKeysIterator(keys)
   }
 
-  def exec(update: Update) = {
+  def exec(update: Update) = active {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
     val setArgs = update.values.map(cv => value2SQLValue(cv.column, cv.value))
@@ -128,7 +128,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     ps.executeUpdate()
   }
 
-  def exec(delete: Delete) = {
+  def exec(delete: Delete) = active {
     var args = List.empty[Any]
 
     val (where, whereArgs) = where2SQL(delete.whereBlock)

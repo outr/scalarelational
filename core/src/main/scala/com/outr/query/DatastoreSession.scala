@@ -1,19 +1,27 @@
 package com.outr.query
 
-import org.powerscala.concurrent.Temporal
+import org.powerscala.concurrent.{AtomicInt, Temporal}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 class DatastoreSession private[query](val datastore: Datastore, val timeout: Double, thread: Thread) extends Temporal {
-  info("DatastoreSession Created!")
+  private[query] val activeQueries = new AtomicInt(0)
+
   lazy val connection = {
-    info("DatastoreSession connect established!")
     datastore.dataSource.getConnection
   }
 
+  override def checkIn() = super.checkIn()
+
+  override def update(delta: Double) = {
+    if (activeQueries() > 0) {
+      checkIn()       // Check in if there is an active query
+    }
+    super.update(delta)
+  }
+
   def dispose() = {
-    info("DatastoreSession Disposing!")
     connection.close()
     datastore.cleanup(thread, this)
   }
