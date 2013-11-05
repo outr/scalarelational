@@ -9,7 +9,11 @@ import com.outr.query._
 class TableSpec extends Specification {
   import TestDatastore._
 
-  "TestTable" should {
+  var acmeId: Int = _
+  var superiorId: Int = _
+  var highGroundId: Int = _
+
+  "test" should {
     "have two columns" in {
       test.columns must have size 3
     }
@@ -86,6 +90,31 @@ class TableSpec extends Specification {
       results must have size 0
     }
   }
+  "suppliers" should {
+    "insert three suppliers" in {
+      import suppliers._
+      acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).get
+      superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).get
+      highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).get
+      acmeId mustNotEqual 0
+      superiorId mustNotEqual 0
+      highGroundId mustNotEqual 0
+    }
+  }
+  "coffees" should {
+    import coffees._
+    "insert five coffees" in {
+      insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)) must not(throwA[Throwable])
+      insert(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)) must not(throwA[Throwable])
+      insert(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)) must not(throwA[Throwable])
+      insert(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)) must not(throwA[Throwable])
+      insert(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0)) must not(throwA[Throwable])
+    }
+    "query five coffees back out" in {
+      val results = exec(select(*) from coffees).toList
+      results must have size 5
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -93,5 +122,20 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
     val name = Column[String]("name", unique = true)
     val date = Column[Long]("date")
+  }
+  val suppliers = new Table("SUPPLIERS") {
+    val id = Column[Int]("SUP_ID", primaryKey = true, autoIncrement = true)
+    val name = Column[String]("SUP_NAME")
+    val street = Column[String]("STREET")
+    val city = Column[String]("CITY")
+    val state = Column[String]("STATE")
+    val zip = Column[String]("ZIP")
+  }
+  val coffees = new Table("COFFEES") {
+    val name = Column[String]("COF_NAME", primaryKey = true)
+    val supID = Column[Int]("SUP_ID", foreignKey = Some(suppliers.id))
+    val price = Column[Double]("PRICE")
+    val sales = Column[Int]("SALES")
+    val total = Column[Int]("TOTAL")
   }
 }

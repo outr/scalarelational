@@ -32,6 +32,12 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     if (table.primaryKeys.nonEmpty) {
       b.append(s", PRIMARY KEY(${table.primaryKeys.map(c => c.name).mkString(", ")})")
     }
+    table.foreignKeys.foreach {
+      case c => {
+        val foreignKey = c.foreignKey.get
+        b.append(s", FOREIGN KEY(${c.name}) REFERENCES ${foreignKey.table.tableName} (${foreignKey.name})")
+      }
+    }
 
     b.append(')')
 
@@ -58,6 +64,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def columnType(c: Class[_]) = EnhancedClass.convertClass(c) match {
     case "Int" => "INTEGER"
     case "Long" => "BIGINT"
+    case "Double" => "DOUBLE"
     case "String" => s"VARCHAR(${Int.MaxValue})"
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }

@@ -15,6 +15,9 @@ abstract class Table(val tableName: String)(implicit val datastore: Datastore) {
   lazy val primaryKeys = columns.collect {
     case c if c.primaryKey => c
   }
+  lazy val foreignKeys = columns.collect {
+    case c if c.foreignKey.nonEmpty => c
+  }
   lazy val autoIncrement = columns.find(c => c.autoIncrement)
 
   def * = columns

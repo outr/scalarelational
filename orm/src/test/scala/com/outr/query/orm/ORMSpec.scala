@@ -52,6 +52,7 @@ class ORMSpec extends Specification {
       val janie = person.query(select(personTable.*) from personTable where personTable.name === "Janie Doe").toList.head
       person.delete(janie) must not(throwA[Throwable])
     }
+    // TODO: cross-reference
     // TODO: Lazy and LazyList
   }
 }

@@ -30,7 +30,14 @@ trait Datastore {
 
   def select(columns: Column[_]*) = Query(columns.toList)
   def select(columns: List[Column[_]]) = Query(columns)
-  def insert(values: ColumnValue[_]*) = exec(Insert(values.toList))
+  def insert(values: ColumnValue[_]*) = {
+    val results = exec(Insert(values.toList))
+    if (results.hasNext) {
+      Some(results.next())
+    } else {
+      None
+    }
+  }
   def update(values: ColumnValue[_]*) = Update(values.toList, values.head.column.table)
   def delete(table: Table) = Delete(table)
 
@@ -87,7 +94,7 @@ trait Datastore {
   }
 
   def exec(query: Query): QueryResultsIterator
-  def exec(insert: Insert): Iterator[Long]
+  def exec(insert: Insert): Iterator[Int]
   def exec(update: Update): Int
   def exec(delete: Delete): Int
 
@@ -100,9 +107,9 @@ trait Datastore {
   }
 }
 
-class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Long] {
+class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Int] {
   def hasNext = rs.next()
-  def next() = rs.getLong(1)
+  def next() = rs.getInt(1)
 }
 
 case class QueryResult(table: Table, values: List[ColumnValue[_]]) {
