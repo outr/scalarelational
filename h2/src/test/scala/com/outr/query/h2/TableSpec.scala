@@ -115,6 +115,8 @@ class TableSpec extends Specification {
       results must have size 5
     }
   }
+  // TODO: joins
+  // TODO: test connection timeout support
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {

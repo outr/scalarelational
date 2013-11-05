@@ -2,7 +2,7 @@ package com.outr.query.orm
 
 import org.specs2.mutable._
 import com.outr.query.h2.{H2Memory, H2Datastore}
-import com.outr.query.{Column, Table}
+import com.outr.query.Column
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -25,31 +25,31 @@ class ORMSpec extends Specification {
       updated.id mustEqual Some(2)
     }
     "query back all records" in {
-      val results = person.query(select(personTable.*) from personTable).toList
+      val results = person.query(select(person.*) from person).toList
       results must have size 2
     }
     "query back 'John Doe' with only 'name'" in {
-      val results = person.query(select(personTable.name) from personTable where personTable.name === "John Doe").toList
+      val results = person.query(select(person.name) from person where person.name === "John Doe").toList
       results must have size 1
       val john = results.head
       john.id mustEqual None
       john.name mustEqual "John Doe"
     }
     "query back 'Jane Doe' with all fields" in {
-      val results = person.query(select(personTable.*) from personTable where personTable.name === "Jane Doe").toList
+      val results = person.query(select(person.*) from person where person.name === "Jane Doe").toList
       results must have size 1
       val jane = results.head
       jane.id mustEqual Some(2)
       jane.name mustEqual "Jane Doe"
     }
     "update 'Jane Doe' to 'Janie Doe'" in {
-      val jane = person.query(select(personTable.*) from personTable where personTable.name === "Jane Doe").toList.head
+      val jane = person.query(select(person.*) from person where person.name === "Jane Doe").toList.head
       person.update(jane.copy(name = "Janie Doe"))
-      val janie = person.query(select(personTable.*) from personTable where personTable.name === "Janie Doe").toList.head
+      val janie = person.query(select(person.*) from person where person.name === "Janie Doe").toList.head
       janie.name mustEqual "Janie Doe"
     }
     "delete 'Janie Doe' from the database" in {
-      val janie = person.query(select(personTable.*) from personTable where personTable.name === "Janie Doe").toList.head
+      val janie = person.query(select(person.*) from person where person.name === "Janie Doe").toList.head
       person.delete(janie) must not(throwA[Throwable])
     }
     // TODO: cross-reference
@@ -58,12 +58,11 @@ class ORMSpec extends Specification {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  val personTable = new Table("person") {
+  val person = new ORM[Person]("person") {
     val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
     val name = Column[String]("name", unique = true)
     val date = Column[Long]("date")
   }
-  val person = orm[Person](personTable)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
