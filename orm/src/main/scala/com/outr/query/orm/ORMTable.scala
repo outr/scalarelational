@@ -11,15 +11,34 @@ import com.outr.query.Delete
 import com.outr.query.Query
 import com.outr.query.Column
 import com.outr.query.Insert
+import org.powerscala.event.processor.OptionProcessor
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T], datastore: Datastore) extends Table(tableName = tableName)(datastore) {
+  ORMTable.configure(datastore)
+
+  val conversions = new OptionProcessor[(EnhancedClass, ColumnValue[_]), Any]("conversions")
+  conversions.on {
+    case (resultType, columnValue) => if (resultType.hasType(classOf[Lazy[_]])) {
+      Some(DelayedLazy(columnValue.column.foreignKey.get.table.asInstanceOf[ORMTable[_]], columnValue.value))
+    } else {
+      None
+    }
+  }
+
   lazy val clazz: EnhancedClass = manifest.runtimeClass
-  lazy val mappedColumns = clazz.caseValues.map {
-    case cv => column[Any](cv.name).map(c => c -> cv)
-  }.flatten.toMap
+  lazy val mappedColumns = Map(clazz.caseValues.map {
+    case cv if cv.valueType.hasType(classOf[Lazy[_]]) => columns.find(c => c.name.toLowerCase.startsWith(cv.name.toLowerCase)) match {
+      case Some(column) => column.asInstanceOf[Column[Any]] -> cv
+      case None => throw new RuntimeException(s"Unable to find match for lazy '${cv.name}' in '$tableName'.")
+    }
+    case cv => column[Any](cv.name) match {
+      case Some(column) => column -> cv
+      case None => throw new RuntimeException(s"Unable to map '${cv.name}' to a column in '$tableName'.")
+    }
+  }: _*)
 
   def insert(instance: T): T = {
     val values = instance2Values(instance)
@@ -48,10 +67,29 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
       throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but exptected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
     }
   }
+  def byId(primaryKey: Any) = {
+    if (primaryKeys.size != 1) {
+      throw new RuntimeException(s"Cannot query by id for a table that doesn't have exactly one primary key (has ${primaryKeys.size} primary keys)")
+    }
+    val pk = primaryKeys.head.asInstanceOf[Column[Any]]
+    val query = Query(*, this).where(pk === primaryKey)
+    val results = this.query(query).toList
+    if (results.tail.nonEmpty) {
+      throw new RuntimeException(s"Query byId for ${pk.name} == $primaryKey returned ${results.size} results.")
+    }
+    results.headOption
+  }
 
+  def primaryKeyConditions(instance: T) = {
+    Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
+  }
   def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
     primaryKeys.collect {
-      case c if mappedColumns.contains(c.asInstanceOf[Column[Any]]) => ColumnValue(c.asInstanceOf[Column[Any]], mappedColumns(c.asInstanceOf[Column[Any]])[Any](instance.asInstanceOf[AnyRef]))
+      case c if mappedColumns.contains(c.asInstanceOf[Column[Any]]) => {
+        val caseValue = mappedColumns(c.asInstanceOf[Column[Any]])
+        val value = caseValue[Any](instance.asInstanceOf[AnyRef])
+        ColumnValue(c.asInstanceOf[Column[Any]], value)
+      }
     }
   } else {
     throw new RuntimeException(s"No primary keys defined for $tableName")
@@ -65,9 +103,50 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     val args = result.values.collect {
       case columnValue if mappedColumns.contains(columnValue.column.asInstanceOf[Column[Any]]) => {
         val caseValue = mappedColumns(columnValue.column.asInstanceOf[Column[Any]])
-        caseValue.name -> columnValue.value
+        val sqlValue = result.table.datastore.sqlValue2Value[Any](columnValue.column.asInstanceOf[Column[Any]], columnValue.value)
+        val value = EnhancedMethod.convertToOption(columnValue.column.name, sqlValue, caseValue.valueType) match {
+          case Some(r) => r
+          case None => conversions.fire(caseValue.valueType -> ColumnValue(columnValue.column.asInstanceOf[Column[Any]], sqlValue)) match {
+            case Some(modified) => modified
+            case None => throw new RuntimeException(s"ORMTable.result2Instance: Unable to convert $sqlValue (${sqlValue.getClass.getSimpleName}) to ${caseValue.valueType}")
+          }
+        }
+        caseValue.name -> value
       }
     }.toMap
+    println(s"result2Instance: $args")
     clazz.copy[T](null.asInstanceOf[T], args, requireValues = false)
+  }
+}
+
+object ORMTable {
+  private var configured = Set.empty[Datastore]
+
+  def configure(datastore: Datastore) = synchronized {
+    if (!configured.contains(datastore)) {
+      datastore.value2SQL.on {
+        case (column, value) => value match {
+          case l: Lazy[_] => l.get() match {
+            case Some(v) => {
+              column.foreignKey match {
+                case Some(foreignColumn) => foreignColumn.table match {
+                  case ormt: ORMTable[_] => {
+                    val keys = ormt.asInstanceOf[ORMTable[Any]].primaryKeysFor(v)
+                    if (keys.size != 1) {
+                      throw new RuntimeException(s"There must be exactly one primary key to use Lazy but in ${ormt.tableName} there are ${keys.size}.")
+                    }
+                    Some(keys.head.value)
+                  }
+                }
+                case None => throw new RuntimeException(s"Lazy can only be used on columns that have a foreign key reference: ${column.name}")
+              }
+            }
+            case None => null
+          }
+          case _ => None
+        }
+      }
+      configured += datastore
+    }
   }
 }

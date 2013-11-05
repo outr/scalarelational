@@ -4,14 +4,18 @@ import javax.sql.DataSource
 
 import org.powerscala.reflect._
 import java.sql.ResultSet
+import org.powerscala.event.processor.OptionProcessor
+import org.powerscala.event.Listenable
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore {
+trait Datastore extends Listenable {
   implicit val thisDatastore = this
 
   private var _sessions = Map.empty[Thread, DatastoreSession]
+  val value2SQL = new OptionProcessor[(Column[_], Any), Any]("value2SQL")
+  val sql2Value = new OptionProcessor[(Column[_], Any), Any]("sql2Value")
 
   lazy val tables = getClass.fields.collect {
     case f if f.hasType(classOf[Table]) => f[Table](this)
@@ -104,6 +108,26 @@ trait Datastore {
 
   protected[query] def cleanup(thread: Thread, session: DatastoreSession) = synchronized {
     _sessions -= thread
+  }
+
+  def value2SQLValue(column: Column[_], value: Any): Any = value match {
+    case null => null
+    case s: String => s
+    case i: Int => i
+    case l: Long => l
+    case d: Double => d
+    case o: Option[_] => o.getOrElse(null)
+    case _ => value2SQL.fire(column -> value) match {
+      case Some(sqlValue) => value2SQLValue(column, sqlValue)
+      case None => throw new RuntimeException(s"Unsupported type conversion to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
+    }
+  }
+  def sqlValue2Value[T](c: Column[T], value: Any) = EnhancedMethod.convertToOption(c.name, value, c.classType) match {
+    case Some(result) => result
+    case None => sql2Value.fire(c -> value) match {
+      case Some(result) => result
+      case None => throw new RuntimeException(s"Unable to convert $value (${value.getClass}) to ${c.classType} for ${c.table.tableName}.${c.name}")
+    }
   }
 }
 

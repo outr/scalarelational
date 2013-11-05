@@ -10,6 +10,8 @@ import com.outr.query.Column
 class ORMSpec extends Specification {
   import TestDatastore._
 
+  private var bill: Person = _
+
   "Person" should {
     "create the tables" in {
       create() must not(throwA[Throwable])
@@ -52,8 +54,28 @@ class ORMSpec extends Specification {
       val janie = person.query(select(person.*) from person where person.name === "Janie Doe").toList.head
       person.delete(janie) must not(throwA[Throwable])
     }
+    "insert person into database" in {
+      bill = person.insert(Person("Bill Gates"))
+      bill.id.get mustNotEqual 0
+    }
+    "insert company into database" in {
+      val microsoft = company.insert(Company("Microsoft", Lazy(bill)))
+      microsoft.id.get mustNotEqual 0
+      microsoft.owner().id.get mustEqual bill.id.get
+    }
+    "query back company and lazy load the owner" in {
+      val companies = company.query(select(company.*) from company).toList
+      companies must have size 1
+      val microsoft = companies.head
+      microsoft.name mustEqual "Microsoft"
+      println(microsoft.owner)
+      microsoft.owner.loaded mustEqual false
+      val bill = microsoft.owner()
+      bill.name mustEqual "Bill Gates"
+      microsoft.owner.loaded mustEqual true
+    }
     // TODO: cross-reference
-    // TODO: Lazy and LazyList
+    // TODO: LazyList
   }
 }
 
@@ -63,6 +85,13 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = Column[String]("name", unique = true)
     val date = Column[Long]("date")
   }
+  val company = new ORMTable[Company]("company") {
+    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
+    val name = Column[String]("name", unique = true)
+    val ownerId = Column[Int]("ownerId", foreignKey = Some(person.id))
+  }
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
+
+case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)

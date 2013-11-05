@@ -1,6 +1,7 @@
 package com.outr.query
 
 import scala.util.matching.Regex
+import org.powerscala.reflect._
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -12,6 +13,8 @@ case class Column[T](name: String,
                      unique: Boolean = false,
                      foreignKey: Option[Column[T]] = None)
                     (implicit val manifest: Manifest[T], val table: Table) {
+  lazy val classType: EnhancedClass = manifest.runtimeClass
+
   def apply(value: T) = ColumnValue[T](this, value)
 
   def ===(value: T) = DirectCondition(this, Operator.Equal, value)

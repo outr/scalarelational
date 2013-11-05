@@ -69,12 +69,6 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 
-  def value2SQLValue(value: Any) = value match {
-    case o: Option[_] => o.getOrElse(null)
-    case _ => value
-  }
-  def sqlValue2Value[T](c: Column[T], value: Any) = value
-
   def exec(query: Query) = {
     val columns = query.columns.map(c => s"${c.table.tableName}.${c.name}").mkString(", ")
 
@@ -89,7 +83,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     // Populate args
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+      case (value, index) => ps.setObject(index + 1, value2SQLValue(null, value))
     }
 
     val resultSet = ps.executeQuery()
@@ -99,7 +93,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def exec(insert: Insert) = {
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
-    val columnValues = insert.values.map(cv => value2SQLValue(cv.value))
+    val columnValues = insert.values.map(cv => value2SQLValue(cv.column, cv.value))
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     val ps = session.connection.prepareStatement(insertString, Statement.RETURN_GENERATED_KEYS)
@@ -118,7 +112,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def exec(update: Update) = {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
-    val setArgs = update.values.map(cv => cv.value)
+    val setArgs = update.values.map(cv => value2SQLValue(cv.column, cv.value))
     args = args ::: setArgs
 
     val (where, whereArgs) = where2SQL(update.whereBlock)
@@ -128,7 +122,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     // Populate args
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+      case (value, index) => ps.setObject(index + 1, value)
     }
 
     ps.executeUpdate()
@@ -144,7 +138,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     // Populate args
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value2SQLValue(value))
+      case (value, index) => ps.setObject(index + 1, value)
     }
 
     ps.executeUpdate()
@@ -155,7 +149,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     def condition2String(condition: Condition) = condition match {
       case c: DirectCondition[_] => {
-        args = c.value :: args
+        args = value2SQLValue(c.column, c.value) :: args
         s"${c.column.name} ${c.operator.symbol} ?"
       }
       case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
@@ -166,6 +160,6 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
       case null => "" // Nothing to do, no where block
       case where: SingleWhereBlock => s" WHERE ${condition2String(where.condition)}"
     }
-    sql -> args
+    sql -> args.reverse
   }
 }
