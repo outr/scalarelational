@@ -73,6 +73,18 @@ class ORMSpec extends Specification {
       bill.name mustEqual "Bill Gates"
       microsoft.owner.loaded mustEqual true
     }
+    "insert company into database with a new Lazy" in {
+      val steve = Person("Steve Jobs")
+      val apple = company.insert(Company("Apple", Lazy(steve)))
+      apple.id.get mustNotEqual 0
+      apple.owner().id.get mustNotEqual 0
+    }
+    "query new person back out of database" in {
+      val people = person.query(select(person.*) from person where person.name === "Steve Jobs").toList
+      people must have size 1
+      val steve = people.head
+      steve.name mustEqual "Steve Jobs"
+    }
     // TODO: cross-reference
     // TODO: LazyList
   }
