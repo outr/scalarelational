@@ -73,11 +73,9 @@ trait Datastore extends Listenable {
 
   /**
    * Creates a transaction for the contents of the supplied function. If an exception is thrown the contents will be
-   * rolled back. If no exception occurs the transaction will be committed. Layering of transactions is supported and
+   * rolled back to the savepoint created before the function was invoked. If no exception occurs the transaction
+   * will be committed (but only if it is not a nested transaction). Layering of transactions is supported and
    * will defer commit until the last transaction is ended.
-   *
-   * Note: even an exception thrown by a inner transaction will not be rolled back, the exception must be thrown all
-   * the way to the top-level transaction for the rollback to occur.
    *
    * @param f the function to execute within the transaction
    * @tparam T the return value from the function
@@ -88,6 +86,7 @@ trait Datastore extends Listenable {
     transactionLayers.set(transactionLayers.get() + 1)            // Increment the transaction layer
     val previousAutoCommit = session.connection.getAutoCommit
     session.connection.setAutoCommit(false)
+    val savepoint = session.connection.setSavepoint()
     active {
       try {
         val result = f
@@ -97,14 +96,13 @@ trait Datastore extends Listenable {
         result
       } catch {
         case t: Throwable => {
-          if (isTop) {
-            session.connection.rollback()
-          }
+          session.connection.rollback(savepoint)
           throw t
         }
       } finally {
         transactionLayers.set(transactionLayers.get() - 1)          // Decrement the transaction layer
         session.connection.setAutoCommit(previousAutoCommit)
+        session.connection.releaseSavepoint(savepoint)
       }
     }
   }
