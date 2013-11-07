@@ -11,53 +11,52 @@ import com.outr.query.Delete
 import com.outr.query.Query
 import com.outr.query.Column
 import com.outr.query.Insert
-import org.powerscala.event.processor.OptionProcessor
+import org.powerscala.event.processor.ModifiableProcessor
+import com.outr.query.orm.persistence.{ConversionResponse, EmptyConversion, DefaultConverter, Persistence}
+import org.powerscala.Priority
+import org.powerscala.event.Listenable
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T], datastore: Datastore) extends Table(tableName = tableName)(datastore) {
-  ORMTable.configure(datastore)
-
-  val conversions = new OptionProcessor[(EnhancedClass, ColumnValue[_]), Any]("conversions")
-  conversions.on {
-    case (resultType, columnValue) => if (resultType.hasType(classOf[Lazy[_]])) {
-      Some(DelayedLazy(columnValue.column.foreignKey.get.table.asInstanceOf[ORMTable[_]], columnValue.value))
-    } else {
-      None
-    }
-  }
-
   lazy val clazz: EnhancedClass = manifest.runtimeClass
-  lazy val mappedColumns = Map(clazz.caseValues.map {
-    case cv if cv.valueType.hasType(classOf[Lazy[_]]) => columns.find(c => c.name.toLowerCase.startsWith(cv.name.toLowerCase)) match {
-      case Some(column) => column.asInstanceOf[Column[Any]] -> cv
-      case None => throw new RuntimeException(s"Unable to find match for lazy '${cv.name}' in '$tableName'.")
-    }
-    case cv => column[Any](cv.name) match {
-      case Some(column) => column -> cv
-      case None => throw new RuntimeException(s"Unable to map '${cv.name}' to a column in '$tableName'.")
-    }
-  }: _*)
+  lazy val caseValues = clazz.caseValues
+  lazy val persistence = loadPersistence()
+  lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 
   def insert(instance: T): T = {
-    val values = instance2Values(instance)
+    val (updated, values) = instance2ColumnValues(instance)
     val insert = Insert(values)
     datastore.exec(insert).toList.headOption match {
-      case Some(id) => clazz.copy[T](instance, Map(autoIncrement.get.name -> id))
-      case None => instance
+      case Some(id) => clazz.copy[T](updated, Map(autoIncrement.get.name -> id))
+      case None => updated
     }
   }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
+  def persist(instance: T): T = if (exists(instance)) {
+    update(instance)
+  } else {
+    insert(instance)
+  }
+  def exists(instance: T): Boolean = {
+    val id = idFor(instance).value
+    id match {
+      case Some(value) => true
+      case None => false
+      case 0 => false
+      case i: Int if i > 0 => true
+    }
+  }
   def update(instance: T): T = {
-    val values = instance2Values(instance)
-    val conditions = Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
+    val (modified, values) = instance2ColumnValues(instance)
+    val conditions = Conditions(primaryKeysFor(modified).map(cv => cv.column === cv.value), ConnectType.And)
     val update = Update(values, this).where(conditions)
     val updated = datastore.exec(update)
     if (updated != 1) {
       throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
     }
-    instance
+    modified
   }
   def delete(instance: T) = {
     val conditions = Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
@@ -66,6 +65,23 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     if (deleted != 1) {
       throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but exptected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
     }
+  }
+  def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
+    primaryKeys.collect {
+      case column => {
+        val c = column.asInstanceOf[Column[Any]]
+        column2PersistenceMap.get(c).map(p => ColumnValue(c, p.caseValue[Any](instance.asInstanceOf[AnyRef])))
+      }
+    }.flatten
+  } else {
+    throw new RuntimeException(s"No primary keys defined for $tableName")
+  }
+  def idFor(instance: T) = {
+    val keys = primaryKeysFor(instance)
+    if (keys.size != 1) {
+      throw new RuntimeException(s"Cannot get the id for a table that doesn't have exactly one primary key (has ${primaryKeys.size} primary keys)")
+    }
+    keys.head
   }
   def byId(primaryKey: Any) = {
     if (primaryKeys.size != 1) {
@@ -80,72 +96,72 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     results.headOption
   }
 
-  def primaryKeyConditions(instance: T) = {
-    Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
-  }
-  def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
-    primaryKeys.collect {
-      case c if mappedColumns.contains(c.asInstanceOf[Column[Any]]) => {
-        val caseValue = mappedColumns(c.asInstanceOf[Column[Any]])
-        val value = caseValue[Any](instance.asInstanceOf[AnyRef])
-        ColumnValue(c.asInstanceOf[Column[Any]], value)
-      }
+  protected def loadPersistence() = {
+    caseValues.map {
+      case cv => caseValue2Persistence(cv)
     }
-  } else {
-    throw new RuntimeException(s"No primary keys defined for $tableName")
   }
 
-  def instance2Values(instance: T) = mappedColumns.map {
-    case (column, caseValue) => ColumnValue[Any](column, caseValue[Any](instance.asInstanceOf[AnyRef]))
-  }.toList
+  protected def caseValue2Persistence[V](cv: CaseValue): Persistence = {
+    val persistence = ORMTable.persistenceSupport.fire(Persistence(this, cv))
+    if (persistence.column == null) {
+      throw new RuntimeException(s"Unable to create persistence mapping for ${cv.name} (${cv.valueType.simpleName}). No column found in $tableName.")
+    } else if (persistence.converter == null) {
+      throw new RuntimeException(s"Unable to create persistence mapping for ${cv.name} (${cv.valueType.simpleName}). No converter found for ${persistence.column.name} (${persistence.column.manifest.runtimeClass.getSimpleName}).")
+    }
+    persistence
+  }
 
-  protected[orm] def result2Instance(result: QueryResult): T = {
-    val args = result.values.collect {
-      case columnValue if mappedColumns.contains(columnValue.column.asInstanceOf[Column[Any]]) => {
-        val caseValue = mappedColumns(columnValue.column.asInstanceOf[Column[Any]])
-        val sqlValue = result.table.datastore.sqlValue2Value[Any](columnValue.column.asInstanceOf[Column[Any]], columnValue.value)
-        val value = EnhancedMethod.convertToOption(columnValue.column.name, sqlValue, caseValue.valueType) match {
-          case Some(r) => r
-          case None => conversions.fire(caseValue.valueType -> ColumnValue(columnValue.column.asInstanceOf[Column[Any]], sqlValue)) match {
-            case Some(modified) => modified
-            case None => throw new RuntimeException(s"ORMTable.result2Instance: Unable to convert $sqlValue (${sqlValue.getClass.getSimpleName}) to ${caseValue.valueType}")
+  protected def instance2ColumnValues(instance: T) = {
+    var updated = instance
+    val columnValues = persistence.map {
+      case p => {
+        val value = p.caseValue[Any](instance.asInstanceOf[AnyRef])
+        p.converter.convert2SQL(p, value) match {
+          case EmptyConversion => None
+          case response: ConversionResponse => {
+            response.updated match {
+              case Some(updatedValue) => {      // Modify the instance with an updated value
+                updated = p.caseValue.copy(updated.asInstanceOf[AnyRef], updatedValue).asInstanceOf[T]
+              }
+              case None => // Nothing to do
+            }
+            Some(p.column.asInstanceOf[Column[Any]](response.value))
           }
         }
-        caseValue.name -> value
       }
-    }.toMap
-    clazz.copy[T](null.asInstanceOf[T], args, requireValues = false)
+    }.flatten
+    updated -> columnValues
+  }
+
+  protected[orm] def result2Instance(result: QueryResult): T = {
+    val args = result.values.map {
+      case columnValue => column2PersistenceMap.get(columnValue.column.asInstanceOf[Column[Any]]) match {
+        case Some(p) => p.converter.convert2Value(p, columnValue.value).map(v => p.caseValue.name -> v)
+        case None => throw new RuntimeException(s"Unable to column: ${columnValue.column.name} in persistence map!")
+      }
+    }.flatten.toMap
+    clazz.copy[T](null.asInstanceOf[T], args)
   }
 }
 
-object ORMTable {
-  private var configured = Set.empty[Datastore]
-
-  def configure(datastore: Datastore) = synchronized {
-    if (!configured.contains(datastore)) {
-      datastore.value2SQL.on {
-        case (column, value) => value match {
-          case l: Lazy[_] => l.get() match {
-            case Some(v) => {
-              column.foreignKey match {
-                case Some(foreignColumn) => foreignColumn.table match {
-                  case ormt: ORMTable[_] => {
-                    val keys = ormt.asInstanceOf[ORMTable[Any]].primaryKeysFor(v)
-                    if (keys.size != 1) {
-                      throw new RuntimeException(s"There must be exactly one primary key to use Lazy but in ${ormt.tableName} there are ${keys.size}.")
-                    }
-                    Some(keys.head.value)
-                  }
-                }
-                case None => throw new RuntimeException(s"Lazy can only be used on columns that have a foreign key reference: ${column.name}")
-              }
-            }
-            case None => null
-          }
-          case _ => None
-        }
+object ORMTable extends Listenable {
+  val persistenceSupport = new ModifiableProcessor[Persistence]("persistenceSupport")
+  persistenceSupport.listen(Priority.High) {      // Direct mapping of CaseValue -> Column
+    case persistence => if (persistence.column == null) {
+      persistence.table.column[Any](persistence.caseValue.name) match {
+        case Some(column) => persistence.copy(column = column)
+        case None => persistence
       }
-      configured += datastore
+    } else {
+      persistence
+    }
+  }
+  persistenceSupport.listen(Priority.Lowest) {    // DefaultConvert is used if no other converter is set
+    case persistence => if (persistence.converter == null) {
+      persistence.copy(converter = DefaultConverter)
+    } else {
+      persistence
     }
   }
 }

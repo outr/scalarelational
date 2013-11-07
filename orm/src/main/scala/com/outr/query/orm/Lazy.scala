@@ -1,9 +1,13 @@
 package com.outr.query.orm
 
+import org.powerscala.Priority
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Lazy[T] extends (() => T) {
+sealed trait Lazy[T] extends (() => T) {
+  Lazy      // Make sure companion has loaded
+
   def manifest: Manifest[T]
 
   def loaded: Boolean
@@ -14,9 +18,24 @@ trait Lazy[T] extends (() => T) {
     case Some(t) => t
     case None => f
   }
+
+  override def toString() = s"${getClass.getSimpleName}(${get()})"
 }
 
 object Lazy {
+  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy converter
+    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[Lazy[_]])) {
+      val name = persistence.caseValue.name
+      val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
+        case c if c.foreignKey.nonEmpty => c
+      }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
+      val converter = LazyConverter
+      persistence.copy(column = column, converter = converter)
+    } else {
+      persistence
+    }
+  }
+
   def None[T](implicit manifest: Manifest[T]) = PreloadedLazy[T](scala.None)
   def apply[T](value: T)(implicit manifest: Manifest[T]) = PreloadedLazy[T](Option(value))
 }

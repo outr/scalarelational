@@ -11,7 +11,7 @@ abstract class Table(val tableName: String)(implicit val datastore: Datastore) {
   lazy val columns: List[Column[_]] = getClass.fields.collect {
     case f if f.hasType(classOf[Column[_]]) => f[Column[_]](this)
   }
-  private lazy val columnMap = Map(columns.map(c => c.name -> c): _*)
+  private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {
     case c if c.primaryKey => c
   }
@@ -22,5 +22,6 @@ abstract class Table(val tableName: String)(implicit val datastore: Datastore) {
 
   def * = columns
 
-  def column[T](name: String) = columnMap.get(name).asInstanceOf[Option[Column[T]]]
+  def column[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
+  def columnsByName[T](names: String*) = names.map(name => column[T](name)).flatten
 }
