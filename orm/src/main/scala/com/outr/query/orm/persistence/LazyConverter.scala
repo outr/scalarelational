@@ -1,6 +1,6 @@
-package com.outr.query.orm
+package com.outr.query.orm.persistence
 
-import com.outr.query.orm.persistence.{EmptyConversion, ConversionResponse, Persistence, Converter}
+import com.outr.query.orm.{DelayedLazy, ORMTable, PreloadedLazy, Lazy}
 
 /**
  * @author Matt Hicks <matt@outr.com>

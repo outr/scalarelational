@@ -17,6 +17,12 @@ class TableSpec extends Specification {
     "have two columns" in {
       test.columns must have size 3
     }
+    "have the proper table-to-table relationships set" in {
+      test.one2One must have size 0
+      test.one2Many must have size 0
+      test.many2One must have size 0
+      test.many2Many must have size 0
+    }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, test)
       sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id))"
@@ -91,8 +97,14 @@ class TableSpec extends Specification {
     }
   }
   "suppliers" should {
+    import suppliers._
+    "have the proper table-to-table relationships set" in {
+      suppliers.one2One must have size 0
+      suppliers.one2Many must have size 0
+      suppliers.many2One must have size 1
+      suppliers.many2Many must have size 0
+    }
     "insert three suppliers" in {
-      import suppliers._
       acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).get
       superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).get
       highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).get
@@ -103,6 +115,12 @@ class TableSpec extends Specification {
   }
   "coffees" should {
     import coffees._
+    "have the proper table-to-table relationships set" in {
+      coffees.one2One must have size 0
+      coffees.one2Many must have size 1
+      coffees.many2One must have size 0
+      coffees.many2Many must have size 0
+    }
     "insert five coffees" in {
       insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)) must not(throwA[Throwable])
       insert(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)) must not(throwA[Throwable])

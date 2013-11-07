@@ -1,6 +1,7 @@
 package com.outr.query.orm
 
 import org.powerscala.Priority
+import com.outr.query.orm.persistence.LazyConverter
 
 /**
  * @author Matt Hicks <matt@outr.com>

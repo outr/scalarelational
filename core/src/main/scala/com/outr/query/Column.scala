@@ -15,6 +15,15 @@ case class Column[T](name: String,
                     (implicit val manifest: Manifest[T], val table: Table) {
   lazy val classType: EnhancedClass = manifest.runtimeClass
 
+  table.addColumn(this)     // Add this column to the table
+  foreignKey match {
+    case Some(foreign) => {
+      val foreignTable = foreign.table
+      foreignTable.addForeignColumn(this)
+    }
+    case None => // Nothing to do
+  }
+
   def apply(value: T) = ColumnValue[T](this, value)
 
   def ===(value: T) = DirectCondition(this, Operator.Equal, value)
@@ -27,4 +36,6 @@ case class Column[T](name: String,
   def between(range: Seq[T]) = RangeCondition(this, Operator.Between, range)
   def like(regex: Regex) = LikeCondition(this, regex)
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
+
+  override def toString = s"Column(${table.tableName}.$name)"
 }

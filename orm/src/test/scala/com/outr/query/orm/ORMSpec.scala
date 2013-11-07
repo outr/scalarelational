@@ -73,7 +73,7 @@ class ORMSpec extends Specification {
       bill.name mustEqual "Bill Gates"
       microsoft.owner.loaded mustEqual true
     }
-    "insert company into database with a new Lazy" in {
+    "insert company into database with a new owner" in {
       val steve = Person("Steve Jobs")
       val apple = company.insert(Company("Apple", Lazy(steve)))
       apple.id.get mustNotEqual 0
