@@ -15,6 +15,8 @@ case class Column[T](name: String,
                     (implicit val manifest: Manifest[T], val table: Table) {
   lazy val classType: EnhancedClass = manifest.runtimeClass
 
+  lazy val longName = s"${table.tableName}.$name"
+
   table.addColumn(this)     // Add this column to the table
   foreignKey match {
     case Some(foreign) => {

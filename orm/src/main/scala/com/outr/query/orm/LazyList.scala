@@ -13,6 +13,9 @@ trait LazyList[T] extends (() => List[T]) {
   LazyList
 
   lazy val clazz: EnhancedClass = manifest.runtimeClass
+  if (clazz.javaClass == classOf[AnyRef]) {
+    throw new RuntimeException("Cannot set LazyList generic type to AnyRef.")
+  }
 
   def manifest: Manifest[T]
 
@@ -50,6 +53,7 @@ case class DelayedLazyList[T](table: ORMTable[T], conditions: Conditions)(implic
   }
 
   private def load() = {
+    println(s"DelayedLazyList: Querying with $conditions")
     val query = Query(table.*, table).where(conditions)
     values = table.query(query).toList
     _loaded = true

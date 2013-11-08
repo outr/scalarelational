@@ -25,8 +25,15 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val persistence = loadPersistence()
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 
+  private var _lazyMappings = Map.empty[CaseValue, Column[_]]
+  def lazyMappings = _lazyMappings
+
   ORMTable.synchronized {     // Map class to table so it can be found externally
     ORMTable.class2Table += clazz -> this
+  }
+  def map(fieldName: String, foreignColumn: Column[_]) = synchronized {
+    val caseValue = caseValues.find(cv => cv.name.equalsIgnoreCase(fieldName)).getOrElse(throw new RuntimeException(s"Unable to find $fieldName in $clazz."))
+    _lazyMappings += caseValue -> foreignColumn
   }
 
   def insert(instance: T): T = {

@@ -24,16 +24,19 @@ object LazyListConverter extends Converter {
   }
 
   def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any]) = {
-    val name = persistence.caseValue.name.toLowerCase
-    persistence.table.many2One.find(c => { println(s"m2o: ${c.name} - $name"); c.name.toLowerCase.startsWith(name) }) match {
+    persistence.table.lazyMappings.get(persistence.caseValue) match {
       case Some(foreignColumn) => {
         val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[Any]]
         val primaryKey = persistence.table.primaryKeys.head.asInstanceOf[Column[Any]]
-        val id = args(primaryKey.name)      // TODO: support better lookup support
-        val conditions = Conditions(List(primaryKey === id))
-        Some(DelayedLazyList(foreignTable, conditions))
+        args.get(primaryKey.name) match {
+          case Some(id) => {
+            val conditions = Conditions(List(foreignColumn.asInstanceOf[Column[Any]] === id))
+            Some(DelayedLazyList[Any](foreignTable, conditions)(Manifest.classType[Any](foreignTable.clazz.javaClass)))
+          }
+          case None => None     // Looks like the primary key isn't part of the query results
+        }
       }
-      case None => throw new RuntimeException(s"Unable to find many2one mapping for LazyList - ${persistence.table.tableName}.${persistence.caseValue.name}")
+      case None => throw new RuntimeException(s"Unable to find ${persistence.caseValue.name} in ${persistence.table.tableName}.")
     }
   }
 }

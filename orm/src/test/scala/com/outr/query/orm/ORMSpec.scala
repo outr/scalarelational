@@ -85,8 +85,16 @@ class ORMSpec extends Specification {
       val steve = people.head
       steve.name mustEqual "Steve Jobs"
     }
+    "access company via LazyList in person" in {
+      val people = person.query(select(person.*) from person where person.name === "Steve Jobs").toList
+      people must have size 1
+      val steve = people.head
+      val companies = steve.companies()
+      companies must have size 1
+      val apple = companies.head
+      apple.name mustEqual "Apple"
+    }
     // TODO: cross-reference
-    // TODO: LazyList
   }
 }
 
@@ -101,6 +109,8 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = Column[String]("name", unique = true)
     val ownerId = Column[Int]("ownerId", foreignKey = Some(person.id))
   }
+
+  person.map("companies", company.ownerId)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)

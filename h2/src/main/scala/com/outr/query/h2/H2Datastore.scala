@@ -7,13 +7,15 @@ import com.outr.query.Column
 import com.outr.query.Insert
 import java.sql.Statement
 import java.io.NotSerializableException
+import scala.collection.mutable.ListBuffer
+import org.powerscala.log.Logging
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
                             user: String = "sa",
-                            password: String = "sa") extends Datastore {
+                            password: String = "sa") extends Datastore with Logging {
   Class.forName("org.h2.Driver")
 
   val dataSource = JdbcConnectionPool.create(mode.url, user, password)
@@ -70,7 +72,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   def exec(query: Query) = active {
-    val columns = query.columns.map(c => s"${c.table.tableName}.${c.name}").mkString(", ")
+    val columns = query.columns.map(c => c.longName).mkString(", ")
 
     var args = List.empty[Any]
 
@@ -78,6 +80,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     val (where, whereArgs) = where2SQL(query.whereBlock)
     args = args ::: whereArgs
     val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$where")
+    info(sql)
 
     val ps = session.connection.prepareStatement(sql.toString())
 
@@ -111,7 +114,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
   def exec(update: Update) = active {
     var args = List.empty[Any]
-    val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
+    val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
     val setArgs = update.values.map(cv => value2SQLValue(cv.column, cv.value))
     args = args ::: setArgs
 
@@ -144,13 +147,13 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     ps.executeUpdate()
   }
 
-  private def where2SQL(whereBlock: WhereBlock) = {
-    var args = List.empty[Any]
+  private def where2SQL(whereBlock: WhereBlock, inner: Boolean = false): (String, List[Any]) = {
+    val args = ListBuffer.empty[Any]
 
     def condition2String(condition: Condition) = condition match {
       case c: DirectCondition[_] => {
-        args = value2SQLValue(c.column, c.value) :: args
-        s"${c.column.name} ${c.operator.symbol} ?"
+        args += value2SQLValue(c.column, c.value)
+        s"${c.column.longName} ${c.operator.symbol} ?"
       }
       case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
       case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
@@ -158,8 +161,30 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
     val sql = whereBlock match {
       case null => "" // Nothing to do, no where block
-      case where: SingleWhereBlock => s" WHERE ${condition2String(where.condition)}"
+      case where: SingleWhereBlock if !inner => s" WHERE ${condition2String(where.condition)}"
+      case where: SingleWhereBlock => s"${condition2String(where.condition)}"
+      case where: MultiWhereBlock => {
+        val b = new StringBuilder
+        b.append(" WHERE ")
+        var first = true
+        where.blocks.foreach {
+          case block => {
+            if (first) {
+              first = false
+            } else {
+              where.connectType match {
+                case ConnectType.And => b.append(" AND ")
+                case ConnectType.Or => b.append(" OR ")
+              }
+            }
+            val (blockSQL, blockArgs) = where2SQL(block, inner = true)
+            args ++= blockArgs
+            b.append(blockSQL)
+          }
+        }
+        b.toString()
+      }
     }
-    sql -> args.reverse
+    sql -> args.toList
   }
 }
