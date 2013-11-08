@@ -28,7 +28,7 @@ object LazyConverter extends Converter {
     }
   }
 
-  def convert2Value(persistence: Persistence, sql: Any) = {
+  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any]) = {
     val foreignTable = persistence.column.foreignKey.get.table.asInstanceOf[ORMTable[Any]]
     Some(DelayedLazy(foreignTable, sql))
   }

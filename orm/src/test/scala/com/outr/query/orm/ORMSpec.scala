@@ -103,6 +103,6 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   }
 }
 
-case class Person(name: String, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
+case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
 
 case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)

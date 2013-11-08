@@ -30,8 +30,7 @@ object Lazy {
       val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
         case c if c.foreignKey.nonEmpty => c
       }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
-      val converter = LazyConverter
-      persistence.copy(column = column, converter = converter)
+      persistence.copy(column = column, converter = LazyConverter)
     } else {
       persistence
     }

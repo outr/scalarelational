@@ -6,7 +6,7 @@ package com.outr.query.orm.persistence
 object DefaultConverter extends Converter {
   def convert2SQL(persistence: Persistence, value: Any) = ConversionResponse(value, None)
 
-  def convert2Value(persistence: Persistence, sql: Any) = {
+  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any]) = {
     val cv = persistence.caseValue
     Some(cv.valueType.convertTo[Any](cv.name, sql))
   }

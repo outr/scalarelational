@@ -16,7 +16,7 @@ case class RangeCondition[T](column: Column[T], operator: Operator, values: Seq[
 
 case class LikeCondition[T](column: Column[T], regex: Regex) extends Condition
 
-case class Conditions(list: List[Condition], connectType: ConnectType) {
+case class Conditions(list: List[Condition], connectType: ConnectType = ConnectType.And) {
   def and(condition: Condition) = if (connectType == ConnectType.And) {
     copy(list = (condition :: list.reverse).reverse)
   } else {

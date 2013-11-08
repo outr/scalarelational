@@ -2,17 +2,32 @@ package com.outr.query.orm
 
 import com.outr.query._
 import com.outr.query.Query
+import org.powerscala.Priority
+import com.outr.query.orm.persistence.LazyListConverter
+import org.powerscala.reflect._
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait LazyList[T] extends (() => List[T]) {
+  LazyList
+
+  lazy val clazz: EnhancedClass = manifest.runtimeClass
+
   def manifest: Manifest[T]
 
   def loaded: Boolean
 }
 
 object LazyList {
+  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy list converter
+    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[LazyList[_]])) {
+      persistence.copy(converter = LazyListConverter)
+    } else {
+      persistence
+    }
+  }
+
   def Empty[T](implicit manifest: Manifest[T]) = PreloadedLazyList[T](Nil)
 }
 

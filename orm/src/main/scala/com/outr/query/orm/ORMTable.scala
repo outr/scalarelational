@@ -25,6 +25,10 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val persistence = loadPersistence()
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 
+  ORMTable.synchronized {     // Map class to table so it can be found externally
+    ORMTable.class2Table += clazz -> this
+  }
+
   def insert(instance: T): T = {
     val (updated, values) = instance2ColumnValues(instance)
     val insert = Insert(values)
@@ -34,12 +38,12 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     }
   }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
-  def persist(instance: T): T = if (exists(instance)) {
+  def persist(instance: T): T = if (hasId(instance)) {
     update(instance)
   } else {
     insert(instance)
   }
-  def exists(instance: T): Boolean = {
+  def hasId(instance: T): Boolean = {
     val id = idFor(instance).value
     id match {
       case Some(value) => true
@@ -104,9 +108,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
 
   protected def caseValue2Persistence[V](cv: CaseValue): Persistence = {
     val persistence = ORMTable.persistenceSupport.fire(Persistence(this, cv))
-    if (persistence.column == null) {
-      throw new RuntimeException(s"Unable to create persistence mapping for ${cv.name} (${cv.valueType.simpleName}). No column found in $tableName.")
-    } else if (persistence.converter == null) {
+    if (persistence.converter == null) {
       throw new RuntimeException(s"Unable to create persistence mapping for ${cv.name} (${cv.valueType.simpleName}). No converter found for ${persistence.column.name} (${persistence.column.manifest.runtimeClass.getSimpleName}).")
     }
     persistence
@@ -135,17 +137,36 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   }
 
   protected[orm] def result2Instance(result: QueryResult): T = {
-    val args = result.values.map {
+    var args = Map.empty[String, Any]
+    // Process query result columns
+    result.values.foreach {
       case columnValue => column2PersistenceMap.get(columnValue.column.asInstanceOf[Column[Any]]) match {
-        case Some(p) => p.converter.convert2Value(p, columnValue.value).map(v => p.caseValue.name -> v)
+        case Some(p) => p.converter.convert2Value(p, columnValue.value, args) match {
+          case Some(v) => args += p.caseValue.name -> v
+          case None => // No value in the case class for this column
+        }
         case None => throw new RuntimeException(s"Unable to column: ${columnValue.column.name} in persistence map!")
       }
-    }.flatten.toMap
+    }
+    // Process fields in case class that have no direct column association
+    result.table.asInstanceOf[ORMTable[Any]].persistence.foreach {
+      case p => if (p.column == null) {
+        p.converter.convert2Value(p, null, args) match {
+          case Some(v) => args += p.caseValue.name -> v
+          case None => // No value in the case class for this column
+        }
+      }
+    }
     clazz.copy[T](null.asInstanceOf[T], args)
   }
 }
 
 object ORMTable extends Listenable {
+  private var class2Table = Map.empty[EnhancedClass, ORMTable[_]]
+
+  def apply[T](clazz: EnhancedClass) = get[T](clazz).getOrElse(throw new RuntimeException(s"Unable to find $clazz ORMTable mapping."))
+  def get[T](clazz: EnhancedClass) = class2Table.get(clazz).asInstanceOf[Option[ORMTable[T]]]
+
   val persistenceSupport = new ModifiableProcessor[Persistence]("persistenceSupport")
   persistenceSupport.listen(Priority.High) {      // Direct mapping of CaseValue -> Column
     case persistence => if (persistence.column == null) {
