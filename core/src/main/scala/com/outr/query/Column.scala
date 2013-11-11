@@ -41,7 +41,11 @@ case class Column[T](name: String,
 
   def ===(column: Column[T]) = ColumnCondition(this, Operator.Equal, column)
 
-  def min = SimpleFunction(FunctionType.Min, this)
+  def avg = SimpleFunction[T](FunctionType.Avg, this)
+  def count = SimpleFunction[Long](FunctionType.Count, this)
+  def min = SimpleFunction[T](FunctionType.Min, this)
+  def max = SimpleFunction[T](FunctionType.Max, this)
+  def sum = SimpleFunction[T](FunctionType.Sum, this)
 
   override def toString = s"Column(${table.tableName}.$name)"
 }

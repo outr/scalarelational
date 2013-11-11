@@ -147,13 +147,14 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     var args = Map.empty[String, Any]
     // Process query result columns
     result.values.foreach {
-      case columnValue => column2PersistenceMap.get(columnValue.column.asInstanceOf[Column[Any]]) match {
+      case columnValue: ColumnValue[_] => column2PersistenceMap.get(columnValue.column.asInstanceOf[Column[Any]]) match {
         case Some(p) => p.converter.convert2Value(p, columnValue.value, args) match {
           case Some(v) => args += p.caseValue.name -> v
           case None => // No value in the case class for this column
         }
         case None => throw new RuntimeException(s"Unable to column: ${columnValue.column.name} in persistence map!")
       }
+      case v => throw new RuntimeException(s"${v.getClass} is not supported in ORM results.")
     }
     // Process fields in case class that have no direct column association
     result.table.asInstanceOf[ORMTable[Any]].persistence.foreach {

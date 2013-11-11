@@ -55,11 +55,11 @@ class TableSpec extends Specification {
       jane(test.id) mustEqual 2
       jane(test.name) mustEqual "Jane Doe"
     }
-//    "query with multiple where clauses" in {
-//      val query = select (test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > 0
-//      val results = exec(query).toList
-//      results must have size 2
-//    }
+    "query with multiple where clauses" in {
+      val query = select (test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > 0
+      val results = exec(query).toList
+      results must have size 2
+    }
     "update 'John Doe' to 'Joe Doe'" in {
       val updated = exec(update(test.name("Joe Doe")) where(test.name === "John Doe"))
       updated mustEqual 1
@@ -144,10 +144,22 @@ class TableSpec extends Specification {
       val query = select(price.min) from coffees
       val results = exec(query).toList
       results must have size 1
-      val values = results.head.values
-      values must have size 1
-      values.head.value mustEqual 7.99
+      val values = results.head
+      values.values must have size 1
+      val minimumPrice = values(price.min)
+      minimumPrice mustEqual 7.99
     }
+    "query the count of coffees for Superior Coffee" in {
+      val query = select(name.count) from coffees innerJoin suppliers on supID === suppliers.id where suppliers.name === "Superior Coffee"
+      val results = exec(query).toList
+      results must have size 1
+      val values = results.head
+      values.values must have size 1
+      val count = values(name.count)
+      count mustEqual 2
+    }
+    // TODO: Ordering
+    // TODO: Grouping
   }
 }
 

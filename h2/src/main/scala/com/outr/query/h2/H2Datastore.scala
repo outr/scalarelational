@@ -73,7 +73,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
   private def expression2SQL(expression: SelectExpression) = expression match {
     case c: Column[_] => c.longName
-    case f: SimpleFunction => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
+    case f: SimpleFunction[_] => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
   }
 
   def exec(query: Query) = active {
@@ -97,7 +97,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
       ""
     }
     val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$joins$where$limit$offset")
-    info(sql)
+//    info(sql)
 
     val ps = session.connection.prepareStatement(sql.toString())
 
@@ -164,7 +164,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     ps.executeUpdate()
   }
 
-  def condition2String(condition: Condition, args: ListBuffer[Any]) = condition match {
+  def condition2String(condition: Condition, args: ListBuffer[Any]): String = condition match {
     case c: ColumnCondition[_] => {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
@@ -174,7 +174,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     }
     case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
     case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
-    case c: Conditions => throw new UnsupportedOperationException("Conditions not supported yet!")
+    case c: Conditions => c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")
   }
 
   private def joins2SQL(joins: List[Join]): (String, List[Any]) = {

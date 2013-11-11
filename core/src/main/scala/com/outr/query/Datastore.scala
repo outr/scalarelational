@@ -166,8 +166,14 @@ class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Int] {
   def next() = rs.getInt(1)
 }
 
-case class QueryResult(table: Table, values: List[ColumnValue[_]]) {
-  def apply[T](column: Column[T]) = values.find(cv => cv.column == column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result.")).value.asInstanceOf[T]
+case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
+  def apply[T](column: Column[T]) = values.collectFirst {
+    case cv: ColumnValue[_] if cv.column == column => cv.value.asInstanceOf[T]
+  }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
+
+  def apply[T](function: SQLFunction[T]) = values.collectFirst {
+    case fv: SQLFunctionValue[_] if fv.function == function => fv.value.asInstanceOf[T]
+  }.getOrElse(throw new RuntimeException(s"Unable to find function value: $function in result."))
 }
 
 class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
@@ -175,7 +181,10 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
   def next() = {
     query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.expressions.zipWithIndex.map {
-      case (column, index) => ColumnValue[Any](column.asInstanceOf[Column[Any]], rs.getObject(index + 1))
+      case (expression, index) => expression match {
+        case column: Column[_] => ColumnValue[Any](column.asInstanceOf[Column[Any]], rs.getObject(index + 1))
+        case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
+      }
     }
     QueryResult(query.table, values)
   }

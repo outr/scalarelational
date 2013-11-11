@@ -7,6 +7,8 @@ case class Query(expressions: List[SelectExpression],
                  table: Table = null,
                  joins: List[Join] = Nil,
                  whereCondition: Condition = null,
+                 _groupBy: List[SelectExpression] = Nil,
+                 _orderBy: List[OrderBy] = Nil,
                  _limit: Int = -1,
                  _offset: Int = -1) extends WhereSupport[Query] {
   def from(table: Table) = copy(table = table)
@@ -19,6 +21,6 @@ case class Query(expressions: List[SelectExpression],
   def limit(value: Int) = copy(_limit = value)
   def offset(value: Int) = copy(_offset = value)
 
-  // TODO: group by
-  // TODO: order by
+  def groupBy(expressions: SelectExpression*) = copy(_groupBy = _groupBy ::: expressions.toList)
+  def orderBy(ordering: OrderBy*) = copy(_orderBy = _orderBy ::: ordering.toList)
 }
