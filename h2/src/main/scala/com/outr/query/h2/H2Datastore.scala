@@ -86,6 +86,16 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     args = args ::: joinArgs
     val (where, whereArgs) = where2SQL(query.whereCondition)
     args = args ::: whereArgs
+    val groupBy = if (query._groupBy.nonEmpty) {
+      s" GROUP BY ${query._groupBy.map(expression2SQL).mkString(", ")}"
+    } else {
+      ""
+    }
+    val orderBy = if (query._orderBy.nonEmpty) {
+      s" ORDER BY ${query._orderBy.map(ob => s"${expression2SQL(ob.expression)} ${ob.direction.sql}").mkString(", ")}"
+    } else {
+      ""
+    }
     val limit = if (query._limit != -1) {
       s" LIMIT ${query._limit}"
     } else {
@@ -96,7 +106,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     } else {
       ""
     }
-    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$joins$where$limit$offset")
+    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset")
 //    info(sql)
 
     val ps = session.connection.prepareStatement(sql.toString())

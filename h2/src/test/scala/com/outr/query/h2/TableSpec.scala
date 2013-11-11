@@ -158,8 +158,23 @@ class TableSpec extends Specification {
       val count = values(name.count)
       count mustEqual 2
     }
-    // TODO: Ordering
-    // TODO: Grouping
+    "query coffees ordered by name and limited to the second result" in {
+      val query = select(name) from coffees orderBy(name asc) limit 1 offset 1
+      val results = exec(query).toList
+      results must have size 1
+      val values = results.head
+      values.values must have size 1
+      val coffeeName = values(name)
+      coffeeName mustEqual "Colombian Decaf"
+    }
+    "query coffees grouped by price" in {
+      val query = select(price) from coffees groupBy price orderBy(price asc)
+      val results = exec(query).toList
+      results must have size 3
+      results(0)(price) mustEqual 7.99
+      results(1)(price) mustEqual 8.99
+      results(2)(price) mustEqual 9.99
+    }
   }
 }
 
