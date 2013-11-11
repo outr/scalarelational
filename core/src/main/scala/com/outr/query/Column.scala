@@ -39,5 +39,7 @@ case class Column[T](name: String,
   def like(regex: Regex) = LikeCondition(this, regex)
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
+  def ===(column: Column[T]) = ColumnCondition(this, Operator.Equal, column)
+
   override def toString = s"Column(${table.tableName}.$name)"
 }

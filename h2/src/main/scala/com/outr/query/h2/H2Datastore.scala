@@ -77,6 +77,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     var args = List.empty[Any]
 
     // Generate SQL
+    val (joins, joinArgs) = joins2SQL(query.joins)
     val (where, whereArgs) = where2SQL(query.whereBlock)
     args = args ::: whereArgs
     val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$where")
@@ -147,22 +148,46 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     ps.executeUpdate()
   }
 
+  def condition2String(condition: Condition, args: ListBuffer[Any]) = condition match {
+    case c: ColumnCondition[_] => {
+      s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
+    }
+    case c: DirectCondition[_] => {
+      args += value2SQLValue(c.column, c.value)
+      s"${c.column.longName} ${c.operator.symbol} ?"
+    }
+    case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
+    case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
+  }
+
+  private def joins2SQL(joins: List[Join]): (String, List[Any]) = {
+    val args = ListBuffer.empty[Any]
+
+    val b = new StringBuilder
+    joins.foreach {
+      case join => {
+        join.joinType match {
+          case JoinType.Inner => " INNER JOIN "
+          case JoinType.Join => " JOIN "
+          case JoinType.Left => " LEFT JOIN "
+          case JoinType.LeftOuter => " LEFT OUTER JOIN "
+        }
+        b.append(join.table.tableName)
+        b.append(" ON ")
+
+      }
+    }
+
+    (b.toString(), args.toList)
+  }
+
   private def where2SQL(whereBlock: WhereBlock, inner: Boolean = false): (String, List[Any]) = {
     val args = ListBuffer.empty[Any]
 
-    def condition2String(condition: Condition) = condition match {
-      case c: DirectCondition[_] => {
-        args += value2SQLValue(c.column, c.value)
-        s"${c.column.longName} ${c.operator.symbol} ?"
-      }
-      case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
-      case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
-    }
-
     val sql = whereBlock match {
       case null => "" // Nothing to do, no where block
-      case where: SingleWhereBlock if !inner => s" WHERE ${condition2String(where.condition)}"
-      case where: SingleWhereBlock => s"${condition2String(where.condition)}"
+      case where: SingleWhereBlock if !inner => s" WHERE ${condition2String(where.condition, args)}"
+      case where: SingleWhereBlock => s"${condition2String(where.condition, args)}"
       case where: MultiWhereBlock => {
         val b = new StringBuilder
         b.append(" WHERE ")

@@ -132,6 +132,11 @@ class TableSpec extends Specification {
       val results = exec(select(*) from coffees).toList
       results must have size 5
     }
+    "query joining suppliers" in {
+      val query = select(*) from coffees innerJoin suppliers on suppliers.id === supID
+      val results = exec(query).toList
+      results must have size 5
+    }
   }
   // TODO: joins
 }

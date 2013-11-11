@@ -5,6 +5,7 @@ package com.outr.query
  */
 case class Query(columns: List[Column[_]],
                  table: Table = null,
+                 joins: List[Join] = Nil,
                  whereBlock: WhereBlock = null) {
   def from(table: Table) = copy(table = table)
   def where(whereBlock: WhereBlock, connectType: ConnectType = ConnectType.And): Query = this.whereBlock match {
@@ -17,8 +18,12 @@ case class Query(columns: List[Column[_]],
     }
   }
   def where(condition: Condition): Query = where(SingleWhereBlock(condition))
-  def where(conditions: Conditions): Query = where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
+//  def where(conditions: Conditions): Query = where(MultiWhereBlock(conditions.list.map(c => SingleWhereBlock(c)), conditions.connectType))
   def and(condition: Condition): Query = where(SingleWhereBlock(condition), ConnectType.And)
   def or(condition: Condition): Query = where(SingleWhereBlock(condition), ConnectType.Or)
   // TODO: cleanup the where clauses functionality - perhaps just have Conditionals?
+
+  def join(table: Table, joinType: JoinType = JoinType.Join) = PartialJoin(this, table, joinType)
+
+  def innerJoin(table: Table) = join(table, joinType = JoinType.Inner)
 }
