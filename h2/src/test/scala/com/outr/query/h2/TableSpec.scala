@@ -36,7 +36,7 @@ class TableSpec extends Specification {
     }
     "create a simple query" in {
       val q = select(test.id, test.name).from(test)
-      q.columns must have size 2
+      q.expressions must have size 2
     }
     "query the record back out" in {
       val results = exec(select(test.id, test.name).from(test)).toList
@@ -133,12 +133,22 @@ class TableSpec extends Specification {
       results must have size 5
     }
     "query joining suppliers" in {
-      val query = select(*) from coffees innerJoin suppliers on suppliers.id === supID
+      val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID
       val results = exec(query).toList
       results must have size 5
+      val first = results.head
+      first.values must have size 6
+      first(suppliers.name) mustEqual "Acme, Inc."
+    }
+    "query the minimum price" in {
+      val query = select(price.min) from coffees
+      val results = exec(query).toList
+      results must have size 1
+      val values = results.head.values
+      values must have size 1
+      values.head.value mustEqual 7.99
     }
   }
-  // TODO: joins
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {

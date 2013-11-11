@@ -12,7 +12,7 @@ case class Column[T](name: String,
                      primaryKey: Boolean = false,
                      unique: Boolean = false,
                      foreignKey: Option[Column[T]] = None)
-                    (implicit val manifest: Manifest[T], val table: Table) {
+                    (implicit val manifest: Manifest[T], val table: Table) extends SelectExpression {
   lazy val classType: EnhancedClass = manifest.runtimeClass
 
   lazy val longName = s"${table.tableName}.$name"
@@ -40,6 +40,8 @@ case class Column[T](name: String,
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
   def ===(column: Column[T]) = ColumnCondition(this, Operator.Equal, column)
+
+  def min = SimpleFunction(FunctionType.Min, this)
 
   override def toString = s"Column(${table.tableName}.$name)"
 }

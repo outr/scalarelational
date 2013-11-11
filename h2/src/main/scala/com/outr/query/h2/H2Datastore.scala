@@ -71,16 +71,32 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 
+  private def expression2SQL(expression: SelectExpression) = expression match {
+    case c: Column[_] => c.longName
+    case f: SimpleFunction => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
+  }
+
   def exec(query: Query) = active {
-    val columns = query.columns.map(c => c.longName).mkString(", ")
+    val columns = query.expressions.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
 
     // Generate SQL
     val (joins, joinArgs) = joins2SQL(query.joins)
-    val (where, whereArgs) = where2SQL(query.whereBlock)
+    args = args ::: joinArgs
+    val (where, whereArgs) = where2SQL(query.whereCondition)
     args = args ::: whereArgs
-    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$where")
+    val limit = if (query._limit != -1) {
+      s" LIMIT ${query._limit}"
+    } else {
+      ""
+    }
+    val offset = if (query._offset != -1) {
+      s" OFFSET ${query._offset}"
+    } else {
+      ""
+    }
+    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$joins$where$limit$offset")
     info(sql)
 
     val ps = session.connection.prepareStatement(sql.toString())
@@ -119,7 +135,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     val setArgs = update.values.map(cv => value2SQLValue(cv.column, cv.value))
     args = args ::: setArgs
 
-    val (where, whereArgs) = where2SQL(update.whereBlock)
+    val (where, whereArgs) = where2SQL(update.whereCondition)
     args = args ::: whereArgs
     val sql = s"UPDATE ${update.table.tableName} SET $sets$where"
     val ps = session.connection.prepareStatement(sql)
@@ -135,7 +151,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def exec(delete: Delete) = active {
     var args = List.empty[Any]
 
-    val (where, whereArgs) = where2SQL(delete.whereBlock)
+    val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
     val sql = s"DELETE FROM ${delete.table.tableName}$where"
     val ps = session.connection.prepareStatement(sql)
@@ -158,6 +174,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     }
     case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
     case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
+    case c: Conditions => throw new UnsupportedOperationException("Conditions not supported yet!")
   }
 
   private def joins2SQL(joins: List[Join]): (String, List[Any]) = {
@@ -166,22 +183,35 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     val b = new StringBuilder
     joins.foreach {
       case join => {
-        join.joinType match {
+        val pre = join.joinType match {
           case JoinType.Inner => " INNER JOIN "
           case JoinType.Join => " JOIN "
           case JoinType.Left => " LEFT JOIN "
           case JoinType.LeftOuter => " LEFT OUTER JOIN "
         }
+        b.append(pre)
         b.append(join.table.tableName)
         b.append(" ON ")
-
+        b.append(condition2String(join.condition, args))
       }
     }
 
     (b.toString(), args.toList)
   }
 
-  private def where2SQL(whereBlock: WhereBlock, inner: Boolean = false): (String, List[Any]) = {
+  private def where2SQL(condition: Condition): (String, List[Any]) = if (condition != null) {
+    val args = ListBuffer.empty[Any]
+    val sql = condition2String(condition, args)
+    if (sql != null && sql.nonEmpty) {
+      s" WHERE $sql" -> args.toList
+    } else {
+      "" -> Nil
+    }
+  } else {
+    "" -> Nil
+  }
+
+  /*private def where2SQL(whereBlock: WhereBlock, inner: Boolean = false): (String, List[Any]) = {
     val args = ListBuffer.empty[Any]
 
     val sql = whereBlock match {
@@ -211,5 +241,5 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
       }
     }
     sql -> args.toList
-  }
+  }*/
 }

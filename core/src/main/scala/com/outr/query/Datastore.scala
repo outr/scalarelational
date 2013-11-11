@@ -42,8 +42,8 @@ trait Datastore extends Listenable {
     }
   }
 
-  def select(columns: Column[_]*) = Query(columns.toList)
-  def select(columns: List[Column[_]]) = Query(columns)
+  def select(expressions: SelectExpression*) = Query(expressions.toList)
+  def select(expressions: List[SelectExpression]) = Query(expressions)
   def insert(values: ColumnValue[_]*) = {
     val results = exec(Insert(values.toList))
     if (results.hasNext) {
@@ -174,7 +174,7 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
   def hasNext = rs.next()
   def next() = {
     query.table.datastore.session.checkIn()       // Keep the session alive
-    val values = query.columns.zipWithIndex.map {
+    val values = query.expressions.zipWithIndex.map {
       case (column, index) => ColumnValue[Any](column.asInstanceOf[Column[Any]], rs.getObject(index + 1))
     }
     QueryResult(query.table, values)
