@@ -18,7 +18,6 @@ class ORMSpec extends Specification {
     }
     "insert 'John Doe' into the table" in {
       val john = Person("John Doe")
-      ORMTable.persistenceSupport.listenable.listeners().foreach(println)
       val updated = person.insert(john)
       updated.id mustEqual Some(1)
     }

@@ -26,15 +26,19 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val caseValues = clazz.caseValues
   lazy val persistence = loadPersistence()
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
+  // TODO: create WeakHashMap to contain instance -> loaded state so we only update what has changed, not what hasn't been loaded thus corrupting the data
 
   private var _lazyMappings = Map.empty[CaseValue, Column[_]]
   def lazyMappings = _lazyMappings
 
   lazy val q = {
     var s = datastore.select(*) from this
-    caseValues.foreach {
-      case cv if cv.valueType.isCase && ORMTable.contains(cv.valueType) => println(s"CaseValue: $clazz.${cv.valueType.simpleName}")
-      case cv => println(s"Ignoring: ${cv.valueType}")// Ignore
+    persistence.foreach {
+      case p if p.caseValue.valueType.isCase && ORMTable.contains(p.caseValue.valueType) => {
+        val table = ORMTable[Any](p.caseValue.valueType)
+        s = s.fields(table.*) innerJoin table on p.column.asInstanceOf[Column[Any]] === p.column.foreignKey.get.asInstanceOf[Column[Any]]
+      }
+      case _ => // Ignore
     }
     s
   }
@@ -162,7 +166,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
           case Some(v) => args += p.caseValue.name -> v
           case None => // No value in the case class for this column
         }
-        case None => throw new RuntimeException(s"Unable to column: ${columnValue.column.name} in persistence map!")
+        case None => // Possible for columns to be returned that don't map to persistence
       }
       case v => throw new RuntimeException(s"${v.getClass} is not supported in ORM results.")
     }

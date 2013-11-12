@@ -11,6 +11,9 @@ case class Query(expressions: List[SelectExpression],
                  _orderBy: List[OrderBy] = Nil,
                  _limit: Int = -1,
                  _offset: Int = -1) extends WhereSupport[Query] {
+  def fields(expressions: SelectExpression*) = copy(expressions = this.expressions ::: expressions.toList)
+  def fields(expressions: List[SelectExpression]) = copy(expressions = this.expressions ::: expressions)
+  def clearFields() = copy(expressions = Nil)
   def from(table: Table) = copy(table = table)
   def where(condition: Condition) = copy(whereCondition = condition)
 

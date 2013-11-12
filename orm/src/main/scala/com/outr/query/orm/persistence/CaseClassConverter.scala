@@ -16,9 +16,10 @@ object CaseClassConverter extends Converter {
     EmptyConversion
   }
 
-  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any], query: QueryResult) = {
-    // TODO: support join and use null if not
+  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any], query: QueryResult) = if (sql != null) {
     val ormTable = persistence.column.foreignKey.get.table.asInstanceOf[ORMTable[Any]]
-    ormTable.byId(sql)
+    Some(ormTable.result2Instance(query))
+  } else {
+    None
   }
 }
