@@ -18,6 +18,7 @@ import com.outr.query.Conditions
 import com.outr.query.Query
 import com.outr.query.Insert
 import com.outr.query.property.ForeignKey
+import org.powerscala.ref.WeakReference
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -27,7 +28,14 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val caseValues = clazz.caseValues
   lazy val persistence = loadPersistence()
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
-  // TODO: create WeakHashMap to contain instance -> loaded state so we only update what has changed, not what hasn't been loaded thus corrupting the data
+
+  private def cache = datastore.session.store.getOrSet(clazz, Map.empty[Any, WeakReference[AnyRef]])
+  def cached(key: Any) = cache.get(key) match {
+    case Some(ref) => ref.get.asInstanceOf[Option[T]]
+    case None => None
+  }
+  def updateCached(key: Any, instance: T) = datastore.session.store(clazz) = cache + (key -> WeakReference(instance.asInstanceOf[AnyRef]))
+  def clearCached(key: Any) = datastore.session.store(clazz) = cache - key
 
   private var _lazyMappings = Map.empty[CaseValue, Column[_]]
   def lazyMappings = _lazyMappings
@@ -55,10 +63,12 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   def insert(instance: T): T = {
     val (updated, values) = instance2ColumnValues(instance)
     val insert = Insert(values)
-    datastore.exec(insert).toList.headOption match {
+    val result = datastore.exec(insert).toList.headOption match {
       case Some(id) => clazz.copy[T](updated, Map(autoIncrement.get.name -> id))
       case None => updated
     }
+    updateCached(idFor(instance).value, instance)   // Update the caching value
+    result
   }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
   def persist(instance: T): T = if (hasId(instance)) {
@@ -77,11 +87,14 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   }
   def update(instance: T): T = {
     val (modified, values) = instance2ColumnValues(instance)
-    val conditions = Conditions(primaryKeysFor(modified).map(cv => cv.column === cv.value), ConnectType.And)
-    val update = Update(values, this).where(conditions)
-    val updated = datastore.exec(update)
-    if (updated != 1) {
-      throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+    if (values.nonEmpty) {
+      val conditions = Conditions(primaryKeysFor(modified).map(cv => cv.column === cv.value), ConnectType.And)
+      val update = Update(values, this).where(conditions)
+      val updated = datastore.exec(update)
+      if (updated != 1) {
+        throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+      }
+      updateCached(idFor(instance).value, modified)
     }
     modified
   }
@@ -90,8 +103,9 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     val delete = Delete(this).where(conditions)
     val deleted = datastore.exec(delete)
     if (deleted != 1) {
-      throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but exptected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+      throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but expected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
     }
+    clearCached(idFor(instance).value)
   }
   def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
     primaryKeys.collect {
@@ -138,8 +152,9 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
 
   protected def instance2ColumnValues(instance: T) = {
     var updated = instance
-    val columnValues = persistence.map {
-      case p => {
+    val cached = this.cached(idFor(instance).value).map(t => clazz.diff(t.asInstanceOf[AnyRef], instance.asInstanceOf[AnyRef]).map(t => t._1).toSet).getOrElse(null)
+    val columnValues = persistence.collect {
+      case p if cached == null || cached.contains(p.caseValue) => {
         val value = p.caseValue[Any](instance.asInstanceOf[AnyRef])
         p.converter.convert2SQL(p, value) match {
           case EmptyConversion => None
@@ -180,7 +195,9 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
         }
       }
     }
-    clazz.copy[T](null.asInstanceOf[T], args)
+    val instance = clazz.copy[T](null.asInstanceOf[T], args)
+    updateCached(idFor(instance).value, instance)
+    instance
   }
 }
 

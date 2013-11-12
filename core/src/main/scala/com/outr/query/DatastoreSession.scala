@@ -1,12 +1,17 @@
 package com.outr.query
 
 import org.powerscala.concurrent.{AtomicInt, Temporal}
+import org.powerscala.MapStorage
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 class DatastoreSession private[query](val datastore: Datastore, val timeout: Double, thread: Thread) extends Temporal {
   private[query] val activeQueries = new AtomicInt(0)
+  /**
+   * Allows storage of key/value pairs on this session that will be removed upon disposal
+   */
+  val store = new MapStorage[Any, Any]()
 
   lazy val connection = {
     datastore.dataSource.getConnection
@@ -22,6 +27,7 @@ class DatastoreSession private[query](val datastore: Datastore, val timeout: Dou
   }
 
   def dispose() = {
+    store.clear()
     connection.close()
     datastore.cleanup(thread, this)
   }

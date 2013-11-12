@@ -110,6 +110,14 @@ class ORMSpec extends Specification {
       apple.name mustEqual "Apple"
       apple.id.get must be > 0
     }
+    "query partial and only persist partial" in {
+      val steve = person.query(select(person.id, person.date) from person where person.name === "Steve Jobs").toList.head
+      val newDate = System.currentTimeMillis()
+      person.persist(steve.copy(date = newDate))
+      val updated = person.query(person.q where person.name === "Steve Jobs").toList.head
+      updated.name mustEqual "Steve Jobs"
+      updated.date mustEqual newDate
+    }
   }
 }
 
