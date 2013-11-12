@@ -2,29 +2,34 @@ package com.outr.query
 
 import scala.util.matching.Regex
 import org.powerscala.reflect._
+import com.outr.query.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class Column[T](name: String,
-                     notNull: Boolean = false,
-                     autoIncrement: Boolean = false,
-                     primaryKey: Boolean = false,
-                     unique: Boolean = false,
-                     foreignKey: Option[Column[T]] = None)
-                    (implicit val manifest: Manifest[T], val table: Table) extends SelectExpression {
+class Column[T] private(val name: String)(implicit val manifest: Manifest[T], val table: Table) extends SelectExpression {
+  private var _properties = Map.empty[String, ColumnProperty]
+  def properties = _properties.values
+
   lazy val classType: EnhancedClass = manifest.runtimeClass
 
   lazy val longName = s"${table.tableName}.$name"
 
   table.addColumn(this)     // Add this column to the table
-  foreignKey match {
-    case Some(foreign) => {
-      val foreignTable = foreign.table
-      foreignTable.addForeignColumn(this)
+
+  def props(properties: ColumnProperty*) = synchronized {
+    properties.foreach {
+      case p => {
+        _properties += p.name -> p
+        p.addedTo(this)
+      }
     }
-    case None => // Nothing to do
+    this
   }
+
+  def has(property: ColumnProperty): Boolean = has(property.name)
+  def has(propertyName: String): Boolean = _properties.contains(propertyName)
+  def prop[P <: ColumnProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
 
   def apply(value: T) = ColumnValue[T](this, value)
 
@@ -48,4 +53,11 @@ case class Column[T](name: String,
   def sum = SimpleFunction[T](FunctionType.Sum, this)
 
   override def toString = s"Column(${table.tableName}.$name)"
+}
+
+object Column {
+  def apply[T](name: String, properties: ColumnProperty*)(implicit manifest: Manifest[T], table: Table) = {
+    val c = new Column[T](name)
+    c.props(properties: _*)
+  }
 }

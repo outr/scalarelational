@@ -3,6 +3,7 @@ package com.outr.query.orm
 import org.specs2.mutable._
 import com.outr.query.h2.{H2Memory, H2Datastore}
 import com.outr.query.Column
+import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, PrimaryKey}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -114,19 +115,19 @@ class ORMSpec extends Specification {
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   val person = new ORMTable[Person]("person") {
-    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
-    val name = Column[String]("name", unique = true)
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name", Unique)
     val date = Column[Long]("date")
   }
   val company = new ORMTable[Company]("company") {
-    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
-    val name = Column[String]("name", unique = true)
-    val ownerId = Column[Int]("ownerId", foreignKey = Some(person.id))
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name", Unique)
+    val ownerId = Column[Int]("ownerId", new ForeignKey(person.id))
   }
   val domain = new ORMTable[CorporateDomain]("domain") {
-    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
-    val url = Column[String]("url", unique = true)
-    val companyId = Column[Int]("companyId", foreignKey = Some(company.id))
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val url = Column[String]("url", Unique)
+    val companyId = Column[Int]("companyId", new ForeignKey(company.id))
   }
 
   person.map("companies", company.ownerId)

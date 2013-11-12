@@ -1,6 +1,7 @@
 package com.outr.query
 
 import scala.collection.mutable.ListBuffer
+import com.outr.query.property.{AutoIncrement, ForeignKey, PrimaryKey}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -20,12 +21,12 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
   def columns = _columns.toList
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {
-    case c if c.primaryKey => c
+    case c if c.has(PrimaryKey) => c
   }
   lazy val foreignKeys = columns.collect {
-    case c if c.foreignKey.nonEmpty => c
+    case c if c.has(ForeignKey.name) => c
   }
-  lazy val autoIncrement = columns.find(c => c.autoIncrement)
+  lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
   lazy val (one2One, one2Many, many2One, many2Many) = loadRelationships()
 
   def * = columns
@@ -35,7 +36,7 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
 
   private def loadRelationships() = {
     val local2Foreign = Map(columns.collect {
-      case c if c.foreignKey.nonEmpty => c.foreignKey.get.table -> c
+      case c if c.has(ForeignKey.name) => ForeignKey(c).foreignColumn.table -> c
     }: _*)
     val foreign2Local = Map(_foreignColumns.map(c => c.table -> c): _*)
     val foreignTables = local2Foreign.keySet ++ foreign2Local.keySet

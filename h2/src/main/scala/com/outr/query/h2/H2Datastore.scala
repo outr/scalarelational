@@ -9,6 +9,7 @@ import java.sql.Statement
 import java.io.NotSerializableException
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
+import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, NotNull}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -36,7 +37,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     }
     table.foreignKeys.foreach {
       case c => {
-        val foreignKey = c.foreignKey.get
+        val foreignKey = ForeignKey(c).foreignColumn
         b.append(s", FOREIGN KEY(${c.name}) REFERENCES ${foreignKey.table.tableName} (${foreignKey.name})")
       }
     }
@@ -51,13 +52,13 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     b.append(column.name)
     b.append(' ')
     b.append(columnType(column.manifest.runtimeClass))
-    if (column.notNull) {
+    if (column.has(NotNull)) {
       b.append(" NOT NULL")
     }
-    if (column.autoIncrement) {
+    if (column.has(AutoIncrement)) {
       b.append(" AUTO_INCREMENT")
     }
-    if (column.unique) {
+    if (column.has(Unique)) {
       b.append(" UNIQUE")
     }
     b.toString()

@@ -17,6 +17,7 @@ import com.outr.query.orm.persistence.ConversionResponse
 import com.outr.query.Conditions
 import com.outr.query.Query
 import com.outr.query.Insert
+import com.outr.query.property.ForeignKey
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -36,7 +37,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     persistence.foreach {
       case p if p.caseValue.valueType.isCase && ORMTable.contains(p.caseValue.valueType) => {
         val table = ORMTable[Any](p.caseValue.valueType)
-        s = s.fields(table.*) innerJoin table on p.column.asInstanceOf[Column[Any]] === p.column.foreignKey.get.asInstanceOf[Column[Any]]
+        s = s.fields(table.*) innerJoin table on p.column.asInstanceOf[Column[Any]] === ForeignKey(p.column).foreignColumn.asInstanceOf[Column[Any]]
       }
       case _ => // Ignore
     }
@@ -213,7 +214,7 @@ object ORMTable extends Listenable {
     case persistence => if (persistence.column == null && persistence.caseValue.valueType.isCase && contains(persistence.caseValue.valueType)) {
       val name = persistence.caseValue.name
       val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
-        case c if c.foreignKey.nonEmpty => c
+        case c if c.has(ForeignKey.name) => c
       }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
       persistence.copy(column = column, converter = CaseClassConverter)
     } else {

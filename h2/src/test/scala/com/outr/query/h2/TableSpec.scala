@@ -2,6 +2,7 @@ package com.outr.query.h2
 
 import org.specs2.mutable._
 import com.outr.query._
+import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, PrimaryKey}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -180,12 +181,12 @@ class TableSpec extends Specification {
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   val test = new Table("test") {
-    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
-    val name = Column[String]("name", unique = true)
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name", Unique)
     val date = Column[Long]("date")
   }
   val suppliers = new Table("SUPPLIERS") {
-    val id = Column[Int]("SUP_ID", primaryKey = true, autoIncrement = true)
+    val id = Column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = Column[String]("SUP_NAME")
     val street = Column[String]("STREET")
     val city = Column[String]("CITY")
@@ -193,8 +194,8 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val zip = Column[String]("ZIP")
   }
   val coffees = new Table("COFFEES") {
-    val name = Column[String]("COF_NAME", primaryKey = true)
-    val supID = Column[Int]("SUP_ID", foreignKey = Some(suppliers.id))
+    val name = Column[String]("COF_NAME", PrimaryKey)
+    val supID = Column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = Column[Double]("PRICE")
     val sales = Column[Int]("SALES")
     val total = Column[Int]("TOTAL")
