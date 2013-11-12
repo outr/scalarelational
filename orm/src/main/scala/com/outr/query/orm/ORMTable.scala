@@ -33,7 +33,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val q = {
     var s = datastore.select(*) from this
     caseValues.foreach {
-      case cv if cv.valueType.isCase && ORMTable.contains(cv.valueType) => println(s"CaseValue: $clazz.$cv")
+      case cv if cv.valueType.isCase && ORMTable.contains(cv.valueType) => println(s"CaseValue: $clazz.${cv.valueType.simpleName}")
       case cv => println(s"Ignoring: ${cv.valueType}")// Ignore
     }
     s
@@ -145,7 +145,6 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
               }
               case None => // Nothing to do
             }
-            println(s"Response: $response, Column; ${p.column} - ${p.converter.getClass} - ${p.caseValue.valueType}")
             Some(p.column.asInstanceOf[Column[Any]](response.value))
           }
         }
@@ -159,7 +158,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     // Process query result columns
     result.values.foreach {
       case columnValue: ColumnValue[_] => column2PersistenceMap.get(columnValue.column.asInstanceOf[Column[Any]]) match {
-        case Some(p) => p.converter.convert2Value(p, columnValue.value, args) match {
+        case Some(p) => p.converter.convert2Value(p, columnValue.value, args, result) match {
           case Some(v) => args += p.caseValue.name -> v
           case None => // No value in the case class for this column
         }
@@ -170,7 +169,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     // Process fields in case class that have no direct column association
     result.table.asInstanceOf[ORMTable[Any]].persistence.foreach {
       case p => if (p.column == null) {
-        p.converter.convert2Value(p, null, args) match {
+        p.converter.convert2Value(p, null, args, result) match {
           case Some(v) => args += p.caseValue.name -> v
           case None => // No value in the case class for this column
         }

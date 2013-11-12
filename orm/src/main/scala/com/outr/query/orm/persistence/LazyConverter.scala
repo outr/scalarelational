@@ -1,6 +1,7 @@
 package com.outr.query.orm.persistence
 
 import com.outr.query.orm.{DelayedLazy, ORMTable, PreloadedLazy, Lazy}
+import com.outr.query.QueryResult
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -28,7 +29,7 @@ object LazyConverter extends Converter {
     }
   }
 
-  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any]) = {
+  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any], query: QueryResult) = {
     val foreignTable = persistence.column.foreignKey.get.table.asInstanceOf[ORMTable[Any]]
     Some(DelayedLazy(foreignTable, sql))
   }

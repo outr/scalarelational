@@ -2,7 +2,7 @@ package com.outr.query.orm.persistence
 
 import com.outr.query.orm._
 import com.outr.query.orm.DelayedLazyList
-import com.outr.query.{Column, Conditions}
+import com.outr.query.{QueryResult, Column, Conditions}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -23,7 +23,7 @@ object LazyListConverter extends Converter {
     EmptyConversion
   }
 
-  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any]) = {
+  def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any], query: QueryResult) = {
     persistence.table.lazyMappings.get(persistence.caseValue) match {
       case Some(foreignColumn) => {
         val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[Any]]
