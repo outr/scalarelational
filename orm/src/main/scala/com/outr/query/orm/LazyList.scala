@@ -53,7 +53,6 @@ case class DelayedLazyList[T](table: ORMTable[T], conditions: Conditions)(implic
   }
 
   private def load() = {
-    println(s"DelayedLazyList: Querying with $conditions")
     val query = Query(table.*, table).where(conditions)
     values = table.query(query).toList
     _loaded = true

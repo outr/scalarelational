@@ -17,7 +17,7 @@ object LazyConverter extends Converter {
           ConversionResponse(id, Some(PreloadedLazy[Any](Some(updated))))
         }
         case delayed: DelayedLazy[_] => {
-          val foreignTable = persistence.column.foreignKey.get.asInstanceOf[ORMTable[Any]]
+          val foreignTable = persistence.column.foreignKey.get.table.asInstanceOf[ORMTable[Any]]
           val value = delayed.apply()
           val id = foreignTable.idFor(value)
           ConversionResponse(id, Some(delayed))

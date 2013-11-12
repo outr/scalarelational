@@ -127,9 +127,10 @@ trait Datastore extends Listenable {
     case l: Long => l
     case d: Double => d
     case o: Option[_] => o.getOrElse(null)
+    case cv: ColumnValue[_] => value2SQLValue(column, cv.value)
     case _ => value2SQL.fire(column -> value) match {
       case Some(sqlValue) => value2SQLValue(column, sqlValue)
-      case None => throw new RuntimeException(s"Unsupported type conversion to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
+      case None => throw new RuntimeException(s"Unsupported type conversion on $column to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
     }
   }
   def sqlValue2Value[T](c: Column[T], value: Any) = EnhancedMethod.convertToOption(c.name, value, c.classType) match {

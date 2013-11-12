@@ -2,19 +2,21 @@ package com.outr.query.orm
 
 import com.outr.query._
 import org.powerscala.reflect._
-import com.outr.query.QueryResult
-import com.outr.query.ColumnValue
-import com.outr.query.Update
-import com.outr.query.Conditions
-import scala.Some
-import com.outr.query.Delete
-import com.outr.query.Query
-import com.outr.query.Column
-import com.outr.query.Insert
 import org.powerscala.event.processor.ModifiableProcessor
-import com.outr.query.orm.persistence.{ConversionResponse, EmptyConversion, DefaultConverter, Persistence}
+import com.outr.query.orm.persistence._
 import org.powerscala.Priority
 import org.powerscala.event.Listenable
+import com.outr.query.Update
+import com.outr.query.orm.persistence.Persistence
+import scala.Some
+import com.outr.query.Delete
+import com.outr.query.Column
+import com.outr.query.QueryResult
+import com.outr.query.ColumnValue
+import com.outr.query.orm.persistence.ConversionResponse
+import com.outr.query.Conditions
+import com.outr.query.Query
+import com.outr.query.Insert
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -27,6 +29,15 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
 
   private var _lazyMappings = Map.empty[CaseValue, Column[_]]
   def lazyMappings = _lazyMappings
+
+  lazy val q = {
+    var s = datastore.select(*) from this
+    caseValues.foreach {
+      case cv if cv.valueType.isCase && ORMTable.contains(cv.valueType) => println(s"CaseValue: $clazz.$cv")
+      case cv => println(s"Ignoring: ${cv.valueType}")// Ignore
+    }
+    s
+  }
 
   ORMTable.synchronized {     // Map class to table so it can be found externally
     ORMTable.class2Table += clazz -> this
@@ -116,8 +127,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   protected def caseValue2Persistence[V](cv: CaseValue): Persistence = {
     val persistence = ORMTable.persistenceSupport.fire(Persistence(this, cv))
     if (persistence.converter == null) {
-      throw new RuntimeException(s"Unable to create persistence mapping for ${cv.name} (${cv.valueType.simpleName}). No converter found for ${persistence.column.name} (${persistence.column.manifest.runtimeClass.getSimpleName}).")
-    }
+      throw new RuntimeException(s"Unable to create persistence mapping for $clazz.${cv.name} (${cv.valueType.simpleName}). No converter found for column ${persistence.column}.")    }
     persistence
   }
 
@@ -135,6 +145,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
               }
               case None => // Nothing to do
             }
+            println(s"Response: $response, Column; ${p.column} - ${p.converter.getClass} - ${p.caseValue.valueType}")
             Some(p.column.asInstanceOf[Column[Any]](response.value))
           }
         }
@@ -174,6 +185,7 @@ object ORMTable extends Listenable {
 
   def apply[T](clazz: EnhancedClass) = get[T](clazz).getOrElse(throw new RuntimeException(s"Unable to find $clazz ORMTable mapping."))
   def get[T](clazz: EnhancedClass) = class2Table.get(clazz).asInstanceOf[Option[ORMTable[T]]]
+  def contains(clazz: EnhancedClass) = class2Table.contains(clazz)
 
   val persistenceSupport = new ModifiableProcessor[Persistence]("persistenceSupport")
   persistenceSupport.listen(Priority.High) {      // Direct mapping of CaseValue -> Column
@@ -186,9 +198,21 @@ object ORMTable extends Listenable {
       persistence
     }
   }
+  private val defaultTypes = List("Int", "Long", "String", "scala.Option")
   persistenceSupport.listen(Priority.Lowest) {    // DefaultConvert is used if no other converter is set
-    case persistence => if (persistence.converter == null) {
+    case persistence => if (persistence.column != null && persistence.converter == null && defaultTypes.contains(persistence.caseValue.valueType.name)) {
       persistence.copy(converter = DefaultConverter)
+    } else {
+      persistence
+    }
+  }
+  persistenceSupport.listen(Priority.Low) {       // Case Class conversion
+    case persistence => if (persistence.column == null && persistence.caseValue.valueType.isCase && contains(persistence.caseValue.valueType)) {
+      val name = persistence.caseValue.name
+      val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
+        case c if c.foreignKey.nonEmpty => c
+      }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
+      persistence.copy(column = column, converter = CaseClassConverter)
     } else {
       persistence
     }

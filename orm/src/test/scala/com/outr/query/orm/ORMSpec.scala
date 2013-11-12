@@ -18,6 +18,7 @@ class ORMSpec extends Specification {
     }
     "insert 'John Doe' into the table" in {
       val john = Person("John Doe")
+      ORMTable.persistenceSupport.listenable.listeners().foreach(println)
       val updated = person.insert(john)
       updated.id mustEqual Some(1)
     }
@@ -94,7 +95,21 @@ class ORMSpec extends Specification {
       val apple = companies.head
       apple.name mustEqual "Apple"
     }
-    // TODO: cross-reference
+    "insert some corporate domains" in {
+      val apple = company.query(company.q where company.name === "Apple").toList.head
+      apple.name mustEqual "Apple"
+      val appleDomain = domain.insert(CorporateDomain("apple.com", apple))
+      appleDomain.id mustNotEqual None
+    }
+    "query back the corporate domain with the company" in {
+      val appleDomain = domain.query(domain.q).toList.head
+      appleDomain.url mustEqual "apple.com"
+      appleDomain.id.get must be > 0
+      val apple = appleDomain.company
+      apple mustNotEqual null
+      apple.name mustEqual "Apple"
+      apple.id.get must be > 0
+    }
   }
 }
 
@@ -109,6 +124,11 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = Column[String]("name", unique = true)
     val ownerId = Column[Int]("ownerId", foreignKey = Some(person.id))
   }
+  val domain = new ORMTable[CorporateDomain]("domain") {
+    val id = Column[Int]("id", primaryKey = true, autoIncrement = true)
+    val url = Column[String]("url", unique = true)
+    val companyId = Column[Int]("companyId", foreignKey = Some(company.id))
+  }
 
   person.map("companies", company.ownerId)
 }
@@ -116,3 +136,5 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
 
 case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)
+
+case class CorporateDomain(url: String, company: Company, id: Option[Int] = None)
