@@ -36,11 +36,12 @@ class TableSpec extends Specification {
       id mustEqual 1
     }
     "create a simple query" in {
-      val q = select(test.id, test.name).from(test)
+      val q = select(test.id, test.name) from test
       q.expressions must have size 2
     }
     "query the record back out" in {
-      val results = exec(select(test.id, test.name).from(test)).toList
+      val query = select(test.id, test.name) from test
+      val results = exec(query).toList
       results must have size 1
       val john = results.head
       john(test.id) mustEqual 1
@@ -50,7 +51,8 @@ class TableSpec extends Specification {
       insert(test.name("Jane Doe")) must not(throwA[Throwable])
     }
     "query the record back by name" in {
-      val results = exec(select(test.id, test.name).from(test).where(test.name === "Jane Doe")).toList
+      val query = select(test.id, test.name) from test where test.name === "Jane Doe"
+      val results = exec(query).toList
       results must have size 1
       val jane = results.head
       jane(test.id) mustEqual 2
@@ -66,15 +68,18 @@ class TableSpec extends Specification {
       updated mustEqual 1
     }
     "verify that 'John Doe' no longer exists" in {
-      val results = exec(select(test.name).from(test).where(test.name === "John Doe")).toList
+      val query = select(test.name) from test where test.name === "John Doe"
+      val results = exec(query).toList
       results must have size 0
     }
     "verify that 'Joe Doe' does exist" in {
-      val results = exec(select(test.name).from(test).where(test.name === "Joe Doe")).toList
+      val query = select(test.name) from test where test.name === "Joe Doe"
+      val results = exec(query).toList
       results must have size 1
     }
     "verify that 'Jane Doe' wasn't modified" in {
-      val results = exec(select(test.name).from(test).where(test.name === "Jane Doe")).toList
+      val query = select(test.name) from test where test.name === "Jane Doe"
+      val results = exec(query).toList
       results must have size 1
     }
     "delete 'Joe Doe' from the database" in {
@@ -82,7 +87,8 @@ class TableSpec extends Specification {
       deleted mustEqual 1
     }
     "verify there is just one record left in the database" in {
-      val results = exec(select(test.id, test.name).from(test)).toList
+      val query = select(test.id, test.name) from test
+      val results = exec(query).toList
       results must have size 1
       val jane = results.head
       jane(test.id) mustEqual 2
@@ -93,7 +99,8 @@ class TableSpec extends Specification {
       deleted mustEqual 1
     }
     "verify there are no records left in the database" in {
-      val results = exec(select(test.id, test.name).from(test)).toList
+      val query = select(test.id, test.name) from test
+      val results = exec(query).toList
       results must have size 0
     }
   }
