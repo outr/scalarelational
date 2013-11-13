@@ -29,6 +29,20 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   lazy val persistence = loadPersistence()
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 
+  /**
+   * Fired immediately before persisting an object to the database. The instance may be modified in the response.
+   * Persisting is called before both insert and update.
+   */
+  val persisting = new ModifiableProcessor[T]("persisting")
+  /**
+   * Fired immediately before inserting a new object into the database. The instance may be modified in the response.
+   */
+  val inserting = new ModifiableProcessor[T]("inserting")
+  /**
+   * Fired immediately before updating an object in the database. The instance may be modified in the response.
+   */
+  val updating = new ModifiableProcessor[T]("updating")
+
   private def cache = datastore.session.store.getOrSet(clazz, Map.empty[Any, WeakReference[AnyRef]])
   def cached(key: Any) = cache.get(key) match {
     case Some(ref) => ref.get.asInstanceOf[Option[T]]
@@ -60,14 +74,15 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     _lazyMappings += caseValue -> foreignColumn
   }
 
-  def insert(instance: T): T = {
-    val (updated, values) = instance2ColumnValues(instance)
+  def insert(t: T): T = {
+    val modified = inserting.fire(persisting.fire(t))
+    val (updated, values) = instance2ColumnValues(modified)
     val insert = Insert(values)
     val result = datastore.exec(insert).toList.headOption match {
       case Some(id) => clazz.copy[T](updated, Map(autoIncrement.get.name -> id))
       case None => updated
     }
-    updateCached(idFor(instance).value, instance)   // Update the caching value
+    updateCached(idFor(result).value, result)   // Update the caching value
     result
   }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
@@ -85,18 +100,19 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
       case i: Int if i > 0 => true
     }
   }
-  def update(instance: T): T = {
-    val (modified, values) = instance2ColumnValues(instance)
+  def update(t: T): T = {
+    val modified = updating.fire(persisting.fire(t))
+    val (updated, values) = instance2ColumnValues(modified)
     if (values.nonEmpty) {
-      val conditions = Conditions(primaryKeysFor(modified).map(cv => cv.column === cv.value), ConnectType.And)
+      val conditions = Conditions(primaryKeysFor(updated).map(cv => cv.column === cv.value), ConnectType.And)
       val update = Update(values, this).where(conditions)
-      val updated = datastore.exec(update)
-      if (updated != 1) {
+      val updatedRows = datastore.exec(update)
+      if (updatedRows != 1) {
         throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
       }
-      updateCached(idFor(instance).value, modified)
+      updateCached(idFor(updated).value, updated)
     }
-    modified
+    updated
   }
   def delete(instance: T) = {
     val conditions = Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)

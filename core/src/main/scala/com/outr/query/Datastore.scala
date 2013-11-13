@@ -7,11 +7,12 @@ import java.sql.ResultSet
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
 import org.powerscala.concurrent.{Time, Executor}
+import org.powerscala.log.Logging
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable {
+trait Datastore extends Listenable with Logging {
   implicit val thisDatastore = this
 
   private var _sessions = Map.empty[Thread, DatastoreSession]
@@ -61,7 +62,29 @@ trait Datastore extends Listenable {
   def create(ifNotExist: Boolean = true) = {
     val s = session
     val statement = s.connection.createStatement()
-    tables.foreach(t => statement.execute(createTableSQL(ifNotExist, t)))
+    val sql = ddl(ifNotExist)
+    transaction {
+      statement.execute(sql)
+    }
+  }
+
+  def ddl(ifNotExist: Boolean = true) = {
+    val b = new StringBuilder
+
+    tables.foreach {
+      case t => {
+        b.append(createTableSQL(ifNotExist, t))
+        b.append("\r\n")
+      }
+    }
+
+    tables.foreach {
+      case t => {
+        b.append(createTableReferences(t))
+      }
+    }
+
+    b.toString()
   }
 
   def transactionMode = TransactionMode.byValue(session.connection.getTransactionIsolation)
@@ -113,6 +136,8 @@ trait Datastore extends Listenable {
   def exec(delete: Delete): Int
 
   def createTableSQL(ifNotExist: Boolean, table: Table): String
+
+  def createTableReferences(table: Table): String
 
   protected def createSession() = new DatastoreSession(this, sessionTimeout, Thread.currentThread())
 

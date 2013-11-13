@@ -26,7 +26,7 @@ class TableSpec extends Specification {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, test)
-      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id))"
+      sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id));"
     }
     "create the table" in {
       create() must not(throwA[Throwable])
@@ -190,6 +190,11 @@ class TableSpec extends Specification {
       results(2)(price) mustEqual 9.99
     }
   }
+  "TestCrossReferenceDatastore" should {
+    "create the tables successfully" in {
+      TestCrossReferenceDatastore.create() must not(throwA[Throwable])
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -213,4 +218,18 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val sales = Column[Int]("SALES")
     val total = Column[Int]("TOTAL")
   }
+}
+
+object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
+  val first = new Table("first") {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name")
+    val secondId = Column[Int]("secondId")
+  }
+  val second = new Table("second") {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val value = Column[Int]("value")
+    val firstId = Column[Int]("firstId", new ForeignKey(first.id))
+  }
+  first.secondId.props(new ForeignKey(second.id))
 }

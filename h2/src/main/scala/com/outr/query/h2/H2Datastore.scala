@@ -2,7 +2,7 @@ package com.outr.query.h2
 
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
-import org.powerscala.reflect.EnhancedClass
+import org.powerscala.reflect._
 import com.outr.query.Column
 import com.outr.query.Insert
 import java.sql.Statement
@@ -10,6 +10,7 @@ import java.io.NotSerializableException
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, NotNull}
+import org.powerscala.enum.EnumEntry
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -35,14 +36,23 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     if (table.primaryKeys.nonEmpty) {
       b.append(s", PRIMARY KEY(${table.primaryKeys.map(c => c.name).mkString(", ")})")
     }
+
+    b.append(");")
+
+    b.toString()
+  }
+
+  def createTableReferences(table: Table) = {
+    val b = new StringBuilder
+
     table.foreignKeys.foreach {
       case c => {
         val foreignKey = ForeignKey(c).foreignColumn
-        b.append(s", FOREIGN KEY(${c.name}) REFERENCES ${foreignKey.table.tableName} (${foreignKey.name})")
+        b.append(s"ALTER TABLE ${table.tableName}\r\n")
+        b.append(s"\tADD FOREIGN KEY(${c.name})\r\n")
+        b.append(s"\tREFERENCES ${foreignKey.table.tableName} (${foreignKey.name});\r\n\r\n")
       }
     }
-
-    b.append(')')
 
     b.toString()
   }
@@ -69,6 +79,8 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case "Long" => "BIGINT"
     case "Double" => "DOUBLE"
     case "String" => s"VARCHAR(${Int.MaxValue})"
+    case "scala.math.BigDecimal" => s"DECIMAL(20, 2)"
+    case _ if c.hasType(classOf[EnumEntry]) => s"VARCHAR(${Int.MaxValue})"
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 

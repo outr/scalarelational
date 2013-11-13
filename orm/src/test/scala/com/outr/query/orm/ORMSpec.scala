@@ -1,9 +1,11 @@
 package com.outr.query.orm
 
 import org.specs2.mutable._
-import com.outr.query.h2.{H2Memory, H2Datastore}
+import com.outr.query.h2.H2Datastore
 import com.outr.query.Column
-import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, PrimaryKey}
+import com.outr.query.property._
+import scala.Some
+import com.outr.query.h2.H2Memory
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -119,6 +121,19 @@ class ORMSpec extends Specification {
       updated.date mustEqual newDate
     }
   }
+  "SimpleInstance" should {
+    "insert a single record without a 'modified' value and get a 'modified' value back" in {
+      val original = SimpleInstance("test")
+      original.modified mustEqual 0L
+      val current = System.currentTimeMillis()
+      val record = simple.persist(original)
+      record.modified must beGreaterThanOrEqualTo(current)
+    }
+    "query the record back out with a modified value" in {
+      val record = simple.query(simple.q).toList.head
+      record.modified mustNotEqual 0L
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -137,6 +152,11 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val url = Column[String]("url", Unique)
     val companyId = Column[Int]("companyId", new ForeignKey(company.id))
   }
+  val simple = new ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name")
+    val modified = Column[Long]("modified", NotNull)
+  }
 
   person.map("companies", company.ownerId)
 }
@@ -146,3 +166,5 @@ case class Person(name: String, date: Long = System.currentTimeMillis(), compani
 case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)
 
 case class CorporateDomain(url: String, company: Company, id: Option[Int] = None)
+
+case class SimpleInstance(name: String, modified: Long = 0L, id: Option[Int] = None)
