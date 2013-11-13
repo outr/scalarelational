@@ -26,7 +26,7 @@ class Column[T] private(val name: String)(implicit val manifest: Manifest[T], va
     this
   }
 
-  def as(alias: String) = ColumnAlias[T](this, alias)
+  def as(alias: String) = ColumnAlias[T](this, table.tableName, alias)
 
   def has(property: ColumnProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = _properties.contains(propertyName)

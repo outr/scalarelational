@@ -20,7 +20,7 @@ case class Query(expressions: List[SelectExpression],
   def join(table: Table, joinType: JoinType = JoinType.Join, alias: String = null) = PartialJoin(this, table, joinType, alias)
 
   def innerJoin(table: Table) = join(table, joinType = JoinType.Inner)
-  def innerJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Inner, alias = alias.alias)
+  def innerJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Inner, alias = alias.tableAlias)
 
   def limit(value: Int) = copy(_limit = value)
   def offset(value: Int) = copy(_offset = value)
