@@ -18,6 +18,8 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
     _foreignColumns += column
   }
 
+  def as(alias: String) = TableAlias(this, alias)
+
   def columns = _columns.toList
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {

@@ -166,6 +166,12 @@ class TableSpec extends Specification {
       val count = values(name.count)
       count mustEqual 2
     }
+    "query with an inner join aliased" in {
+      val s = suppliers as "s"
+      val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID === s(suppliers.id)
+      val results = exec(query).toList
+      results must have size 5
+    }
     "query coffees ordered by name and limited to the second result" in {
       val query = select(name) from coffees orderBy(name asc) limit 1 offset 1
       val results = exec(query).toList

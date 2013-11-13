@@ -22,4 +22,4 @@ object FunctionType extends Enumerated[FunctionType] {
   val Sum = new FunctionType("SUM")
 }
 
-case class SimpleFunction[T](functionType: FunctionType, column: Column[_]) extends SQLFunction[T]
+case class SimpleFunction[T](functionType: FunctionType, column: ColumnLike[_]) extends SQLFunction[T]

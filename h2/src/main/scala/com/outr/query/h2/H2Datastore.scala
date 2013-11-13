@@ -73,7 +73,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   private def expression2SQL(expression: SelectExpression) = expression match {
-    case c: Column[_] => c.longName
+    case c: ColumnLike[_] => c.longName
     case f: SimpleFunction[_] => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
   }
 
@@ -202,6 +202,9 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
         }
         b.append(pre)
         b.append(join.table.tableName)
+        if (join.alias != null) {
+          b.append(s" AS ${join.alias}")
+        }
         b.append(" ON ")
         b.append(condition2String(join.condition, args))
       }

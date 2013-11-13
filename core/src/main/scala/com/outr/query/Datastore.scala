@@ -15,8 +15,8 @@ trait Datastore extends Listenable {
   implicit val thisDatastore = this
 
   private var _sessions = Map.empty[Thread, DatastoreSession]
-  val value2SQL = new OptionProcessor[(Column[_], Any), Any]("value2SQL")
-  val sql2Value = new OptionProcessor[(Column[_], Any), Any]("sql2Value")
+  val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
+  val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
   lazy val tables = getClass.fields.collect {
     case f if f.hasType(classOf[Table]) => f[Table](this)
@@ -120,7 +120,7 @@ trait Datastore extends Listenable {
     _sessions -= thread
   }
 
-  def value2SQLValue(column: Column[_], value: Any): Any = value match {
+  def value2SQLValue(column: ColumnLike[_], value: Any): Any = value match {
     case null => null
     case s: String => s
     case i: Int => i
@@ -183,7 +183,7 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
     query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.expressions.zipWithIndex.map {
       case (expression, index) => expression match {
-        case column: Column[_] => ColumnValue[Any](column.asInstanceOf[Column[Any]], rs.getObject(index + 1))
+        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], rs.getObject(index + 1))
         case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
       }
     }

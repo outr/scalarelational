@@ -10,13 +10,13 @@ sealed trait Condition {
   def or(condition: Condition) = Conditions(List(this, condition), ConnectType.Or)
 }
 
-case class ColumnCondition[T](column: Column[T], operator: Operator, other: Column[T]) extends Condition
+case class ColumnCondition[T](column: ColumnLike[T], operator: Operator, other: ColumnLike[T]) extends Condition
 
-case class DirectCondition[T](column: Column[T], operator: Operator, value: T) extends Condition
+case class DirectCondition[T](column: ColumnLike[T], operator: Operator, value: T) extends Condition
 
-case class RangeCondition[T](column: Column[T], operator: Operator, values: Seq[T]) extends Condition
+case class RangeCondition[T](column: ColumnLike[T], operator: Operator, values: Seq[T]) extends Condition
 
-case class LikeCondition[T](column: Column[T], regex: Regex) extends Condition
+case class LikeCondition[T](column: ColumnLike[T], regex: Regex) extends Condition
 
 case class Conditions(list: List[Condition], connectType: ConnectType = ConnectType.And) extends Condition {
   override def and(condition: Condition) = if (connectType == ConnectType.And) {
