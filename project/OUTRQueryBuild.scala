@@ -11,7 +11,7 @@ object OUTRQueryBuild extends Build {
       Dependencies.H2,
       Dependencies.Specs2
     ),
-    scalacOptions ++= Seq("-unchecked", "-deprecation"),
+    scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"),
     publishTo <<= version {
       (v: String) =>

@@ -2,6 +2,7 @@ package com.outr.query
 
 import scala.collection.mutable.ListBuffer
 import com.outr.query.property.{AutoIncrement, ForeignKey, PrimaryKey}
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>

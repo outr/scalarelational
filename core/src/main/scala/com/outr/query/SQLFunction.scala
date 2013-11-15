@@ -1,6 +1,7 @@
 package com.outr.query
 
 import org.powerscala.enum.{Enumerated, EnumEntry}
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
