@@ -2,7 +2,7 @@ package com.outr.query.orm
 
 import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
-import com.outr.query.Column
+import com.outr.query.{Table, Column}
 import com.outr.query.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
@@ -134,6 +134,49 @@ class ORMSpec extends Specification {
       record.modified mustNotEqual 0L
     }
   }
+  "Orders and Items" should {
+    "insert a few items and create some orders" in {
+      val elmo = item.insert(Item("Tickle Me Elmo"))
+      val district9 = item.insert(Item("District 9 DVD"))
+      val batarang = item.insert(Item("Batarang"))
+
+      elmo.id mustNotEqual None
+      district9.id mustNotEqual None
+      batarang.id mustNotEqual None
+
+      order.insert(Order(LazyList(elmo))) mustNotEqual null
+      order.insert(Order(LazyList(district9, batarang))) mustNotEqual null
+      order.insert(Order(LazyList(district9, batarang, elmo))) mustNotEqual null
+    }
+    "simple query items are correct" in {
+      val results = exec(item.q).toList
+      results must have size 3
+    }
+    "simple query orders are correct" in {
+      val results = exec(order.q).toList
+      results must have size 3
+    }
+    "simple query orderItem entries are correct" in {
+      val results = exec(select(orderItem.*) from orderItem).toList
+      results must have size 6
+    }
+    "query back the orders and verify the correct data" in {
+      val orders = order.query(order.q).toList
+      orders must have size 3
+      val o1 = orders.head
+      o1.items().length mustEqual 1
+      o1.items().head.name mustEqual "Tickle Me Elmo"
+      val o2 = orders.tail.head
+      o2.items().length mustEqual 2
+      o2.items().head.name mustEqual "District 9 DVD"
+      o2.items().tail.head.name mustEqual "Batarang"
+      val o3 = orders.tail.tail.head
+      o3.items().length mustEqual 3
+      o3.items().head.name mustEqual "District 9 DVD"
+      o3.items().tail.head.name mustEqual "Batarang"
+      o3.items().tail.tail.head.name mustEqual "Tickle Me Elmo"
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -157,8 +200,23 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = Column[String]("name")
     val modified = Column[Long]("modified", NotNull)
   }
+  val order = new ORMTable[Order]("orders") {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val date = Column[Long]("date", NotNull)
+  }
+  val item = new ORMTable[Item]("item") {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = Column[String]("name", NotNull)
+  }
+  val orderItem = new Table("order_item_linking", linking = true) {
+    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
+    val orderId = Column[Int]("orderId", new ForeignKey(order.id))
+    val itemId = Column[Int]("itemId", new ForeignKey(item.id))
+  }
 
   person.map("companies", company.ownerId)
+  order.map("items", orderItem.orderId)
+  item.map("orders", orderItem.itemId)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
@@ -168,3 +226,7 @@ case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int
 case class CorporateDomain(url: String, company: Company, id: Option[Int] = None)
 
 case class SimpleInstance(name: String, modified: Long = 0L, id: Option[Int] = None)
+
+case class Order(items: LazyList[Item] = LazyList.Empty, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
+
+case class Item(name: String, orders: LazyList[Order] = LazyList.Empty, id: Option[Int] = None)

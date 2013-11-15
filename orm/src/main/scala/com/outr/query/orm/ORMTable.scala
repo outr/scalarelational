@@ -2,7 +2,7 @@ package com.outr.query.orm
 
 import com.outr.query._
 import org.powerscala.reflect._
-import org.powerscala.event.processor.ModifiableProcessor
+import org.powerscala.event.processor.{ModifiableOptionProcessor, UnitProcessor, ModifiableProcessor}
 import com.outr.query.orm.persistence._
 import org.powerscala.Priority
 import org.powerscala.event.Listenable
@@ -19,6 +19,7 @@ import com.outr.query.Query
 import com.outr.query.Insert
 import com.outr.query.property.ForeignKey
 import org.powerscala.ref.WeakReference
+import org.powerscala.enum.EnumEntry
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -42,6 +43,27 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
    * Fired immediately before updating an object in the database. The instance may be modified in the response.
    */
   val updating = new ModifiableProcessor[T]("updating")
+  /**
+   * Fired immediately before deleting an object from the database. The instance may be modified or None returned to
+   * avoid deletion.
+   */
+  val deleting = new ModifiableOptionProcessor[T]("deleting")
+  /**
+   * Fired immediate after successful persisting. Persisted is called after both insert and update.
+   */
+  val persisted = new UnitProcessor[T]("persisted")
+  /**
+   * Fired immediate after successful insert.
+   */
+  val inserted = new UnitProcessor[T]("inserted")
+  /**
+   * Fired immediately after successful update.
+   */
+  val updated = new UnitProcessor[T]("updated")
+  /**
+   * Fired immediately after successful delete.
+   */
+  val deleted = new UnitProcessor[T]("deleted")
 
   private def cache = datastore.session.store.getOrSet(clazz, Map.empty[Any, WeakReference[AnyRef]])
   def cached(key: Any) = cache.get(key) match {
@@ -83,6 +105,8 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
       case None => updated
     }
     updateCached(idFor(result).value, result)   // Update the caching value
+    persisted.fire(result)
+    inserted.fire(result)
     result
   }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
@@ -112,16 +136,25 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
       }
       updateCached(idFor(updated).value, updated)
     }
+    persisted.fire(updated)
+    this.updated.fire(updated)
     updated
   }
-  def delete(instance: T) = {
-    val conditions = Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
-    val delete = Delete(this).where(conditions)
-    val deleted = datastore.exec(delete)
-    if (deleted != 1) {
-      throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but expected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+  def delete(t: T) = {
+    deleting.fire(t) match {
+      case Some(instance) => {
+        val conditions = Conditions(primaryKeysFor(instance).map(cv => cv.column === cv.value), ConnectType.And)
+        val delete = Delete(this).where(conditions)
+        val deleted = datastore.exec(delete)
+        if (deleted != 1) {
+          throw new RuntimeException(s"Attempt to delete single instance failed. Deleted $deleted records, but expected to delete 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+        }
+        clearCached(idFor(instance).value)
+        this.deleted.fire(instance)
+        true
+      }
+      case None => false
     }
-    clearCached(idFor(instance).value)
   }
   def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
     primaryKeys.collect {
@@ -162,7 +195,8 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   protected def caseValue2Persistence[V](cv: CaseValue): Persistence = {
     val persistence = ORMTable.persistenceSupport.fire(Persistence(this, cv))
     if (persistence.converter == null) {
-      throw new RuntimeException(s"Unable to create persistence mapping for $clazz.${cv.name} (${cv.valueType.simpleName}). No converter found for column ${persistence.column}.")    }
+      throw new RuntimeException(s"Unable to create persistence mapping for $clazz.${cv.name} (${cv.valueType.simpleName}). No converter found for column ${persistence.column}.")
+    }
     persistence
   }
 
@@ -235,7 +269,7 @@ object ORMTable extends Listenable {
       persistence
     }
   }
-  private val defaultTypes = List("Int", "Long", "String", "scala.Option")
+  private val defaultTypes = List("Int", "Long", "String", "Array[Byte]", "scala.Option")
   persistenceSupport.listen(Priority.Lowest) {    // DefaultConvert is used if no other converter is set
     case persistence => if (persistence.column != null && persistence.converter == null && defaultTypes.contains(persistence.caseValue.valueType.name)) {
       persistence.copy(converter = DefaultConverter)
@@ -254,4 +288,15 @@ object ORMTable extends Listenable {
       persistence
     }
   }
+  persistenceSupport.listen(Priority.Low) {       // EnumEntry conversion
+    case persistence => if (persistence.column != null && persistence.caseValue.valueType.hasType(classOf[EnumEntry]) && persistence.converter == null) {
+      persistence.copy(converter = new EnumEntryConverter(persistence.caseValue.valueType))
+    } else {
+      persistence
+    }
+  }
+
+  // Make sure Lazy and LazyList have added their persistence support
+  Lazy
+  LazyList
 }

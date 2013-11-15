@@ -130,6 +130,8 @@ trait Datastore extends Listenable with Logging {
     }
   }
 
+  def sqlFromQuery(query: Query): (String, List[Any])
+
   def exec(query: Query): QueryResultsIterator
   def exec(insert: Insert): Iterator[Int]
   def exec(update: Update): Int
@@ -151,6 +153,7 @@ trait Datastore extends Listenable with Logging {
     case i: Int => i
     case l: Long => l
     case d: Double => d
+    case b: Array[Byte] => b
     case o: Option[_] => o.getOrElse(null)
     case cv: ColumnValue[_] => value2SQLValue(column, cv.value)
     case _ => value2SQL.fire(column -> value) match {

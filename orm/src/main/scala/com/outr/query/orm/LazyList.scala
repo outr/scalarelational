@@ -1,6 +1,5 @@
 package com.outr.query.orm
 
-import com.outr.query._
 import com.outr.query.Query
 import org.powerscala.Priority
 import com.outr.query.orm.persistence.LazyListConverter
@@ -25,11 +24,13 @@ trait LazyList[T] extends (() => List[T]) {
 object LazyList {
   ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy list converter
     case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[LazyList[_]])) {
-      persistence.copy(converter = LazyListConverter)
+      persistence.copy(converter = new LazyListConverter(persistence.table.asInstanceOf[ORMTable[Any]], persistence.caseValue))
     } else {
       persistence
     }
   }
+
+  def apply[T](values: T*)(implicit manifest: Manifest[T]) = PreloadedLazyList[T](values.toList)
 
   def Empty[T](implicit manifest: Manifest[T]) = PreloadedLazyList[T](Nil)
 }
@@ -40,7 +41,7 @@ case class PreloadedLazyList[T](values: List[T])(implicit val manifest: Manifest
   def apply() = values
 }
 
-case class DelayedLazyList[T](table: ORMTable[T], conditions: Conditions)(implicit val manifest: Manifest[T]) extends LazyList[T] {
+case class DelayedLazyList[T](table: ORMTable[T], query: Query)(implicit val manifest: Manifest[T]) extends LazyList[T] {
   @volatile private var _loaded = false
   @volatile private var values: List[T] = null
   def loaded = _loaded
@@ -53,7 +54,7 @@ case class DelayedLazyList[T](table: ORMTable[T], conditions: Conditions)(implic
   }
 
   private def load() = {
-    val query = Query(table.*, table).where(conditions)
+//    val query = Query(table.*, table).where(conditions)
     values = table.query(query).toList
     _loaded = true
   }

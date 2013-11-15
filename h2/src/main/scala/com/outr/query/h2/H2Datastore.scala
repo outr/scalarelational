@@ -15,12 +15,12 @@ import org.powerscala.enum.EnumEntry
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
-                            user: String = "sa",
-                            password: String = "sa") extends Datastore with Logging {
+class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
+                            val dbUser: String = "sa",
+                            val dbPassword: String = "sa") extends Datastore with Logging {
   Class.forName("org.h2.Driver")
 
-  val dataSource = JdbcConnectionPool.create(mode.url, user, password)
+  val dataSource = JdbcConnectionPool.create(mode.url, dbUser, dbPassword)
 
   def createTableSQL(ifNotExist: Boolean, table: Table) = {
     val b = new StringBuilder
@@ -75,11 +75,13 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   def columnType(c: Class[_]) = EnhancedClass.convertClass(c) match {
+    case "Boolean" => "BOOLEAN"
     case "Int" => "INTEGER"
     case "Long" => "BIGINT"
     case "Double" => "DOUBLE"
     case "String" => s"VARCHAR(${Int.MaxValue})"
-    case "scala.math.BigDecimal" => s"DECIMAL(20, 2)"
+    case "scala.math.BigDecimal" => "DECIMAL(20, 2)"
+    case "Array[Byte]" => "BINARY(1000)"
     case _ if c.hasType(classOf[EnumEntry]) => s"VARCHAR(${Int.MaxValue})"
     case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
@@ -89,7 +91,7 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     case f: SimpleFunction[_] => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
   }
 
-  def exec(query: Query) = active {
+  def sqlFromQuery(query: Query) = {
     val columns = query.expressions.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
@@ -119,10 +121,13 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     } else {
       ""
     }
-    val sql = new StringBuilder(s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset")
-//    info(sql)
+    s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset" -> args
+  }
 
-    val ps = session.connection.prepareStatement(sql.toString())
+  def exec(query: Query) = active {
+    val (sql, args) = sqlFromQuery(query)
+
+    val ps = session.connection.prepareStatement(sql)
 
     // Populate args
     args.zipWithIndex.foreach {
@@ -236,36 +241,4 @@ class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   } else {
     "" -> Nil
   }
-
-  /*private def where2SQL(whereBlock: WhereBlock, inner: Boolean = false): (String, List[Any]) = {
-    val args = ListBuffer.empty[Any]
-
-    val sql = whereBlock match {
-      case null => "" // Nothing to do, no where block
-      case where: SingleWhereBlock if !inner => s" WHERE ${condition2String(where.condition, args)}"
-      case where: SingleWhereBlock => s"${condition2String(where.condition, args)}"
-      case where: MultiWhereBlock => {
-        val b = new StringBuilder
-        b.append(" WHERE ")
-        var first = true
-        where.blocks.foreach {
-          case block => {
-            if (first) {
-              first = false
-            } else {
-              where.connectType match {
-                case ConnectType.And => b.append(" AND ")
-                case ConnectType.Or => b.append(" OR ")
-              }
-            }
-            val (blockSQL, blockArgs) = where2SQL(block, inner = true)
-            args ++= blockArgs
-            b.append(blockSQL)
-          }
-        }
-        b.toString()
-      }
-    }
-    sql -> args.toList
-  }*/
 }
