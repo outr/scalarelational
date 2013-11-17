@@ -40,13 +40,13 @@ class LazyListConverter(table: ORMTable[Any], caseValue: CaseValue) extends Conv
     val firstValue = foreignColumn(id)
     lzy match {
       case l: PreloadedLazyList[_] => {
+        // Delete all linking records for this instance
+        m2m.linkingTable.datastore.exec(m2m.linkingTable.datastore.delete(m2m.linkingTable) where firstValue)
         l().foreach {
           case item => {
             val otherId = m2m.otherTable.idFor(item)
             val secondValue = m2m.otherColumnInLinkingTable(otherId)
 
-            // Delete the record if it already exists
-            m2m.linkingTable.datastore.exec(m2m.linkingTable.datastore.delete(m2m.linkingTable) where firstValue and secondValue)
             // Insert the linking record
             m2m.linkingTable.datastore.insert(firstValue, secondValue)
           }
@@ -70,23 +70,6 @@ class LazyListConverter(table: ORMTable[Any], caseValue: CaseValue) extends Conv
     }
     EmptyConversion
   }
-
-  /* -- Must be *after* persist
-  val updated = foreignTable.persist(item)
-            val id = foreignTable.idFor(updated).value
-            persistence.table.lazyMappings.get(persistence.caseValue) match {
-              case Some(foreignColumn) if foreignColumn.table.linking => {    // Insert linking record
-                val linkingTable = foreignColumn.table
-                val otherColumn = linkingTable.columns.find(c => c.has(ForeignKey.name) && c != foreignColumn).get.asInstanceOf[Column[Any]]
-                val firstColumnValue = otherColumn(id)
-                val secondColumnValue = persistence.table.
-//                linkingTable.datastore.insert()
-                println(s"**** convert2SQL: $id - ${foreignColumn.longName} - $clazz - ${linkingTable.tableName} - $otherColumn - $foreignTable")
-                // TODO: insert linking record
-              }
-              case _ =>
-            }
-   */
 
   def convert2Value(persistence: Persistence, sql: Any, args: Map[String, Any], query: QueryResult) = {
     args.get(primaryKey.name) match {

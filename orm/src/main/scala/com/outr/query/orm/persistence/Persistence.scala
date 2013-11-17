@@ -3,7 +3,7 @@ package com.outr.query.orm.persistence
 import org.powerscala.reflect.CaseValue
 import com.outr.query.Column
 import com.outr.query.orm.ORMTable
-//import scala.language.existentials
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
