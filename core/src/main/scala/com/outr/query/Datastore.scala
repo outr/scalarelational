@@ -2,12 +2,13 @@ package com.outr.query
 
 import javax.sql.DataSource
 
-import org.powerscala.reflect._
 import java.sql.ResultSet
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
 import org.powerscala.concurrent.{Time, Executor}
 import org.powerscala.log.Logging
+import com.outr.query.convert._
+import scala.Some
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -19,9 +20,15 @@ trait Datastore extends Listenable with Logging {
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
-  lazy val tables = getClass.fields.collect {
-    case f if f.hasType(classOf[Table]) => f[Table](this)
-  }
+  implicit def booleanConverter = BooleanConverter
+  implicit def intConverter = IntConverter
+  implicit def longConverter = LongConverter
+  implicit def doubleConverter = DoubleConverter
+  implicit def bigDecimalConverter = BigDecimalConverter
+  implicit def stringConverter = StringConverter
+  implicit def byteArrayConverter = ByteArrayConverter
+
+  val tables: List[Table]
 
   private var lastUpdated = System.nanoTime()
   val updater = Executor.scheduleWithFixedDelay(1.0, 1.0) {
@@ -147,27 +154,27 @@ trait Datastore extends Listenable with Logging {
     _sessions -= thread
   }
 
-  def value2SQLValue(column: ColumnLike[_], value: Any): Any = value match {
-    case null => null
-    case s: String => s
-    case i: Int => i
-    case l: Long => l
-    case d: Double => d
-    case b: Array[Byte] => b
-    case o: Option[_] => o.getOrElse(null)
-    case cv: ColumnValue[_] => value2SQLValue(column, cv.value)
-    case _ => value2SQL.fire(column -> value) match {
-      case Some(sqlValue) => value2SQLValue(column, sqlValue)
-      case None => throw new RuntimeException(s"Unsupported type conversion on $column to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
-    }
-  }
-  def sqlValue2Value[T](c: Column[T], value: Any) = EnhancedMethod.convertToOption(c.name, value, c.classType) match {
-    case Some(result) => result
-    case None => sql2Value.fire(c -> value) match {
-      case Some(result) => result
-      case None => throw new RuntimeException(s"Unable to convert $value (${value.getClass}) to ${c.classType} for ${c.table.tableName}.${c.name}")
-    }
-  }
+//  def value2SQLValue(column: ColumnLike[_], value: Any): Any = value match {
+//    case null => null
+//    case s: String => s
+//    case i: Int => i
+//    case l: Long => l
+//    case d: Double => d
+//    case b: Array[Byte] => b
+//    case o: Option[_] => o.getOrElse(null)
+//    case cv: ColumnValue[_] => value2SQLValue(column, cv.value)
+//    case _ => value2SQL.fire(column -> value) match {
+//      case Some(sqlValue) => value2SQLValue(column, sqlValue)
+//      case None => throw new RuntimeException(s"Unsupported type conversion on $column to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
+//    }
+//  }
+//  def sqlValue2Value[T](c: Column[T], value: Any) = EnhancedMethod.convertToOption(c.name, value, c.classType) match {
+//    case Some(result) => result
+//    case None => sql2Value.fire(c -> value) match {
+//      case Some(result) => result
+//      case None => throw new RuntimeException(s"Unable to convert $value (${value.getClass}) to ${c.classType} for ${c.table.tableName}.${c.name}")
+//    }
+//  }
   protected def update(delta: Double) = {
     sessions.foreach {
       case session => session.update(delta)
@@ -211,7 +218,7 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
     query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.expressions.zipWithIndex.map {
       case (expression, index) => expression match {
-        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], rs.getObject(index + 1))
+        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], rs.getObject(index + 1), None)
         case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
       }
     }

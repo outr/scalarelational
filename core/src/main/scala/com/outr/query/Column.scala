@@ -2,11 +2,15 @@ package com.outr.query
 
 import org.powerscala.reflect._
 import com.outr.query.property.ColumnProperty
+import com.outr.query.convert.ColumnConverter
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class Column[T] private(val name: String)(implicit val manifest: Manifest[T], val table: Table) extends ColumnLike[T] {
+class Column[T] private[query](val name: String,
+                        val converter: ColumnConverter[T],
+                        val manifest: Manifest[T],
+                        val table: Table) extends ColumnLike[T] {
   private var _properties = Map.empty[String, ColumnProperty]
   def properties = _properties.values
 
@@ -35,9 +39,10 @@ class Column[T] private(val name: String)(implicit val manifest: Manifest[T], va
   override def toString = s"Column(${table.tableName}.$name)"
 }
 
-object Column {
-  def apply[T](name: String, properties: ColumnProperty*)(implicit manifest: Manifest[T], table: Table) = {
-    val c = new Column[T](name)
-    c.props(properties: _*)
-  }
-}
+//object Column {
+//  def apply[T](name: String, properties: ColumnProperty*)
+//              (implicit converter: ColumnConverter[T], manifest: Manifest[T], table: Table) = {
+//    val c = new Column[T](name, converter, manifest, table)
+//    c.props(properties: _*)
+//  }
+//}

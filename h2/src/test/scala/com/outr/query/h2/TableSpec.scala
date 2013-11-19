@@ -3,11 +3,15 @@ package com.outr.query.h2
 import org.specs2.mutable._
 import com.outr.query._
 import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, PrimaryKey}
+import com.outr.query.convert.{StringConverter, ColumnConverter}
+import org.specs2.main.ArgumentsShortcuts
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class TableSpec extends Specification {
+class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
+  addArguments(fullStackTrace)
+
   import TestDatastore._
 
   var acmeId: Int = _
@@ -29,7 +33,7 @@ class TableSpec extends Specification {
       sql mustEqual "CREATE TABLE IF NOT EXISTS test(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id));"
     }
     "create the table" in {
-      create() must not(throwA[Throwable])
+      create() mustNotEqual null
     }
     "insert a record" in {
       val id = insert(test.name("John Doe")).toList.head
@@ -195,41 +199,66 @@ class TableSpec extends Specification {
       TestCrossReferenceDatastore.create() must not(throwA[Throwable])
     }
   }
+  // TODO: Column[List[String]] support
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  val test = new Table("test") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name", Unique)
-    val date = Column[Long]("date")
+  object test extends Table("test") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", Unique)
+    val date = column[Long]("date")
   }
-  val suppliers = new Table("SUPPLIERS") {
-    val id = Column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
-    val name = Column[String]("SUP_NAME")
-    val street = Column[String]("STREET")
-    val city = Column[String]("CITY")
-    val state = Column[String]("STATE")
-    val zip = Column[String]("ZIP")
+  object suppliers extends Table("SUPPLIERS") {
+    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val name = column[String]("SUP_NAME")
+    val street = column[String]("STREET")
+    val city = column[String]("CITY")
+    val state = column[String]("STATE")
+    val zip = column[String]("ZIP")
   }
-  val coffees = new Table("COFFEES") {
-    val name = Column[String]("COF_NAME", PrimaryKey)
-    val supID = Column[Int]("SUP_ID", new ForeignKey(suppliers.id))
-    val price = Column[Double]("PRICE")
-    val sales = Column[Int]("SALES")
-    val total = Column[Int]("TOTAL")
+  object coffees extends Table("COFFEES") {
+    val name = column[String]("COF_NAME", PrimaryKey)
+    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val price = column[Double]("PRICE")
+    val sales = column[Int]("SALES")
+    val total = column[Int]("TOTAL")
   }
+
+  val tables = List(test, suppliers, coffees)
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
-  val first = new Table("first") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name")
-    val secondId = Column[Int]("secondId")
+  object first extends Table("first") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name")
+    val secondId = column[Int]("secondId")
   }
-  val second = new Table("second") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val value = Column[Int]("value")
-    val firstId = Column[Int]("firstId", new ForeignKey(first.id))
+  object second extends Table("second") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val value = column[Int]("value")
+    val firstId = column[Int]("firstId", new ForeignKey(first.id))
   }
   first.secondId.props(new ForeignKey(second.id))
+
+  val tables = List(first, second)
+}
+
+object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
+  implicit val listStringConverter = new ColumnConverter[List[String]] {
+    def sqlType = StringConverter.sqlType
+
+    def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
+
+    def fromSQLType(column: ColumnLike[List[String]], value: Any) = value match {
+      case null => Nil
+      case s: String => s.split('|').toList
+    }
+  }
+
+  object lists extends Table("special_lists") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val strings = column[List[String]]("strings")
+  }
+
+  val tables = List(lists)
 }

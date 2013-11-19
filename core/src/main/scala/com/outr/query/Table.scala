@@ -1,8 +1,9 @@
 package com.outr.query
 
 import scala.collection.mutable.ListBuffer
-import com.outr.query.property.{AutoIncrement, ForeignKey, PrimaryKey}
+import com.outr.query.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
 import scala.language.existentials
+import com.outr.query.convert.ColumnConverter
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -34,8 +35,20 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
 
   def * = columns
 
-  def column[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
-  def columnsByName[T](names: String*) = names.map(name => column[T](name)).flatten
+  def getColumn[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
+  def columnsByName[T](names: String*) = names.map(name => getColumn[T](name)).flatten
+
+  def column[T](name: String, properties: ColumnProperty*)
+               (implicit converter: ColumnConverter[T], manifest: Manifest[T]) = {
+    val c = new Column[T](name, converter, manifest, this)
+    c.props(properties: _*)
+  }
+
+  def column[T](name: String, converter: ColumnConverter[T], properties: ColumnProperty*)
+               (implicit manifest: Manifest[T]) = {
+    val c = new Column[T](name, converter, manifest, this)
+    c.props(properties: _*)
+  }
 
   private def loadRelationships() = {
     val local2Foreign = Map(columns.collect {

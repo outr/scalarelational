@@ -2,7 +2,6 @@ package com.outr.query.h2
 
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
-import org.powerscala.reflect._
 import com.outr.query.Column
 import com.outr.query.Insert
 import java.sql.Statement
@@ -10,12 +9,12 @@ import java.io.NotSerializableException
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, NotNull}
-import org.powerscala.enum.EnumEntry
+import com.outr.query.convert.ColumnConverter
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
+abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
                             val dbUser: String = "sa",
                             val dbPassword: String = "sa") extends Datastore with Logging {
   Class.forName("org.h2.Driver")
@@ -61,7 +60,7 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val b = new StringBuilder
     b.append(column.name)
     b.append(' ')
-    b.append(columnType(column.manifest.runtimeClass))
+    b.append(column.converter.sqlType)
     if (column.has(NotNull)) {
       b.append(" NOT NULL")
     }
@@ -72,18 +71,6 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       b.append(" UNIQUE")
     }
     b.toString()
-  }
-
-  def columnType(c: Class[_]) = EnhancedClass.convertClass(c) match {
-    case "Boolean" => "BOOLEAN"
-    case "Int" => "INTEGER"
-    case "Long" => "BIGINT"
-    case "Double" => "DOUBLE"
-    case "String" => s"VARCHAR(${Int.MaxValue})"
-    case "scala.math.BigDecimal" => "DECIMAL(20, 2)"
-    case "Array[Byte]" => "BINARY(1000)"
-    case _ if c.hasType(classOf[EnumEntry]) => s"VARCHAR(${Int.MaxValue})"
-    case classType => throw new RuntimeException(s"Unsupported column-type: $classType ($c).")
   }
 
   private def expression2SQL(expression: SelectExpression) = expression match {
@@ -131,7 +118,7 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
 
     // Populate args
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value2SQLValue(null, value))
+      case (value, index) => ps.setObject(index + 1, value)
     }
 
     val resultSet = ps.executeQuery()
@@ -141,9 +128,10 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   def exec(insert: Insert) = active {
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
-    val columnValues = insert.values.map(cv => value2SQLValue(cv.column, cv.value))
+    val columnValues = insert.values.map(cv => cv.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
+//    info(s"$insertString - ${columnValues.mkString(", ")}")
     val ps = session.connection.prepareStatement(insertString, Statement.RETURN_GENERATED_KEYS)
     columnValues.zipWithIndex.foreach {
       case (value, index) => try {
@@ -160,7 +148,7 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   def exec(update: Update) = active {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
-    val setArgs = update.values.map(cv => value2SQLValue(cv.column, cv.value))
+    val setArgs = update.values.map(cv => cv.toSQL)
     args = args ::: setArgs
 
     val (where, whereArgs) = where2SQL(update.whereCondition)
@@ -197,7 +185,7 @@ class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
     case c: DirectCondition[_] => {
-      args += value2SQLValue(c.column, c.value)
+      args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[Column[Any]], c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"
     }
     case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")

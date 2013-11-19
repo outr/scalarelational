@@ -1,6 +1,8 @@
 package com.outr.query
 
 import scala.util.matching.Regex
+import com.outr.query.convert.ColumnConverter
+import org.powerscala.reflect.EnhancedMethod
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -9,8 +11,25 @@ trait ColumnLike[T] extends SelectExpression {
   def name: String
   def longName: String
   def table: Table
+  def converter: ColumnConverter[T]
+  def manifest: Manifest[T]
 
-  def apply(value: T) = ColumnValue[T](this, value)
+  def apply(value: T, converterOverride: Option[ColumnConverter[T]] = None) = ColumnValue[T](this, value, converterOverride)
+  def value(v: Any) = {
+    val toConvert = v match {
+      case cv: ColumnValue[_] => cv.toSQL
+      case _ => v
+    }
+    try {
+      val value = EnhancedMethod.convertTo(name, toConvert, manifest.runtimeClass).asInstanceOf[T]
+      println(s"$toConvert converted to $value (${manifest.runtimeClass} - $longName)")
+      apply(value)
+    } catch {
+      case t: Throwable => {
+        throw new RuntimeException(s"Name: $name, Value: $v, toConvert: $toConvert, Class: ${manifest.runtimeClass}", t)
+      }
+    }
+  }
 
   def ===(value: T) = DirectCondition(this, Operator.Equal, value)
   def <>(value: T) = DirectCondition(this, Operator.NotEqual, value)
