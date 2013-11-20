@@ -219,6 +219,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
+  LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
 
   val tables = List(person, company, domain, simple, order, item, orderItem)
 }

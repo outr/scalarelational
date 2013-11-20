@@ -13,7 +13,7 @@ class ObjectConverter[O](implicit manifest: Manifest[O]) extends ORMConverter[In
     val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[O]]
     val updated = foreignTable.persist(o)
     val idColumnValue = foreignTable.idFor[Int](updated).getOrElse(throw new RuntimeException(s"No id was returned with $o (${o.getClass})"))
-    Conversion(Some(idColumnValue), Some(updated))
+    Conversion(Some(column(idColumnValue.value)), Some(updated))
   } else {
     Conversion.empty
   }

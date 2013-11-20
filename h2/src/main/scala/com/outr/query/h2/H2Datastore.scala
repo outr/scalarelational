@@ -114,6 +114,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   def exec(query: Query) = active {
     val (sql, args) = sqlFromQuery(query)
 
+//    info(s"$sql - ${args.mkString(", ")}")
     val ps = session.connection.prepareStatement(sql)
 
     // Populate args

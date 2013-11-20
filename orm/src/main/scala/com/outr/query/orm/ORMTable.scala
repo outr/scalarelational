@@ -141,7 +141,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     persistence.foreach {
       case p if p.caseValue.valueType.isCase && ORMTable.contains(p.caseValue.valueType) => {
         val table = ORMTable[Any](p.caseValue.valueType)
-        s = s.fields(table.*) innerJoin table on p.column.asInstanceOf[Column[Any]] === ForeignKey(p.column).foreignColumn.asInstanceOf[Column[Any]]
+        s = s.fields(table.*) leftJoin table on p.column.asInstanceOf[Column[Any]] === ForeignKey(p.column).foreignColumn.asInstanceOf[Column[Any]]
       }
       case _ => // Ignore
     }
