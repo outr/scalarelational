@@ -2,15 +2,19 @@ package com.outr.query.orm
 
 import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
-import com.outr.query.{Table, Column}
+import com.outr.query.Table
 import com.outr.query.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
+import org.specs2.main.ArgumentsShortcuts
+import com.outr.query.orm.convert.{ObjectConverter, LazyConverter}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class ORMSpec extends Specification {
+class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
+  addArguments(fullStackTrace)
+
   import TestDatastore._
 
   private var bill: Person = _
@@ -180,43 +184,43 @@ class ORMSpec extends Specification {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  val person = new ORMTable[Person]("person") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name", Unique)
-    val date = Column[Long]("date")
+  object person extends ORMTable[Person]("person") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name", Unique)
+    val date = orm[Long]("date")
   }
-  val company = new ORMTable[Company]("company") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name", Unique)
-    val ownerId = Column[Int]("ownerId", new ForeignKey(person.id))
+  object company extends ORMTable[Company]("company") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name", Unique)
+    val ownerId = orm[Int, Lazy[Person]]("ownerId", "owner", new LazyConverter[Person], new ForeignKey(person.id))
   }
-  val domain = new ORMTable[CorporateDomain]("domain") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val url = Column[String]("url", Unique)
-    val companyId = Column[Int]("companyId", new ForeignKey(company.id))
+  object domain extends ORMTable[CorporateDomain]("domain") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val url = orm[String]("url", Unique)
+    val companyId = orm[Int, Company]("companyId", "company", new ObjectConverter[Company], new ForeignKey(company.id))
   }
-  val simple = new ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name")
-    val modified = Column[Long]("modified", NotNull)
+  object simple extends ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name")
+    val modified = orm[Long]("modified", NotNull)
   }
-  val order = new ORMTable[Order]("orders") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val date = Column[Long]("date", NotNull)
+  object order extends ORMTable[Order]("orders") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val date = orm[Long]("date", NotNull)
   }
-  val item = new ORMTable[Item]("item") {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = Column[String]("name", NotNull)
+  object item extends ORMTable[Item]("item") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name", NotNull)
   }
-  val orderItem = new Table("order_item_linking", linking = true) {
-    val id = Column[Int]("id", PrimaryKey, AutoIncrement)
-    val orderId = Column[Int]("orderId", new ForeignKey(order.id))
-    val itemId = Column[Int]("itemId", new ForeignKey(item.id))
+  object orderItem extends Table("order_item_linking", linking = true) {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val orderId = column[Int]("orderId", new ForeignKey(order.id))
+    val itemId = column[Int]("itemId", new ForeignKey(item.id))
   }
 
-  person.map("companies", company.ownerId)
-  order.map("items", orderItem.orderId)
-  item.map("orders", orderItem.itemId)
+  LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
+
+  val tables = List(person, company, domain, simple, order, item, orderItem)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)

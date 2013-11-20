@@ -1,8 +1,6 @@
 package com.outr.query.orm
 
-import com.outr.query.Query
-import org.powerscala.Priority
-import com.outr.query.orm.persistence.LazyListConverter
+import com.outr.query.{Column, Query}
 import org.powerscala.reflect._
 
 /**
@@ -22,12 +20,18 @@ trait LazyList[T] extends (() => List[T]) {
 }
 
 object LazyList {
-  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy list converter
-    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[LazyList[_]])) {
-      persistence.copy(converter = new LazyListConverter(persistence.table.asInstanceOf[ORMTable[Any]], persistence.caseValue))
-    } else {
-      persistence
-    }
+//  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy list converter
+//    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[LazyList[_]])) {
+//      persistence.copy(converter = new LazyListConverter(persistence.table.asInstanceOf[ORMTable[Any]], persistence.caseValue))
+//    } else {
+//      persistence
+//    }
+//  }
+
+  def connect[Origin, ListItem, C](table: ORMTable[Origin], fieldName: String, foreignColumn: Column[C])
+                                  (implicit manifest: Manifest[ListItem]) = {
+    val caseValue = table.clazz.caseValue(fieldName).getOrElse(throw new RuntimeException(s"Unable to find '$fieldName' in ${table.clazz.name}"))
+    new LazyListConnectionO2M[Origin, ListItem, C](table, caseValue, foreignColumn, manifest)
   }
 
   def apply[T](values: T*)(implicit manifest: Manifest[T]) = PreloadedLazyList[T](values.toList)
@@ -57,5 +61,40 @@ case class DelayedLazyList[T](table: ORMTable[T], query: Query)(implicit val man
 //    val query = Query(table.*, table).where(conditions)
     values = table.query(query).toList
     _loaded = true
+  }
+}
+
+class LazyListConnectionO2M[Origin, ListItem, C](table: ORMTable[Origin],
+                                                 caseValue: CaseValue,
+                                                 foreignColumn: Column[C],
+                                                 listItemManifest: Manifest[ListItem]) {
+  val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[ListItem]]
+
+  // After persisting, persist entries and update LazyList with ids
+  table.persisted.on {
+    case origin => {
+      val lzy = caseValue[LazyList[ListItem]](origin.asInstanceOf[AnyRef])
+      lzy match {
+        case l: PreloadedLazyList[ListItem] => {
+          val list = l().map(item => foreignTable.persist(item))
+          val updated = PreloadedLazyList[ListItem](list)(listItemManifest)
+          caseValue.copy(origin, updated)
+        }
+        case l: DelayedLazyList[ListItem] => origin
+      }
+    }
+  }
+
+  // After querying update the instance with LazyList reference
+  table.queried.on {
+    case origin => table.idFor[C](origin) match {
+      case Some(idColumnValue) => {
+        val id = idColumnValue.value
+        val query = foreignTable.q where foreignColumn === id
+        val lzy = DelayedLazyList[ListItem](foreignTable, query)(listItemManifest)
+        caseValue.copy(origin, lzy)
+      }
+      case None => origin   // No id found for the queried object, perhaps not part of the query
+    }
   }
 }
