@@ -184,35 +184,35 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  object person extends ORMTable[Person]("person") {
+  val person = new ORMTable[Person]("person") {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = orm[String]("name", Unique)
     val date = orm[Long]("date")
   }
-  object company extends ORMTable[Company]("company") {
+  val company = new ORMTable[Company]("company") {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = orm[String]("name", Unique)
     val ownerId = orm[Int, Lazy[Person]]("ownerId", "owner", new LazyConverter[Person], new ForeignKey(person.id))
   }
-  object domain extends ORMTable[CorporateDomain]("domain") {
+  val domain = new ORMTable[CorporateDomain]("domain") {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val url = orm[String]("url", Unique)
     val companyId = orm[Int, Company]("companyId", "company", new ObjectConverter[Company], new ForeignKey(company.id))
   }
-  object simple extends ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
+  val simple = new ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = orm[String]("name")
     val modified = orm[Long]("modified", NotNull)
   }
-  object order extends ORMTable[Order]("orders") {
+  val order = new ORMTable[Order]("orders") {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val date = orm[Long]("date", NotNull)
   }
-  object item extends ORMTable[Item]("item") {
+  val item = new ORMTable[Item]("item") {
     val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = orm[String]("name", NotNull)
   }
-  object orderItem extends Table("order_item_linking", linking = true) {
+  val orderItem = new Table("order_item_linking", linking = true) {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val orderId = column[Int]("orderId", new ForeignKey(order.id))
     val itemId = column[Int]("itemId", new ForeignKey(item.id))

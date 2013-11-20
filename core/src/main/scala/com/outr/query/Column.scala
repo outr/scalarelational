@@ -38,11 +38,3 @@ class Column[T] private[query](val name: String,
 
   override def toString = s"Column(${table.tableName}.$name)"
 }
-
-//object Column {
-//  def apply[T](name: String, properties: ColumnProperty*)
-//              (implicit converter: ColumnConverter[T], manifest: Manifest[T], table: Table) = {
-//    val c = new Column[T](name, converter, manifest, table)
-//    c.props(properties: _*)
-//  }
-//}

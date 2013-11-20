@@ -22,18 +22,6 @@ sealed trait Lazy[T] extends (() => T) {
 }
 
 object Lazy {
-//  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy converter
-//    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[Lazy[_]])) {
-//      val name = persistence.caseValue.name
-//      val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
-//        case c if c.has(ForeignKey.name) => c
-//      }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
-//      persistence.copy(column = column, converter = LazyConverter)
-//    } else {
-//      persistence
-//    }
-//  }
-
   def None[T](implicit manifest: Manifest[T]) = PreloadedLazy[T](scala.None)
   def apply[T](value: T)(implicit manifest: Manifest[T]) = PreloadedLazy[T](Option(value))
 }

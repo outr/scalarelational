@@ -222,7 +222,6 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
           }
           case None => None
         }
-//        column2PersistenceMap.get(c).map(p => ColumnValue(c, p.caseValue[Any](instance.asInstanceOf[AnyRef]), None))
       }
     }.flatten
   } else {
@@ -293,16 +292,6 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
       }
       case v => throw new RuntimeException(s"${v.getClass} is not supported in ORM results.")
     }
-//    // Process fields in case class that have no direct column association
-//    result.table.asInstanceOf[ORMTable[Any]].persistence.foreach {
-//      case p => if (p.column == null) {
-//        p.conversion()
-//        p.converter.convert2Value(p, null, args, result) match {
-//          case Some(v) => args += p.caseValue.name -> v
-//          case None => // No value in the case class for this column
-//        }
-//      }
-//    }
     val instance = clazz.copy[T](null.asInstanceOf[T], args)
     idFor[Any](instance) match {
       case Some(columnValue) => updateCached(columnValue.value, instance)
@@ -318,46 +307,4 @@ object ORMTable extends Listenable {
   def apply[T](clazz: EnhancedClass) = get[T](clazz).getOrElse(throw new RuntimeException(s"Unable to find $clazz ORMTable mapping."))
   def get[T](clazz: EnhancedClass) = class2Table.get(clazz).asInstanceOf[Option[ORMTable[T]]]
   def contains(clazz: EnhancedClass) = class2Table.contains(clazz)
-
-//  val persistenceSupport = new ModifiableProcessor[Persistence]("persistenceSupport")
-//  persistenceSupport.listen(Priority.High) {      // Direct mapping of CaseValue -> Column
-//    case persistence => if (persistence.column == null) {
-//      persistence.table.column[Any](persistence.caseValue.name) match {
-//        case Some(column) => persistence.copy(column = column)
-//        case None => persistence
-//      }
-//    } else {
-//      persistence
-//    }
-//  }
-//  private val defaultTypes = List("Int", "Long", "String", "Array[Byte]", "scala.Option")
-//  persistenceSupport.listen(Priority.Lowest) {    // DefaultConvert is used if no other converter is set
-//    case persistence => if (persistence.column != null && persistence.converter == null && defaultTypes.contains(persistence.caseValue.valueType.name)) {
-//      persistence.copy(converter = DefaultConverter)
-//    } else {
-//      persistence
-//    }
-//  }
-//  persistenceSupport.listen(Priority.Low) {       // Case Class conversion
-//    case persistence => if (persistence.column == null && persistence.caseValue.valueType.isCase && contains(persistence.caseValue.valueType)) {
-//      val name = persistence.caseValue.name
-//      val column = persistence.table.columnsByName[Any](s"${name}_id", s"${name}id", s"${name}_fk", s"${name}fk").collect {
-//        case c if c.has(ForeignKey.name) => c
-//      }.headOption.getOrElse(throw new RuntimeException(s"Unable to find foreign key column for ${persistence.table.tableName}.${persistence.caseValue.name} (Lazy)"))
-//      persistence.copy(column = column, converter = CaseClassConverter)
-//    } else {
-//      persistence
-//    }
-//  }
-//  persistenceSupport.listen(Priority.Low) {       // EnumEntry conversion
-//    case persistence => if (persistence.column != null && persistence.caseValue.valueType.hasType(classOf[EnumEntry]) && persistence.converter == null) {
-//      persistence.copy(converter = new EnumEntryConverter(persistence.caseValue.valueType))
-//    } else {
-//      persistence
-//    }
-//  }
-//
-//  // Make sure Lazy and LazyList have added their persistence support
-//  Lazy
-//  LazyList
 }

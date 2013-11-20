@@ -225,12 +225,12 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  object test extends Table("test") {
+  val test = new Table("test") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique)
     val date = column[Long]("date")
   }
-  object suppliers extends Table("SUPPLIERS") {
+  val suppliers = new Table("SUPPLIERS") {
     val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -238,7 +238,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table("COFFEES") {
+  val coffees = new Table("COFFEES") {
     val name = column[String]("COF_NAME", PrimaryKey)
     val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
@@ -250,12 +250,12 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
-  object first extends Table("first") {
+  val first = new Table("first") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val secondId = column[Int]("secondId")
   }
-  object second extends Table("second") {
+  val second = new Table("second") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val value = column[Int]("value")
     val firstId = column[Int]("firstId", new ForeignKey(first.id))
@@ -277,7 +277,7 @@ object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_ty
     }
   }
 
-  object lists extends Table("special_lists") {
+  val lists = new Table("special_lists") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val strings = column[List[String]]("strings")
   }

@@ -154,27 +154,6 @@ trait Datastore extends Listenable with Logging {
     _sessions -= thread
   }
 
-//  def value2SQLValue(column: ColumnLike[_], value: Any): Any = value match {
-//    case null => null
-//    case s: String => s
-//    case i: Int => i
-//    case l: Long => l
-//    case d: Double => d
-//    case b: Array[Byte] => b
-//    case o: Option[_] => o.getOrElse(null)
-//    case cv: ColumnValue[_] => value2SQLValue(column, cv.value)
-//    case _ => value2SQL.fire(column -> value) match {
-//      case Some(sqlValue) => value2SQLValue(column, sqlValue)
-//      case None => throw new RuntimeException(s"Unsupported type conversion on $column to SQL: $value (${value.getClass}). Arbitrary conversions can be added through Datastore.value2SQL listeners.")
-//    }
-//  }
-//  def sqlValue2Value[T](c: Column[T], value: Any) = EnhancedMethod.convertToOption(c.name, value, c.classType) match {
-//    case Some(result) => result
-//    case None => sql2Value.fire(c -> value) match {
-//      case Some(result) => result
-//      case None => throw new RuntimeException(s"Unable to convert $value (${value.getClass}) to ${c.classType} for ${c.table.tableName}.${c.name}")
-//    }
-//  }
   protected def update(delta: Double) = {
     sessions.foreach {
       case session => session.update(delta)

@@ -20,14 +20,6 @@ trait LazyList[T] extends (() => List[T]) {
 }
 
 object LazyList {
-//  ORMTable.persistenceSupport.listen(Priority.Low) {    // Support lazy list converter
-//    case persistence => if (persistence.column == null && persistence.caseValue.valueType.hasType(classOf[LazyList[_]])) {
-//      persistence.copy(converter = new LazyListConverter(persistence.table.asInstanceOf[ORMTable[Any]], persistence.caseValue))
-//    } else {
-//      persistence
-//    }
-//  }
-
   /**
    * Connects one-to-many relationship for LazyList.
    *
@@ -100,7 +92,6 @@ case class DelayedLazyList[T](table: ORMTable[T], query: Query)(implicit val man
   }
 
   private def load() = {
-//    val query = Query(table.*, table).where(conditions)
     values = table.query(query).toList
     _loaded = true
   }
