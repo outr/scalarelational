@@ -199,7 +199,29 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       TestCrossReferenceDatastore.create() must not(throwA[Throwable])
     }
   }
-  // TODO: Column[List[String]] support
+  "TestSpecialTypesDatastore" should {
+    import TestSpecialTypesDatastore._
+
+    var id: Int = -1
+
+    "create the tables successfully" in {
+      create() must not(throwA[Throwable])
+    }
+    "insert a List[String] entry" in {
+      val idOption = insert(lists.strings(List("One", "Two", "Three")))
+      idOption mustNotEqual None
+      id = idOption.get
+      id mustEqual 1
+    }
+    "query a List[String] entry" in {
+      val query = select(lists.id, lists.strings) from lists
+      val results = exec(query).toList
+      results must have size 1
+      val result = results.head
+      result(lists.id) mustEqual id
+      result(lists.strings) mustEqual List("One", "Two", "Three")
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {

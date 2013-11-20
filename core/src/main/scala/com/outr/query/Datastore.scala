@@ -218,7 +218,7 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
     query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.expressions.zipWithIndex.map {
       case (expression, index) => expression match {
-        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], rs.getObject(index + 1), None)
+        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], column.converter.fromSQLType(column, rs.getObject(index + 1)), None)
         case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
       }
     }
