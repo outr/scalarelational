@@ -62,10 +62,14 @@ object LazyList {
                                       linkingTableOriginId: Column[C])
                                      (implicit originManifest: Manifest[Origin],
                                       destinationManifest: Manifest[Destination]): Unit = {
-    val originCaseValue = originTable.clazz.caseValue(originFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$originFieldName' in ${originTable.clazz.name}"))
-    val destinationCaseValue = destinationTable.clazz.caseValue(destinationFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$destinationFieldName' in ${destinationTable.clazz.name}"))
-    new LazyListConnectionM2M[Origin, Destination, C](originTable, originCaseValue, linkingTableOriginId, linkingTableDestinationId, destinationTable, destinationManifest)
-    new LazyListConnectionM2M[Destination, Origin, C](destinationTable, destinationCaseValue, linkingTableDestinationId, linkingTableOriginId, originTable, originManifest)
+    if (originFieldName != null) {
+      val originCaseValue = originTable.clazz.caseValue(originFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$originFieldName' in ${originTable.clazz.name}"))
+      new LazyListConnectionM2M[Origin, Destination, C](originTable, originCaseValue, linkingTableOriginId, linkingTableDestinationId, destinationTable, destinationManifest)
+    }
+    if (destinationFieldName != null) {
+      val destinationCaseValue = destinationTable.clazz.caseValue(destinationFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$destinationFieldName' in ${destinationTable.clazz.name}"))
+      new LazyListConnectionM2M[Destination, Origin, C](destinationTable, destinationCaseValue, linkingTableDestinationId, linkingTableOriginId, originTable, originManifest)
+    }
   }
 
   def apply[T](values: T*)(implicit manifest: Manifest[T]) = PreloadedLazyList[T](values.toList)

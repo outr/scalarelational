@@ -191,7 +191,10 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     }
     case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
     case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
-    case c: Conditions => c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")
+    case c: Conditions => {
+      val sql = c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")
+      s"($sql)"
+    }
   }
 
   private def joins2SQL(joins: List[Join]): (String, List[Any]) = {

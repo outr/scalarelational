@@ -125,6 +125,14 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     column
   }
 
+  def orm[C](name: String, columnConverter: ColumnConverter[C], properties: ColumnProperty*)
+            (implicit manifest: Manifest[C]) = {
+    val column = this.column[C](name, columnConverter, properties: _*)
+    val caseValue = clazz.caseValue(name).getOrElse(throw new RuntimeException(s"Unable to find $name in $clazz"))
+    _persistence += Persistence[T, C, C](this, caseValue, column, new SameTypeORMConverter[C](column))
+    column
+  }
+
   private def cache = datastore.session.store.getOrSet(clazz, Map.empty[Any, WeakReference[AnyRef]])
   def cached(key: Any) = cache.get(key) match {
     case Some(ref) => ref.get.asInstanceOf[Option[T]]

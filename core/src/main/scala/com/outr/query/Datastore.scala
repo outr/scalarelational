@@ -112,12 +112,14 @@ trait Datastore extends Listenable with Logging {
    * @return T
    */
   def transaction[T](f: => T) = {
-    val isTop = transactionLayers.get() == 0                      // Is this the top-level transaction
-    transactionLayers.set(transactionLayers.get() + 1)            // Increment the transaction layer
-    val previousAutoCommit = session.connection.getAutoCommit
-    session.connection.setAutoCommit(false)
-    val savepoint = session.connection.setSavepoint()
+    val layer = transactionLayers.get()
+    val isTop = layer == 0                                        // Is this the top-level transaction
+    transactionLayers.set(layer + 1)                              // Increment the transaction layer
     active {
+      val previousAutoCommit = session.connection.getAutoCommit
+      session.connection.setAutoCommit(false)
+      val savepointName = s"transaction$layer"
+      val savepoint = session.connection.setSavepoint(savepointName)
       try {
         val result = f
         if (isTop) {
@@ -126,7 +128,11 @@ trait Datastore extends Listenable with Logging {
         result
       } catch {
         case t: Throwable => {
-          session.connection.rollback(savepoint)
+          if (isTop) {
+            session.connection.rollback()
+          } else {
+            session.connection.rollback(savepoint)
+          }
           throw t
         }
       } finally {
