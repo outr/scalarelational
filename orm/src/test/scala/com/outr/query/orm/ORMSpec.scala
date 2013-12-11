@@ -181,6 +181,31 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       o3.items().tail.tail.head.name mustEqual "Tickle Me Elmo"
     }
   }
+  "Countries" should {
+    val PopulationIn2011 = 311600000
+    val PopulationIn2012 = 313900000
+
+    "insert one country" in {
+      country.merge(Country("USA", PopulationIn2011)) must not(throwA[Throwable])
+    }
+    "query the country back" in {
+      val results = country.query(country.q).toList
+      results must have size 1
+      val usa = results.head
+      usa.name mustEqual "USA"
+      usa.population mustEqual PopulationIn2011
+    }
+    "merge a population change" in {
+      country.merge(Country("USA", PopulationIn2012)) must not(throwA[Throwable])
+    }
+    "query only one country back" in {
+      val results = country.query(country.q).toList
+      results must have size 1
+      val usa = results.head
+      usa.name mustEqual "USA"
+      usa.population mustEqual PopulationIn2012
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -217,11 +242,15 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val orderId = column[Int]("orderId", new ForeignKey(order.id))
     val itemId = column[Int]("itemId", new ForeignKey(item.id))
   }
+  val country = new ORMTable[Country]("country") {
+    val name = orm[String]("name", Unique, NotNull, PrimaryKey)
+    val population = orm[Int]("population", NotNull)
+  }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
 
-  val tables = List(person, company, domain, simple, order, item, orderItem)
+  val tables = List(person, company, domain, simple, order, item, orderItem, country)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
@@ -235,3 +264,5 @@ case class SimpleInstance(name: String, modified: Long = 0L, id: Option[Int] = N
 case class Order(items: LazyList[Item] = LazyList.Empty, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
 
 case class Item(name: String, orders: LazyList[Order] = LazyList.Empty, id: Option[Int] = None)
+
+case class Country(name: String, population: Int)

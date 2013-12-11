@@ -37,13 +37,17 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
 
   /**
    * Fired immediately before persisting an object to the database. The instance may be modified in the response.
-   * Persisting is called before both insert and update.
+   * Persisting is called before insert, merge, and update.
    */
   val persisting = new ModifiableProcessor[T]("persisting")
   /**
    * Fired immediately before inserting a new object into the database. The instance may be modified in the response.
    */
   val inserting = new ModifiableProcessor[T]("inserting")
+  /**
+   * Fired immediately before merging a new object into the database. The instance may be modified in the response.
+   */
+  val merging = new ModifiableProcessor[T]("merging")
   /**
    * Fired immediately before updating an object in the database. The instance may be modified in the response.
    */
@@ -54,13 +58,17 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
    */
   val deleting = new ModifiableOptionProcessor[T]("deleting")
   /**
-   * Fired immediate after successful persisting. Persisted is called after both insert and update.
+   * Fired immediate after successful persisting. Persisted is called after insert, merge, and update.
    */
   val persisted = new ModifiableProcessor[T]("persisted")
   /**
    * Fired immediate after successful insert.
    */
   val inserted = new UnitProcessor[T]("inserted")
+  /**
+   * Fired immediate after successful merge.
+   */
+  val merged = new UnitProcessor[T]("merged")
   /**
    * Fired immediately after successful update.
    */
@@ -177,6 +185,20 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     inserted.fire(updated2)
     updated2
   }
+  def merge(t: T): T = {
+    val modified = merging.fire(persisting.fire(t))
+    val (updated, values) = instance2ColumnValues(modified, useCached = false)
+    val key = primaryKeys.head
+    if (primaryKeys.tail.nonEmpty) {
+      throw new RuntimeException(s"Cannot merge with more than one primary key ($tableName)!")
+    }
+    val merge = Merge(key, values)
+    datastore.exec(merge)
+    updateCached(idFor(updated).get.value, updated)   // Update the caching value
+    val updated2 = persisted.fire(updated)
+    merged.fire(updated2)
+    updated2
+  }
   def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
   def persist(instance: T): T = if (hasId(instance)) {
     update(instance)
@@ -259,11 +281,15 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     results.headOption
   }
 
-  protected def instance2ColumnValues(instance: T) = {
+  protected def instance2ColumnValues(instance: T, useCached: Boolean = true) = {
     var updated = instance
-    val cached = idFor[Any](instance) match {
-      case Some(columnValue) => this.cached(columnValue.value).map(t => clazz.diff(t.asInstanceOf[AnyRef], instance.asInstanceOf[AnyRef]).map(t => t._1).toSet).getOrElse(null)
-      case None => null
+    val cached = if (useCached) {
+      idFor[Any](instance) match {
+        case Some(columnValue) => this.cached(columnValue.value).map(t => clazz.diff(t.asInstanceOf[AnyRef], instance.asInstanceOf[AnyRef]).map(t => t._1).toSet).getOrElse(null)
+        case None => null
+      }
+    } else {
+      null
     }
     val columnValues = persistence.collect {
       case p if cached == null || cached.contains(p.caseValue) => {

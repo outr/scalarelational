@@ -145,6 +145,23 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val keys = ps.getGeneratedKeys
     new GeneratedKeysIterator(keys)
   }
+  
+  def exec(merge: Merge) = active {
+    val table = merge.key.table
+    val columnNames = merge.values.map(cv => cv.column.name).mkString(", ")
+    val columnValues = merge.values.map(cv => cv.toSQL)
+    val placeholder = columnValues.map(v => "?").mkString(", ")
+    val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
+    val ps = session.connection.prepareStatement(mergeString)
+    columnValues.zipWithIndex.foreach {
+      case (value, index) => try {
+        ps.setObject(index + 1, value)
+      } catch {
+        case exc: NotSerializableException => throw new RuntimeException(s"Index: $index (zero-based) is not serializable for insert($columnNames)", exc)
+      }
+    }
+    ps.executeUpdate()
+  }
 
   def exec(update: Update) = active {
     var args = List.empty[Any]

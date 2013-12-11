@@ -2,7 +2,7 @@ package com.outr.query.h2
 
 import org.specs2.mutable._
 import com.outr.query._
-import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, PrimaryKey}
+import com.outr.query.property._
 import com.outr.query.convert.{StringConverter, ColumnConverter}
 import org.specs2.main.ArgumentsShortcuts
 
@@ -194,6 +194,43 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       results(2)(price) mustEqual 9.99
     }
   }
+  "names" should {
+    import names._
+
+    val queryAll = select(*) from names orderBy(name asc)
+
+    "have no records in the table" in {
+      val results = exec(queryAll).toList
+      results must have size 0
+    }
+    "merge 'John Doe' for an inserted record" in {
+      merge(name, name("John Doe"), age(21))
+      val results = exec(queryAll).toList
+      results must have size 1
+      val result = results.head
+      result(name) mustEqual "John Doe"
+      result(age) mustEqual 21
+    }
+    "merge 'John Doe' for an updated record" in {
+      merge(name, name("John Doe"), age(25))
+      val results = exec(queryAll).toList
+      results must have size 1
+      val result = results.head
+      result(name) mustEqual "John Doe"
+      result(age) mustEqual 25
+    }
+    "merge 'Jane Doe' for an inserted record" in {
+      merge(name, name("Jane Doe"), age(22))
+      val results = exec(queryAll).toList
+      results must have size 2
+      val jane = results.head
+      jane(name) mustEqual "Jane Doe"
+      jane(age) mustEqual 22
+      val john = results.tail.head
+      john(name) mustEqual "John Doe"
+      john(age) mustEqual 25
+    }
+  }
   "TestCrossReferenceDatastore" should {
     "create the tables successfully" in {
       TestCrossReferenceDatastore.create() must not(throwA[Throwable])
@@ -245,8 +282,12 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
   }
+  val names = new Table("names") {
+    val name = column[String]("name", PrimaryKey, Unique, NotNull)
+    val age = column[Int]("age", NotNull)
+  }
 
-  val tables = List(test, suppliers, coffees)
+  val tables = List(test, suppliers, coffees, names)
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {

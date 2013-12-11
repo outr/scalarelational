@@ -60,6 +60,9 @@ trait Datastore extends Listenable with Logging {
       None
     }
   }
+  def merge(key: Column[_], values: ColumnValue[_]*) = {
+    exec(Merge(key, values.toList))
+  }
   def update(values: ColumnValue[_]*) = Update(values.toList, values.head.column.table)
   def delete(table: Table) = Delete(table)
 
@@ -147,6 +150,7 @@ trait Datastore extends Listenable with Logging {
 
   def exec(query: Query): QueryResultsIterator
   def exec(insert: Insert): Iterator[Int]
+  def exec(merge: Merge): Int
   def exec(update: Update): Int
   def exec(delete: Delete): Int
 
