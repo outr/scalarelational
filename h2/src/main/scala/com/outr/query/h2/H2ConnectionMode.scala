@@ -10,6 +10,12 @@ trait H2ConnectionMode {
   def url: String
 }
 
+object H2ConnectionMode {
+  def apply(connectionURL: String) = new H2ConnectionMode {
+    def url = connectionURL
+  }
+}
+
 case class H2Embedded(file: File) extends H2ConnectionMode {
   lazy val url = s"jdbc:h2:file:${file.getAbsolutePath}"
 }

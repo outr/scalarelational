@@ -33,7 +33,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
   def persistence = _persistence.toList
   lazy val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 
-  implicit val optionInt2IntConverter = OptionInt2IntConverter
+  implicit val optionInt2IntConverter = new Option2ValueConverter[Int]
 
   /**
    * Fired immediately before persisting an object to the database. The instance may be modified in the response.
@@ -95,6 +95,22 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
 
   def orm[C, O](name: String, properties: ColumnProperty*)
                (implicit columnConverter: ColumnConverter[C], ormConverter: ORMConverter[C, O], columnManifest: Manifest[C]) = {
+    val column = this.column[C](name, columnConverter, properties: _*)
+    val caseValue = clazz.caseValue(name).getOrElse(throw new RuntimeException(s"Unable to find $name in $clazz"))
+    _persistence += Persistence[T, C, O](this, caseValue, column, ormConverter)
+    column
+  }
+
+  def orm[C, O](name: String, columnConverter: ColumnConverter[C], properties: ColumnProperty*)
+               (implicit ormConverter: ORMConverter[C, O], columnManifest: Manifest[C]) = {
+    val column = this.column[C](name, columnConverter, properties: _*)
+    val caseValue = clazz.caseValue(name).getOrElse(throw new RuntimeException(s"Unable to find $name in $clazz"))
+    _persistence += Persistence[T, C, O](this, caseValue, column, ormConverter)
+    column
+  }
+
+  def orm[C, O](name: String, columnConverter: ColumnConverter[C], ormConverter: ORMConverter[C, O], properties: ColumnProperty*)
+               (implicit columnManifest: Manifest[C]) = {
     val column = this.column[C](name, columnConverter, properties: _*)
     val caseValue = clazz.caseValue(name).getOrElse(throw new RuntimeException(s"Unable to find $name in $clazz"))
     _persistence += Persistence[T, C, O](this, caseValue, column, ormConverter)

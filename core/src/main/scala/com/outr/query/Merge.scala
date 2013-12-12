@@ -1,5 +1,7 @@
 package com.outr.query
 
+import scala.language.existentials
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */

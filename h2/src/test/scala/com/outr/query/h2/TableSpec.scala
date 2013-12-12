@@ -3,7 +3,7 @@ package com.outr.query.h2
 import org.specs2.mutable._
 import com.outr.query._
 import com.outr.query.property._
-import com.outr.query.convert.{StringConverter, ColumnConverter}
+import com.outr.query.convert.{ObjectSerializationConverter, StringConverter, ColumnConverter}
 import org.specs2.main.ArgumentsShortcuts
 
 /**
@@ -231,6 +231,20 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       john(age) mustEqual 25
     }
   }
+  "fruit colors" should {
+    import fruitColors._
+
+    "insert an Orange" in {
+      insert(color("Orange"), fruit(Fruit("Orange"))) must not(throwA[Throwable])
+    }
+    "query the Orange back" in {
+      val results = exec(select (*) from fruitColors).toList
+      results must have size 1
+      val orange = results.head
+      orange(color) mustEqual "Orange"
+      orange(fruit) mustEqual Fruit("Orange")
+    }
+  }
   "TestCrossReferenceDatastore" should {
     "create the tables successfully" in {
       TestCrossReferenceDatastore.create() must not(throwA[Throwable])
@@ -286,8 +300,12 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = column[String]("name", PrimaryKey, Unique, NotNull)
     val age = column[Int]("age", NotNull)
   }
+  val fruitColors = new Table("fruit_colors") {
+    val color = column[String]("color", NotNull)
+    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit], NotNull)
+  }
 
-  val tables = List(test, suppliers, coffees, names)
+  val tables = List(test, suppliers, coffees, names, fruitColors)
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
@@ -325,3 +343,5 @@ object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_ty
 
   val tables = List(lists)
 }
+
+case class Fruit(name: String)
