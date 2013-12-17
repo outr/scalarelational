@@ -3,6 +3,7 @@ package com.outr.query.convert
 import com.outr.query.ColumnLike
 import org.powerscala.enum.{Enumerated, EnumEntry}
 import org.powerscala.reflect._
+import java.sql.Blob
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -55,6 +56,12 @@ object ByteArrayConverter extends ColumnConverter[Array[Byte]] {
   def sqlType = "BINARY(1000)"
   def toSQLType(column: ColumnLike[Array[Byte]], value: Array[Byte]) = value
   def fromSQLType(column: ColumnLike[Array[Byte]], value: Any) = value.asInstanceOf[Array[Byte]]
+}
+
+object BlobConverter extends ColumnConverter[Blob] {
+  def sqlType = "BLOB"
+  def toSQLType(column: ColumnLike[Blob], value: Blob) = value
+  def fromSQLType(column: ColumnLike[Blob], value: Any) = value.asInstanceOf[Blob]
 }
 
 class EnumConverter[T <: EnumEntry](implicit manifest: Manifest[T]) extends ColumnConverter[T] {

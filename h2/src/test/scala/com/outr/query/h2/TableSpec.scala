@@ -5,6 +5,11 @@ import com.outr.query._
 import com.outr.query.property._
 import com.outr.query.convert.{ObjectSerializationConverter, StringConverter, ColumnConverter}
 import org.specs2.main.ArgumentsShortcuts
+import java.sql.Blob
+import javax.sql.rowset.serial.SerialBlob
+import org.powerscala.IO
+
+import scala.language.reflectiveCalls
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -253,7 +258,8 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
   "TestSpecialTypesDatastore" should {
     import TestSpecialTypesDatastore._
 
-    var id: Int = -1
+    var listId: Int = -1
+    var dataId: Int = -1
 
     "create the tables successfully" in {
       create() must not(throwA[Throwable])
@@ -261,16 +267,32 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
     "insert a List[String] entry" in {
       val idOption = insert(lists.strings(List("One", "Two", "Three")))
       idOption mustNotEqual None
-      id = idOption.get
-      id mustEqual 1
+      listId = idOption.get
+      listId mustEqual 1
     }
     "query a List[String] entry" in {
       val query = select(lists.id, lists.strings) from lists
       val results = exec(query).toList
       results must have size 1
       val result = results.head
-      result(lists.id) mustEqual id
+      result(lists.id) mustEqual listId
       result(lists.strings) mustEqual List("One", "Two", "Three")
+    }
+    "insert a Blob entry" in {
+      val idOption = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8"))))
+      idOption mustNotEqual None
+      dataId = idOption.get
+      dataId mustEqual 1
+    }
+    "query a Blob entry" in {
+      val query = select(data.id, data.content) from data
+      val results = exec(query).toList
+      results must have size 1
+      val result = results.head
+      result(data.id) mustEqual dataId
+      val content = result(data.content)
+      val s = IO.copy(content.getBinaryStream)
+      s mustEqual "test using blob"
     }
   }
 }
@@ -341,7 +363,12 @@ object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_ty
     val strings = column[List[String]]("strings")
   }
 
-  val tables = List(lists)
+  val data = new Table("data") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val content = column[Blob]("content")
+  }
+
+  val tables = List(lists, data)
 }
 
 case class Fruit(name: String)

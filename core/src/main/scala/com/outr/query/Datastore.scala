@@ -27,6 +27,7 @@ trait Datastore extends Listenable with Logging {
   implicit def bigDecimalConverter = BigDecimalConverter
   implicit def stringConverter = StringConverter
   implicit def byteArrayConverter = ByteArrayConverter
+  implicit def blobConverter = BlobConverter
 
   val tables: List[Table]
 
