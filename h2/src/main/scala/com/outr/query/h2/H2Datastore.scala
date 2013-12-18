@@ -139,6 +139,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
         ps.setObject(index + 1, value)
       } catch {
         case exc: NotSerializableException => throw new RuntimeException(s"Index: $index (zero-based) is not serializable for insert($columnNames)", exc)
+        case t: Throwable => throw new RuntimeException(s"Index: $index (zero-based) - $value failed for insert($columnNames)", t)
       }
     }
     ps.executeUpdate()
