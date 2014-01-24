@@ -74,7 +74,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     table.columns.foreach {
       case c => c.get[Indexed](Indexed.name) match {
         case Some(index) => {
-          b.append(s"CREATE INDEX ${index.indexName} ON ${table.tableName}(${c.name})\r\n\r\n")
+          b.append(s"CREATE INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${c.name})\r\n\r\n")
         }
         case None => // No index on this column
       }
