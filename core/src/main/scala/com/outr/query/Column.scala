@@ -34,6 +34,9 @@ class Column[T] private[query](val name: String,
 
   def has(property: ColumnProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = _properties.contains(propertyName)
+  def get[P <: ColumnProperty](propertyName: String) = _properties.collectFirst {
+    case (key, property) if key == propertyName => property.asInstanceOf[P]
+  }
   def prop[P <: ColumnProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
 
   override def toString = s"Column(${table.tableName}.$name)"

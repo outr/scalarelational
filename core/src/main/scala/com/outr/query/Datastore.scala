@@ -95,6 +95,12 @@ trait Datastore extends Listenable with Logging {
       }
     }
 
+    tables.foreach {
+      case t => {
+        b.append(createTableIndexes(t))
+      }
+    }
+
     b.toString()
   }
 
@@ -158,6 +164,8 @@ trait Datastore extends Listenable with Logging {
   def createTableSQL(ifNotExist: Boolean, table: Table): String
 
   def createTableReferences(table: Table): String
+
+  def createTableIndexes(table: Table): String
 
   protected def createSession() = new DatastoreSession(this, sessionTimeout, Thread.currentThread())
 

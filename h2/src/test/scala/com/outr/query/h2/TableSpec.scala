@@ -320,7 +320,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   }
   val names = new Table("names") {
     val name = column[String]("name", PrimaryKey, Unique, NotNull)
-    val age = column[Int]("age", NotNull)
+    val age = column[Int]("age", NotNull, Indexed("idxage"))
   }
   val fruitColors = new Table("fruit_colors") {
     val color = column[String]("color", NotNull)

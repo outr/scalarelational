@@ -3,13 +3,25 @@ package com.outr.query.h2
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
-import com.outr.query.Insert
 import java.sql.Statement
 import java.io.NotSerializableException
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
-import com.outr.query.property.{ForeignKey, Unique, AutoIncrement, NotNull}
+import com.outr.query.property._
 import com.outr.query.convert.ColumnConverter
+import com.outr.query.Update
+import com.outr.query.LikeCondition
+import com.outr.query.Join
+import com.outr.query.SimpleFunction
+import scala.Some
+import com.outr.query.Delete
+import com.outr.query.DirectCondition
+import com.outr.query.RangeCondition
+import com.outr.query.ColumnCondition
+import com.outr.query.Conditions
+import com.outr.query.Merge
+import com.outr.query.Query
+import com.outr.query.Insert
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -50,6 +62,21 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
         b.append(s"ALTER TABLE ${table.tableName}\r\n")
         b.append(s"\tADD FOREIGN KEY(${c.name})\r\n")
         b.append(s"\tREFERENCES ${foreignKey.table.tableName} (${foreignKey.name});\r\n\r\n")
+      }
+    }
+
+    b.toString()
+  }
+
+  def createTableIndexes(table: Table) = {
+    val b = new StringBuilder
+
+    table.columns.foreach {
+      case c => c.get[Indexed](Indexed.name) match {
+        case Some(index) => {
+          b.append(s"CREATE INDEX ${index.indexName} ON ${table.tableName}(${c.name})\r\n\r\n")
+        }
+        case None => // No index on this column
       }
     }
 
