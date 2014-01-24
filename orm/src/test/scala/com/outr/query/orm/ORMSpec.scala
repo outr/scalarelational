@@ -7,7 +7,12 @@ import com.outr.query.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
 import org.specs2.main.ArgumentsShortcuts
-import com.outr.query.orm.convert.{ObjectConverter, LazyConverter}
+import com.outr.query.orm.convert._
+import java.sql.Blob
+import scala.language.reflectiveCalls
+import java.io.File
+import org.powerscala.IO
+import com.outr.query.column.FileBlob
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -206,6 +211,31 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       usa.population mustEqual PopulationIn2012
     }
   }
+  "Content" should {
+    val testContent = "Testing content"
+
+    "insert content and data" in {
+      val file = File.createTempFile("tmp", ".txt")
+      IO.copy(testContent, file)
+      val data = contentData.persist(ContentData(new FileBlob(file)))
+      data.id mustNotEqual None
+      val c = content.persist(Content("Test", Transient(data)))
+      c.id mustNotEqual None
+    }
+    "query back content and access data" in {
+      val results = content.query(content.q).toList
+      results must have size 1
+      val c = results.head
+      c.name mustEqual "Test"
+      c.data.use {
+        case Some(data) => {
+          val s = new String(data.content.getBytes(0, data.content.length().toInt), "UTF-8")
+          s mustEqual testContent
+        }
+        case None => throw new RuntimeException("No result found!")
+      }
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -246,11 +276,20 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = orm[String]("name", Unique, NotNull, PrimaryKey)
     val population = orm[Int]("population", NotNull)
   }
+  val contentData = new ORMTable[ContentData]("contentData") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val content = orm[Blob]("content", NotNull)
+  }
+  val content = new ORMTable[Content]("content") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name", NotNull)
+    val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(contentData.id))
+  }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
 
-  val tables = List(person, company, domain, simple, order, item, orderItem, country)
+  val tables = List(person, company, domain, simple, order, item, orderItem, country, contentData, content)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
@@ -266,3 +305,7 @@ case class Order(items: LazyList[Item] = LazyList.Empty, date: Long = System.cur
 case class Item(name: String, orders: LazyList[Order] = LazyList.Empty, id: Option[Int] = None)
 
 case class Country(name: String, population: Int)
+
+case class Content(name: String, data: Transient[ContentData] = Transient.None, id: Option[Int] = None)
+
+case class ContentData(content: Blob, id: Option[Int] = None)

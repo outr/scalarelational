@@ -1,12 +1,12 @@
 package com.outr.query.orm
 
-
 /**
+ * Lazy can be used to lazily load a foreign key on-demand. After the first request to load on the referencing instance
+ * all future calls will use the cached value.
+ *
  * @author Matt Hicks <matt@outr.com>
  */
 sealed trait Lazy[T] extends (() => T) {
-  Lazy      // Make sure companion has loaded
-
   def manifest: Manifest[T]
 
   def loaded: Boolean
