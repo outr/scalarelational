@@ -26,6 +26,7 @@ sealed trait Transient[T] {
 object Transient {
   def None[T](implicit manifest: Manifest[T]) = PreloadedTransient[T](scala.None)
   def apply[T](value: T)(implicit manifest: Manifest[T]) = PreloadedTransient[T](Option(value))
+  def fromOption[T](o: Option[T])(implicit manifest: Manifest[T]) = PreloadedTransient[T](o)
 }
 
 case class PreloadedTransient[T](value: Option[T])(implicit val manifest: Manifest[T]) extends Transient[T] {

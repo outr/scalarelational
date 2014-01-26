@@ -17,4 +17,6 @@ object Operator extends Enumerated[Operator] {
   val Between = new Operator("BETWEEN")
   val Like = new Operator("LIKE")
   val In = new Operator("IN")
+  val Is = new Operator("IS")
+  val IsNot = new Operator("IS NOT")
 }

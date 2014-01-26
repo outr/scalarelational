@@ -230,6 +230,9 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     case c: ColumnCondition[_] => {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
+    case c: NullCondition[_] => {
+      s"${c.column.longName} ${c.operator.symbol} NULL"
+    }
     case c: DirectCondition[_] => {
       args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[Column[Any]], c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"

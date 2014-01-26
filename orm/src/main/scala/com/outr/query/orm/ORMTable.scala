@@ -291,7 +291,7 @@ abstract class ORMTable[T](tableName: String)(implicit val manifest: Manifest[T]
     val pk = primaryKeys.head.asInstanceOf[Column[Any]]
     val query = Query(*, this).where(pk === primaryKey)
     val results = this.query(query).toList
-    if (results.tail.nonEmpty) {
+    if (results.nonEmpty && results.tail.nonEmpty) {
       throw new RuntimeException(s"Query byId for ${pk.name} == $primaryKey returned ${results.size} results.")
     }
     results.headOption

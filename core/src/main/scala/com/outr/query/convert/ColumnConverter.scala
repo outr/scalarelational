@@ -42,8 +42,8 @@ object DoubleConverter extends ColumnConverter[Double] {
 
 object BigDecimalConverter extends ColumnConverter[BigDecimal] {
   def sqlType = "DECIMAL(20, 2)"
-  def toSQLType(column: ColumnLike[BigDecimal], value: BigDecimal) = value
-  def fromSQLType(column: ColumnLike[BigDecimal], value: Any) = value.asInstanceOf[BigDecimal]
+  def toSQLType(column: ColumnLike[BigDecimal], value: BigDecimal) = value.underlying()
+  def fromSQLType(column: ColumnLike[BigDecimal], value: Any) = BigDecimal(value.asInstanceOf[java.math.BigDecimal])
 }
 
 object StringConverter extends ColumnConverter[String] {

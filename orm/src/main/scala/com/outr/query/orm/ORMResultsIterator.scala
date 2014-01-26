@@ -9,4 +9,12 @@ class ORMResultsIterator[T](results: QueryResultsIterator, orm: ORMTable[T]) ext
   def hasNext = results.hasNext
 
   def next() = orm.result2Instance(results.next())
+
+  def headOption = if (hasNext) {
+    Some(next())
+  } else {
+    None
+  }
+
+  def head = headOption.getOrElse(throw new RuntimeException(s"No results found for ORMResultsIterator!"))
 }

@@ -10,6 +10,8 @@ sealed trait Condition {
   def or(condition: Condition) = Conditions(List(this, condition), ConnectType.Or)
 }
 
+case class NullCondition[T](column: ColumnLike[T], operator: Operator) extends Condition
+
 case class ColumnCondition[T](column: ColumnLike[T], operator: Operator, other: ColumnLike[T]) extends Condition
 
 case class DirectCondition[T](column: ColumnLike[T], operator: Operator, value: T) extends Condition

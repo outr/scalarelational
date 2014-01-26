@@ -24,6 +24,7 @@ sealed trait Lazy[T] extends (() => T) {
 object Lazy {
   def None[T](implicit manifest: Manifest[T]) = PreloadedLazy[T](scala.None)
   def apply[T](value: T)(implicit manifest: Manifest[T]) = PreloadedLazy[T](Option(value))
+  def fromOption[T](o: Option[T])(implicit manifest: Manifest[T]) = PreloadedLazy[T](o)
 }
 
 case class PreloadedLazy[T](value: Option[T])(implicit val manifest: Manifest[T]) extends Lazy[T] {
