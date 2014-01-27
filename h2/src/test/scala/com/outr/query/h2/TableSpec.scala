@@ -57,7 +57,7 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       john(test.name) mustEqual "John Doe"
     }
     "query a record back via 'LIKE'" in {
-      val query = select(test.id, test.name) from test where (test.name like "John%")
+      val query = select(test.id, test.name) from test where test.name % "John%"
       val results = exec(query).toList
       results must have size 1
       val john = results.head
@@ -81,7 +81,7 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       results must have size 2
     }
     "query two records back via regular expression" in {
-      val query = select(test.id, test.name) from test where (test.name regex ".*Doe".r)
+      val query = select(test.id, test.name) from test where test.name * ".*Doe".r
       val results = exec(query).toList
       results must have size 2
       val john = results.head

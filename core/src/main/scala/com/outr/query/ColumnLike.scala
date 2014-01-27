@@ -43,9 +43,13 @@ trait ColumnLike[T] extends SelectExpression {
   def >=(value: T) = DirectCondition(this, Operator.GreaterThanOrEqual, value)
   def <=(value: T) = DirectCondition(this, Operator.LessThanOrEqual, value)
   def between(range: Seq[T]) = RangeCondition(this, Operator.Between, range)
+  def %(pattern: String) = LikeCondition(this, pattern, not = false)
   def like(pattern: String) = LikeCondition(this, pattern, not = false)
+  def !%(pattern: String) = LikeCondition(this, pattern, not = true)
   def notLike(pattern: String) = LikeCondition(this, pattern, not = true)
+  def *(regex: Regex) = RegexCondition(this, regex, not = false)
   def regex(regex: Regex) = RegexCondition(this, regex, not = false)
+  def !*(regex: Regex) = RegexCondition(this, regex, not = true)
   def notRegex(regex: Regex) = RegexCondition(this, regex, not = true)
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 

@@ -74,6 +74,8 @@ object LazyList {
 
   def apply[T](values: T*)(implicit manifest: Manifest[T]) = PreloadedLazyList[T](values.toList)
 
+  def apply[T](values: List[T])(implicit manifest: Manifest[T]) = PreloadedLazyList[T](values)
+
   def Empty[T](implicit manifest: Manifest[T]) = PreloadedLazyList[T](Nil)
 }
 
