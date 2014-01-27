@@ -18,7 +18,9 @@ case class DirectCondition[T](column: ColumnLike[T], operator: Operator, value: 
 
 case class RangeCondition[T](column: ColumnLike[T], operator: Operator, values: Seq[T]) extends Condition
 
-case class LikeCondition[T](column: ColumnLike[T], regex: Regex) extends Condition
+case class LikeCondition[T](column: ColumnLike[T], pattern: String, not: Boolean) extends Condition
+
+case class RegexCondition[T](column: ColumnLike[T], regex: Regex, not: Boolean) extends Condition
 
 case class Conditions(list: List[Condition], connectType: ConnectType = ConnectType.And) extends Condition {
   override def and(condition: Condition) = if (connectType == ConnectType.And) {

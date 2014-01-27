@@ -87,7 +87,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val b = new StringBuilder
     b.append(column.name)
     b.append(' ')
-    b.append(column.converter.sqlType)
+    b.append(column.sqlType)
     if (column.has(NotNull)) {
       b.append(" NOT NULL")
     }
@@ -237,7 +237,14 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[Column[Any]], c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"
     }
-    case c: LikeCondition[_] => throw new UnsupportedOperationException("LikeCondition isn't supported yet!")
+    case c: LikeCondition[_] => {
+      args += c.pattern
+      s"${c.column.longName} ${if (c.not) "NOT " else ""}LIKE ?"
+    }
+    case c: RegexCondition[_] => {
+      args += c.regex.toString()
+      s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
+    }
     case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
     case c: Conditions => {
       val sql = c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")

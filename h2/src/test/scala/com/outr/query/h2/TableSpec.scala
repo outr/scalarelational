@@ -56,6 +56,14 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       john(test.id) mustEqual 1
       john(test.name) mustEqual "John Doe"
     }
+    "query a record back via 'LIKE'" in {
+      val query = select(test.id, test.name) from test where (test.name like "John%")
+      val results = exec(query).toList
+      results must have size 1
+      val john = results.head
+      john(test.id) mustEqual 1
+      john(test.name) mustEqual "John Doe"
+    }
     "insert another record" in {
       insert(test.name("Jane Doe")) must not(throwA[Throwable])
     }
@@ -71,6 +79,17 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       val query = select (test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > 0
       val results = exec(query).toList
       results must have size 2
+    }
+    "query two records back via regular expression" in {
+      val query = select(test.id, test.name) from test where (test.name regex ".*Doe".r)
+      val results = exec(query).toList
+      results must have size 2
+      val john = results.head
+      john(test.id) mustEqual 1
+      john(test.name) mustEqual "John Doe"
+      val jane = results.tail.head
+      jane(test.id) mustEqual 2
+      jane(test.name) mustEqual "Jane Doe"
     }
     "update 'John Doe' to 'Joe Doe'" in {
       val updated = exec(update(test.name("Joe Doe")) where(test.name === "John Doe"))
@@ -348,7 +367,7 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
 
 object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
   implicit val listStringConverter = new ColumnConverter[List[String]] {
-    def sqlType = StringConverter.sqlType
+    def sqlType(column: ColumnLike[List[String]]) = StringConverter.VarcharType
 
     def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
 

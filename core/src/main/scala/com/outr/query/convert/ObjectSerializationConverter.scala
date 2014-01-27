@@ -9,7 +9,7 @@ import java.io.{ByteArrayInputStream, ObjectInputStream, ByteArrayOutputStream, 
  * @author Matt Hicks <matt@outr.com>
  */
 class ObjectSerializationConverter[T <: AnyRef] extends ColumnConverter[T] {
-  val sqlType = s"BINARY(${Int.MaxValue})"
+  def sqlType(column: ColumnLike[T]) = s"BINARY(${Int.MaxValue})"
 
   def toSQLType(column: ColumnLike[T], value: T) = if (value != null) {
     val baos = new ByteArrayOutputStream()

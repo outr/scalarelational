@@ -14,6 +14,8 @@ trait ColumnLike[T] extends SelectExpression {
   def converter: ColumnConverter[T]
   def manifest: Manifest[T]
 
+  def sqlType = converter.sqlType(this)
+
   def apply(value: T, converterOverride: Option[ColumnConverter[T]] = None) = ColumnValue[T](this, value, converterOverride)
   def value(v: Any) = {
     val toConvert = v match {
@@ -41,7 +43,10 @@ trait ColumnLike[T] extends SelectExpression {
   def >=(value: T) = DirectCondition(this, Operator.GreaterThanOrEqual, value)
   def <=(value: T) = DirectCondition(this, Operator.LessThanOrEqual, value)
   def between(range: Seq[T]) = RangeCondition(this, Operator.Between, range)
-  def like(regex: Regex) = LikeCondition(this, regex)
+  def like(pattern: String) = LikeCondition(this, pattern, not = false)
+  def notLike(pattern: String) = LikeCondition(this, pattern, not = true)
+  def regex(regex: Regex) = RegexCondition(this, regex, not = false)
+  def notRegex(regex: Regex) = RegexCondition(this, regex, not = true)
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
   def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
