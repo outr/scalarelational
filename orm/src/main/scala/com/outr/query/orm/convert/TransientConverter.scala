@@ -29,9 +29,11 @@ class TransientConverter[O](implicit manifest: Manifest[O]) extends ORMConverter
     }
   }
 
-  def toORM(column: Column[Int], c: Int, result: QueryResult): Option[Transient[O]] = {
+  def toORM(column: Column[Int], c: Int, result: QueryResult): Option[Transient[O]] = if (c > 0) {
     val foreignColumn = ForeignKey(column).foreignColumn
     val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[O]]
     Some(DynamicTransient(foreignTable, c))
+  } else {
+    None
   }
 }

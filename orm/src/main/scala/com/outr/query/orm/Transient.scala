@@ -19,8 +19,6 @@ sealed trait Transient[T] {
    * @return R
    */
   def use[R](f: Option[T] => R): R
-
-  override def toString = s"${getClass.getSimpleName}(...)"
 }
 
 object Transient {
@@ -31,6 +29,8 @@ object Transient {
 
 case class PreloadedTransient[T](value: Option[T])(implicit val manifest: Manifest[T]) extends Transient[T] {
   def use[R](f: Option[T] => R) = f(value)
+
+  override def toString = s"PreloadedTransient($value)"
 }
 
 case class DynamicTransient[T](table: ORMTable[T], key: Any)(implicit val manifest: Manifest[T]) extends Transient[T] {
@@ -38,4 +38,6 @@ case class DynamicTransient[T](table: ORMTable[T], key: Any)(implicit val manife
     val value = table.byId(key)
     f(value)
   }
+
+  override def toString = s"DynamicTransient($key)"
 }

@@ -235,6 +235,27 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
         case None => throw new RuntimeException("No result found!")
       }
     }
+    "remove data" in {
+      val results = content.query(content.q).toList
+      results must have size 1
+      val c = results.head
+      c.name mustEqual "Test"
+      val updated = content.persist(c.copy(name = "new name", data = Transient.None))
+      updated.data mustEqual Transient.None
+    }
+    "set data back" in {
+      val results = content.query(content.q).toList
+      results must have size 1
+      val c = results.head
+      c.name mustEqual "new name"
+      c.data.use {
+        case Some(data) => {
+          val s = new String(data.content.getBytes(0, data.content.length().toInt), "UTF-8")
+          s mustEqual testContent
+        }
+        case None => throw new RuntimeException("No result found!")
+      }
+    }
   }
 }
 

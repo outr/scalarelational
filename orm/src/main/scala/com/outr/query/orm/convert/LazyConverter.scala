@@ -28,9 +28,11 @@ class LazyConverter[O](implicit manifest: Manifest[O]) extends ORMConverter[Int,
     }
   }
 
-  def toORM(column: Column[Int], c: Int, result: QueryResult): Option[Lazy[O]] = {
+  def toORM(column: Column[Int], c: Int, result: QueryResult): Option[Lazy[O]] = if (c > 0) {
     val foreignColumn = ForeignKey(column).foreignColumn
     val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[O]]
     Some(DelayedLazy(foreignTable, c))
+  } else {
+    None
   }
 }

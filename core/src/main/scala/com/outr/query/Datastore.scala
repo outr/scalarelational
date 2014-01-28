@@ -222,4 +222,12 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
     }
     QueryResult(query.table, values)
   }
+
+  def one = if (hasNext) {
+    val n = next()
+    if (hasNext) throw new RuntimeException("More than one result for query!")
+    n
+  } else {
+    throw new RuntimeException("No results for the query!")
+  }
 }
