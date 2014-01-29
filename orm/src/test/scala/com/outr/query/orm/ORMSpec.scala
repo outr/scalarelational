@@ -26,7 +26,7 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
 
   "Person" should {
     "create the tables" in {
-      create() must not(throwA[Throwable])
+      create() mustNotEqual null
     }
     "insert 'John Doe' into the table" in {
       val john = Person("John Doe")
@@ -257,6 +257,17 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       }
     }
   }
+//  "User" should {
+//    "insert an Administrator" in {
+//      user.persist(Administrator("Super User")) mustNotEqual null
+//    }
+//    "query back the Administrator by name" in {
+//      val results = user.query(user.q where user.name === "Super User").toList
+//      results must have length 1
+//      val result = results.head
+//      result.getClass mustEqual classOf[Administrator]
+//    }
+//  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -306,6 +317,12 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = orm[String]("name", NotNull)
     val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(contentData.id))
   }
+//  val user = new ORMTable[User]("user") {
+//    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+//    val name = orm[String]("name", NotNull)
+//    val language = orm[String]("language")
+//    val userType = column[String]("column", NotNull)
+//  }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
@@ -330,3 +347,14 @@ case class Country(name: String, population: Int)
 case class Content(name: String, data: Transient[ContentData] = Transient.None, id: Option[Int] = None)
 
 case class ContentData(content: Blob, id: Option[Int] = None)
+
+trait User {
+  def id: Option[Int]
+  def name: String
+}
+
+case class Administrator(name: String, id: Option[Int] = None) extends User
+
+case class Developer(name: String, language: String, id: Option[Int] = None) extends User
+
+case class Employee(name: String, id: Option[Int] = None) extends User
