@@ -2,7 +2,7 @@ package com.outr.query.orm
 
 import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
-import com.outr.query.Table
+import com.outr.query.{QueryResult, ColumnValue, Table}
 import com.outr.query.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
@@ -257,17 +257,42 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       }
     }
   }
-//  "User" should {
-//    "insert an Administrator" in {
-//      user.persist(Administrator("Super User")) mustNotEqual null
-//    }
-//    "query back the Administrator by name" in {
-//      val results = user.query(user.q where user.name === "Super User").toList
-//      results must have length 1
-//      val result = results.head
-//      result.getClass mustEqual classOf[Administrator]
-//    }
-//  }
+  "User" should {
+    "insert an Administrator" in {
+      user.persist(Administrator("Super User")) mustNotEqual null
+    }
+    "query back the Administrator by name" in {
+      val results = user.query(user.q where user.name === "Super User").toList
+      results must have length 1
+      val result = results.head
+      result.getClass mustEqual classOf[Administrator]
+      result.name mustEqual "Super User"
+    }
+    "insert a Developer" in {
+      user.persist(Developer("Superman", "Scala")) mustNotEqual null
+    }
+    "query back the Developer by name" in {
+      val results = user.query(user.q where user.name === "Superman").toList
+      results must have length 1
+      val result = results.head
+      result.getClass mustEqual classOf[Developer]
+      result.name mustEqual "Superman"
+      result.asInstanceOf[Developer].language mustEqual "Scala"
+    }
+    "query back all users" in {
+      val results = user.query(user.q).toList
+      results must have length 2
+      val admin = results.collectFirst {
+        case u: Administrator => u
+      }.get
+      admin.name mustEqual "Super User"
+      val dev = results.collectFirst {
+        case u: Developer => u
+      }.get
+      dev.name mustEqual "Superman"
+      dev.language mustEqual "Scala"
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -317,17 +342,54 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = orm[String]("name", NotNull)
     val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(contentData.id))
   }
-//  val user = new ORMTable[User]("user") {
-//    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-//    val name = orm[String]("name", NotNull)
-//    val language = orm[String]("language")
-//    val userType = column[String]("column", NotNull)
-//  }
+  val user = new MappedTable[User]("user") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", NotNull)
+    val language = column[String]("language")
+    val userType = column[String]("column", NotNull)
+
+    override def q = select(*) from this
+
+    override def object2Row(value: User, onlyChanges: Boolean) = {
+      var columnValues = List.empty[ColumnValue[_]]
+      if (value.id.nonEmpty) {
+        columnValues = id(value.id.get) :: columnValues
+      }
+      columnValues = name(value.name) :: columnValues
+      val userTypeValue = value match {
+        case u: Administrator => "administrator"
+        case u: Developer => {
+          columnValues = language(u.language) :: columnValues
+          "developer"
+        }
+        case u: Employee => "employee"
+      }
+      columnValues = userType(userTypeValue) :: columnValues
+      MappedObject(value, columnValues.reverse)
+    }
+
+    override def result2Object(result: QueryResult) = result(userType) match {
+      case "administrator" => Administrator(result(name), Some(result(id)))
+      case "developer" => Developer(result(name), result(language), Some(result(id)))
+      case "employee" => Employee(result(name), Some(result(id)))
+    }
+
+    override def primaryKeysFor(value: User) = value.id match {
+      case Some(userId) => List(id(userId))
+      case None => Nil
+    }
+
+    override def updateWithId(t: User, id: Int) = t match {
+      case u: Administrator => u.copy(id = Some(id))
+      case u: Developer => u.copy(id = Some(id))
+      case u: Employee => u.copy(id = Some(id))
+    }
+  }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
 
-  val tables = List(person, company, domain, simple, order, item, orderItem, country, contentData, content)
+  val tables = List(person, company, domain, simple, order, item, orderItem, country, contentData, content, user)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)

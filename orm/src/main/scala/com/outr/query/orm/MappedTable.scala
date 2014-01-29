@@ -93,6 +93,15 @@ abstract class MappedTable[T](tableName: String)
   def result2Object(result: QueryResult): T
 
   /**
+   * Updates the supplied instance with a new id and returns the updated instance.
+   *
+   * @param t the instance to assign an id to
+   * @param id the id to be assigned
+   * @return a copy of the instance with the new id
+   */
+  def updateWithId(t: T, id: Int): T
+
+  /**
    * Converts the supplied object to a MappedObject representing the modified object (during persistence) along with
    * the column values to send to the database.
    *
@@ -121,7 +130,7 @@ abstract class MappedTable[T](tableName: String)
     val mapped = object2Row(modified)
     val insert = Insert(mapped.columnValues)
     val result = datastore.exec(insert).toList.headOption match {
-      case Some(id) => clazz.copy[T](mapped.updated, Map(autoIncrement.get.name -> id))
+      case Some(id) => updateWithId(mapped.updated, id)
       case None => mapped.updated
     }
     updateCached(idFor(result).get.value, result)   // Update the caching value

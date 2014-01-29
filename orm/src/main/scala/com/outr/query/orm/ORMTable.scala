@@ -2,22 +2,17 @@ package com.outr.query.orm
 
 import com.outr.query._
 import org.powerscala.reflect._
-import org.powerscala.event.processor.ModifiableProcessor
-import org.powerscala.event.Listenable
 import com.outr.query.Column
 import com.outr.query.property.{ColumnProperty, ForeignKey}
-import org.powerscala.ref.WeakReference
 import com.outr.query.orm.convert._
 import com.outr.query.convert.ColumnConverter
 import scala.collection.mutable.ListBuffer
 
 import scala.language.existentials
-import com.outr.query.Update
 import scala.Some
 import com.outr.query.QueryResult
 import com.outr.query.orm.convert.ConversionResponse
 import com.outr.query.orm.persistence.Persistence
-import com.outr.query.Delete
 import com.outr.query.ColumnValue
 
 /**
@@ -128,6 +123,8 @@ abstract class ORMTable[T](tableName: String)
     val caseValue = caseValues.find(cv => cv.name.equalsIgnoreCase(fieldName)).getOrElse(throw new RuntimeException(s"Unable to find $fieldName in $clazz."))
     _lazyMappings += caseValue -> foreignColumn
   }
+
+  override def updateWithId(t: T, id: Int) = clazz.copy[T](t, Map(autoIncrement.get.name -> id))
 
   def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
     primaryKeys.collect {
