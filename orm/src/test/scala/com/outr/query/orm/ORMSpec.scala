@@ -2,7 +2,7 @@ package com.outr.query.orm
 
 import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
-import com.outr.query.{QueryResult, ColumnValue, Table}
+import com.outr.query.Table
 import com.outr.query.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
@@ -342,48 +342,14 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val name = orm[String]("name", NotNull)
     val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(contentData.id))
   }
-  val user = new MappedTable[User]("user") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", NotNull)
-    val language = column[String]("language")
-    val userType = column[String]("column", NotNull)
+  val user = new PolymorphicORMTable[User]("user") {
+    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = orm[String]("name", NotNull)
+    val language = orm[String]("language", MappingOptional)
+    val userType = column[Int]("userType", NotNull)
 
-    override def q = select(*) from this
-
-    override def object2Row(value: User, onlyChanges: Boolean) = {
-      var columnValues = List.empty[ColumnValue[_]]
-      if (value.id.nonEmpty) {
-        columnValues = id(value.id.get) :: columnValues
-      }
-      columnValues = name(value.name) :: columnValues
-      val userTypeValue = value match {
-        case u: Administrator => "administrator"
-        case u: Developer => {
-          columnValues = language(u.language) :: columnValues
-          "developer"
-        }
-        case u: Employee => "employee"
-      }
-      columnValues = userType(userTypeValue) :: columnValues
-      MappedObject(value, columnValues.reverse)
-    }
-
-    override def result2Object(result: QueryResult) = result(userType) match {
-      case "administrator" => Administrator(result(name), Some(result(id)))
-      case "developer" => Developer(result(name), result(language), Some(result(id)))
-      case "employee" => Employee(result(name), Some(result(id)))
-    }
-
-    override def primaryKeysFor(value: User) = value.id match {
-      case Some(userId) => List(id(userId))
-      case None => Nil
-    }
-
-    override def updateWithId(t: User, id: Int) = t match {
-      case u: Administrator => u.copy(id = Some(id))
-      case u: Developer => u.copy(id = Some(id))
-      case u: Employee => u.copy(id = Some(id))
-    }
+    override val caseClasses = List(classOf[Administrator], classOf[Developer], classOf[Employee])
+    def typeColumn = userType
   }
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
@@ -413,6 +379,12 @@ case class ContentData(content: Blob, id: Option[Int] = None)
 trait User {
   def id: Option[Int]
   def name: String
+}
+
+object User {
+  val Administrator = 1
+  val Developer = 2
+  val Employee = 3
 }
 
 case class Administrator(name: String, id: Option[Int] = None) extends User
