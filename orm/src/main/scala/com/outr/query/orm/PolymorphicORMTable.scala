@@ -7,7 +7,7 @@ import com.outr.query.{QueryResult, Column, Datastore}
  */
 abstract class PolymorphicORMTable[T](tableName: String)(implicit manifest: Manifest[T], datastore: Datastore)
                                       extends ORMTable[T](tableName)(manifest, datastore) {
-  def caseClasses: List[Class[_ <: T]]
+  def caseClasses: Vector[Class[_ <: T]]
   def typeColumn: Column[Int]
 
   private def typeFromInstance(t: T) = caseClasses.indexOf(t.getClass) match {

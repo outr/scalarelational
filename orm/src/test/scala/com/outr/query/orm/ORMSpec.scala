@@ -348,7 +348,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
     val language = orm[String]("language", MappingOptional)
     val userType = column[Int]("userType", NotNull)
 
-    override val caseClasses = List(classOf[Administrator], classOf[Developer], classOf[Employee])
+    override val caseClasses = Vector(classOf[Administrator], classOf[Developer], classOf[Employee])
     def typeColumn = userType
   }
 
