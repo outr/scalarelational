@@ -6,16 +6,13 @@ package com.outr.query.orm
 trait ModifiedSupport[T] {
   this: ORMTable[T] =>
 
-  val modifiedCaseValue = clazz.caseValue("modified") match {
-    case Some(cv) => if (cv.valueType.hasType(classOf[Long])) {
-      cv
-    } else {
-      throw new RuntimeException(s"""Case Class ($clazz) must contain a "modified" field of type Long (type is actually: ${cv.valueType}) to utilize the ModifiedSupport trait.""")
-    }
-    case None => throw new RuntimeException(s"""Case Class ($clazz) must contain a "modified" field to utilize the ModifiedSupport trait.""")
-  }
-
   persisting.on {
-    case value => modifiedCaseValue.copy(value, System.currentTimeMillis())
+    case value => if (value != null) {
+      val persistence = persistenceFor(value.getClass)
+      val modifiedCaseValue = persistence.caseValues("modified")
+      modifiedCaseValue.copy(value, System.currentTimeMillis())
+    } else {
+      value
+    }
   }
 }

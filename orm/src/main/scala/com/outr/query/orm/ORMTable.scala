@@ -144,7 +144,12 @@ abstract class ORMTable[T](tableName: String)(implicit manifest: Manifest[T], da
 
   override def updateWithId(t: T, id: Int) = t.getClass.copy[T](t, Map(autoIncrement.get.name -> id))
 
-  override def result2Object(result: QueryResult) = {
+  protected def hasFieldsForThisTable(result: QueryResult) = result.values.find {
+    case cv: ColumnValue[_] => cv.column.table == this
+    case _ => false
+  }.nonEmpty
+
+  override def result2Object(result: QueryResult) = if (hasFieldsForThisTable(result)) {
     // Lookup ORMPersistence
     val caseClass = caseClassForRow(result)
     val ormPersistence = persistenceFor(caseClass)
@@ -167,6 +172,8 @@ abstract class ORMTable[T](tableName: String)(implicit manifest: Manifest[T], da
       case None => // No id, so we can't update the cache
     }
     queried.fire(instance)      // Allow listener to update the resulting instance before returning
+  } else {
+    null.asInstanceOf[T]
   }
 
   def primaryKeysFor(instance: T) = if (primaryKeys.nonEmpty) {
@@ -194,7 +201,7 @@ abstract class ORMTable[T](tableName: String)(implicit manifest: Manifest[T], da
   lazy val q = {
     var query = datastore.select(*) from this
     ormColumns.foreach {
-      case ormColumn if ormColumn.fieldClass.isCase && MappedTable.contains(ormColumn.fieldClass) => {
+      case ormColumn if MappedTable.contains(ormColumn.fieldClass) => {
         val table = MappedTable[Any](ormColumn.fieldClass)
         query = query.fields(table.*) leftJoin table on ormColumn.column.asInstanceOf[Column[Any]] === ForeignKey(ormColumn.column).foreignColumn.asInstanceOf[Column[Any]]
       }
