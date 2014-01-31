@@ -4,12 +4,16 @@ import scala.collection.mutable.ListBuffer
 import com.outr.query.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
 import scala.language.existentials
 import com.outr.query.convert.ColumnConverter
+import com.outr.query.table.property.TableProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 abstract class Table(val tableName: String, val linking: Boolean = false)(implicit val datastore: Datastore) {
   implicit def thisTable = this
+
+  private var _properties = Map.empty[String, TableProperty]
+  def properties = _properties.values
 
   private var _columns = ListBuffer.empty[Column[_]]
   private var _foreignColumns = ListBuffer.empty[Column[_]]
@@ -75,6 +79,29 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
     }
     (o2o.reverse, o2m.reverse, m2o.reverse, m2m.reverse)
   }
+
+  /**
+   * Adds the supplied properties to this table.
+   *
+   * @param properties the properties to add
+   * @return this
+   */
+  def props(properties: TableProperty*) = synchronized {
+    properties.foreach {
+      case p => {
+        _properties += p.name -> p
+        p.addedTo(this)
+      }
+    }
+    this
+  }
+
+  def has(property: TableProperty): Boolean = has(property.name)
+  def has(propertyName: String): Boolean = _properties.contains(propertyName)
+  def get[P <: TableProperty](propertyName: String) = _properties.collectFirst {
+    case (key, property) if key == propertyName => property.asInstanceOf[P]
+  }
+  def prop[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
 
   override def toString = s"Table($tableName)"
 }

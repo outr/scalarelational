@@ -22,6 +22,7 @@ import com.outr.query.Conditions
 import com.outr.query.Merge
 import com.outr.query.Query
 import com.outr.query.Insert
+import com.outr.query.table.property.Index
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -78,6 +79,11 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
         }
         case None => // No index on this column
       }
+    }
+
+    table.properties.foreach {
+      case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""} INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")})\r\n\r\n")
+      case _ => // Ignore other table properties
     }
 
     b.toString()

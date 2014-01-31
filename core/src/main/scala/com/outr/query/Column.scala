@@ -20,6 +20,12 @@ class Column[T] private[query](val name: String,
 
   table.addColumn(this)     // Add this column to the table
 
+  /**
+   * Adds the supplied properties to this column.
+   *
+   * @param properties the properties to add
+   * @return this
+   */
   def props(properties: ColumnProperty*) = synchronized {
     properties.foreach {
       case p => {

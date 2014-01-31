@@ -10,6 +10,8 @@ import javax.sql.rowset.serial.SerialBlob
 import org.powerscala.IO
 
 import scala.language.reflectiveCalls
+import com.outr.query.table.property.Index
+import org.h2.jdbc.JdbcSQLException
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -313,6 +315,15 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
       val s = IO.copy(content.getBinaryStream)
       s mustEqual "test using blob"
     }
+    "insert John Doe into combinedUnique" in {
+      insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")) mustEqual Some(1)
+    }
+    "insert Jane Doe into combinedUnique" in {
+      insert(combinedUnique.firstName("Jane"), combinedUnique.lastName("Doe")) mustEqual Some(2)
+    }
+    "attempting to insert John Doe again throws a constraint violation" in {
+      insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")) must throwA[JdbcSQLException]
+    }
   }
 }
 
@@ -387,7 +398,15 @@ object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_ty
     val content = column[Blob]("content")
   }
 
-  val tables = List(lists, data)
+  val combinedUnique = new Table("combined_unique") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val firstName = column[String]("firstName", NotNull)
+    val lastName = column[String]("lastName", NotNull)
+
+    props(Index.unique("IDXNAME", firstName, lastName))
+  }
+
+  val tables = List(lists, data, combinedUnique)
 }
 
 case class Fruit(name: String)
