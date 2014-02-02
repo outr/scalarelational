@@ -75,14 +75,14 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     table.columns.foreach {
       case c => c.get[Indexed](Indexed.name) match {
         case Some(index) => {
-          b.append(s"CREATE INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${c.name})\r\n\r\n")
+          b.append(s"CREATE INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${c.name});\r\n\r\n")
         }
         case None => // No index on this column
       }
     }
 
     table.properties.foreach {
-      case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""} INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")})\r\n\r\n")
+      case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""}INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")});\r\n\r\n")
       case _ => // Ignore other table properties
     }
 
