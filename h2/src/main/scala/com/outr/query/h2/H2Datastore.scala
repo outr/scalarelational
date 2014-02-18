@@ -3,8 +3,6 @@ package com.outr.query.h2
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
-import java.sql.Statement
-import java.io.NotSerializableException
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.property._
@@ -23,6 +21,8 @@ import com.outr.query.Merge
 import com.outr.query.Query
 import com.outr.query.Insert
 import com.outr.query.table.property.Index
+import org.powerscala.event.processor.UnitProcessor
+import com.outr.query.h2.trigger.{TriggerType, TriggerEvent}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -33,6 +33,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   Class.forName("org.h2.Driver")
 
   val dataSource = JdbcConnectionPool.create(mode.url, dbUser, dbPassword)
+  val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
   def createTableSQL(ifNotExist: Boolean, table: Table) = {
     val b = new StringBuilder
@@ -54,9 +55,13 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     b.toString()
   }
 
-  def createTableReferences(table: Table) = {
-    val b = new StringBuilder
+  def createTableExtras(table: Table, b: StringBuilder) = {
+    createTableReferences(table, b)
+    createTableIndexes(table, b)
+    createTableTriggers(table, b)
+  }
 
+  def createTableReferences(table: Table, b: StringBuilder) = {
     table.foreignKeys.foreach {
       case c => {
         val foreignKey = ForeignKey(c).foreignColumn
@@ -65,13 +70,9 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
         b.append(s"\tREFERENCES ${foreignKey.table.tableName} (${foreignKey.name});\r\n\r\n")
       }
     }
-
-    b.toString()
   }
 
-  def createTableIndexes(table: Table) = {
-    val b = new StringBuilder
-
+  def createTableIndexes(table: Table, b: StringBuilder) = {
     table.columns.foreach {
       case c => c.get[Indexed](Indexed.name) match {
         case Some(index) => {
@@ -85,8 +86,22 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""}INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")});\r\n\r\n")
       case _ => // Ignore other table properties
     }
+  }
 
-    b.toString()
+  private def createTableTriggers(table: Table, b: StringBuilder) = if (table.has(Triggers.name)) {
+    val triggers = table.get[Triggers](Triggers.name).get
+    if (triggers.has(TriggerType.Insert)) {
+      b.append(s"""CREATE TRIGGER ${table.tableName}_INSERT_TRIGGER AFTER INSERT ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+    }
+    if (triggers.has(TriggerType.Update)) {
+      b.append(s"""CREATE TRIGGER ${table.tableName}_UPDATE_TRIGGER AFTER UPDATE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+    }
+    if (triggers.has(TriggerType.Delete)) {
+      b.append(s"""CREATE TRIGGER ${table.tableName}_DELETE_TRIGGER AFTER DELETE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+    }
+    if (triggers.has(TriggerType.Select)) {
+      b.append(s"""CREATE TRIGGER ${table.tableName}_SELECT_TRIGGER BEFORE SELECT ON ${table.tableName} CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+    }
   }
 
   def column2SQL(column: Column[_]) = {
@@ -147,15 +162,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   def exec(query: Query) = active {
     val (sql, args) = sqlFromQuery(query)
 
-//    info(s"$sql - ${args.mkString(", ")}")
-    val ps = session.connection.prepareStatement(sql)
-
-    // Populate args
-    args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
-    }
-
-    val resultSet = ps.executeQuery()
+    val resultSet = session.executeQuery(sql, args)
     new QueryResultsIterator(resultSet, query)
   }
 
@@ -165,18 +172,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val columnValues = insert.values.map(cv => cv.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
-//    info(s"$insertString - ${columnValues.mkString(", ")}")
-    val ps = session.connection.prepareStatement(insertString, Statement.RETURN_GENERATED_KEYS)
-    columnValues.zipWithIndex.foreach {
-      case (value, index) => try {
-        ps.setObject(index + 1, value)
-      } catch {
-        case exc: NotSerializableException => throw new RuntimeException(s"Index: $index (zero-based) is not serializable for insert($columnNames)", exc)
-        case t: Throwable => throw new RuntimeException(s"Index: $index (zero-based) - $value failed for insert($columnNames)", t)
-      }
-    }
-    ps.executeUpdate()
-    val keys = ps.getGeneratedKeys
+    val keys = session.executeInsert(insertString, columnValues)
     new GeneratedKeysIterator(keys)
   }
   
@@ -186,15 +182,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val columnValues = merge.values.map(cv => cv.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
-    val ps = session.connection.prepareStatement(mergeString)
-    columnValues.zipWithIndex.foreach {
-      case (value, index) => try {
-        ps.setObject(index + 1, value)
-      } catch {
-        case exc: NotSerializableException => throw new RuntimeException(s"Index: $index (zero-based) is not serializable for insert($columnNames)", exc)
-      }
-    }
-    ps.executeUpdate()
+    session.executeUpdate(mergeString, columnValues)
   }
 
   def exec(update: Update) = active {
@@ -206,14 +194,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val (where, whereArgs) = where2SQL(update.whereCondition)
     args = args ::: whereArgs
     val sql = s"UPDATE ${update.table.tableName} SET $sets$where"
-    val ps = session.connection.prepareStatement(sql)
-
-    // Populate args
-    args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
-    }
-
-    ps.executeUpdate()
+    session.executeUpdate(sql, args)
   }
 
   def exec(delete: Delete) = active {
@@ -222,14 +203,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
     val sql = s"DELETE FROM ${delete.table.tableName}$where"
-    val ps = session.connection.prepareStatement(sql)
-
-    // Populate args
-    args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
-    }
-
-    ps.executeUpdate()
+    session.executeUpdate(sql, args)
   }
 
   def condition2String(condition: Condition, args: ListBuffer[Any]): String = condition match {

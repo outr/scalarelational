@@ -9,14 +9,28 @@ import com.outr.query.table.property.TableProperty
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(val tableName: String, val linking: Boolean = false)(implicit val datastore: Datastore) {
+abstract class Table(val tableName: String, val linking: Boolean, tableProperties: TableProperty*)(implicit val datastore: Datastore) {
+  def this(tableName: String, tableProperties: TableProperty*)(implicit datastore: Datastore) = this(tableName, false, tableProperties: _*)
+
   implicit def thisTable = this
 
   private var _properties = Map.empty[String, TableProperty]
-  def properties = _properties.values
-
   private var _columns = ListBuffer.empty[Column[_]]
   private var _foreignColumns = ListBuffer.empty[Column[_]]
+  private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
+  lazy val primaryKeys = columns.collect {
+    case c if c.has(PrimaryKey) => c
+  }
+  lazy val foreignKeys = columns.collect {
+    case c if c.has(ForeignKey.name) => c
+  }
+  lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
+  lazy val (one2One, one2Many, many2One, many2Many) = loadRelationships()
+
+  props(tableProperties: _*)      // Add properties from constructor
+
+  def properties = _properties.values
+
   protected[query] def addColumn[T](column: Column[T]) = synchronized {
     _columns += column
   }
@@ -27,15 +41,6 @@ abstract class Table(val tableName: String, val linking: Boolean = false)(implic
   def as(alias: String) = TableAlias(this, alias)
 
   def columns = _columns.toList
-  private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
-  lazy val primaryKeys = columns.collect {
-    case c if c.has(PrimaryKey) => c
-  }
-  lazy val foreignKeys = columns.collect {
-    case c if c.has(ForeignKey.name) => c
-  }
-  lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
-  lazy val (one2One, one2Many, many2One, many2Many) = loadRelationships()
 
   def * = columns
 

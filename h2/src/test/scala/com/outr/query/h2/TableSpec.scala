@@ -12,6 +12,8 @@ import org.powerscala.IO
 import scala.language.reflectiveCalls
 import com.outr.query.table.property.Index
 import org.h2.jdbc.JdbcSQLException
+import com.outr.query.column.property.Searchable
+import com.outr.query.h2.trigger.TriggerType
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -281,6 +283,10 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
 
     var listId: Int = -1
     var dataId: Int = -1
+    var inserted = 0
+    var updated = 0
+    var deleted = 0
+    var selected = 0
 
     "create the tables successfully" in {
       create() must not(throwA[Throwable])
@@ -323,6 +329,59 @@ class TableSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs
     }
     "attempting to insert John Doe again throws a constraint violation" in {
       insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")) must throwA[JdbcSQLException]
+    }
+    "add a trigger" in {
+      trigger.on {
+        case evt => evt.triggerType match {
+          case TriggerType.Insert => inserted += 1
+          case TriggerType.Update => updated += 1
+          case TriggerType.Delete => deleted += 1
+          case TriggerType.Select => selected += 1
+        }
+      } mustNotEqual null
+    }
+    "validate no trigger has been invoked" in {
+      inserted mustEqual 0
+      updated mustEqual 0
+      deleted mustEqual 0
+      selected mustEqual 0
+    }
+    "insert a record to fire a trigger" in {
+      insert(triggerTest.name("Test1")) mustEqual Some(1)
+    }
+    "validate that one insert was triggered" in {
+      inserted mustEqual 1
+      updated mustEqual 0
+      deleted mustEqual 0
+      selected mustEqual 0
+    }
+    "update a record to fire a trigger" in {
+      exec(update(triggerTest.name("Test2")) where triggerTest.id === 1) mustEqual 1
+    }
+    "validate that one update was triggered" in {
+      inserted mustEqual 1
+      updated mustEqual 1
+      deleted mustEqual 0
+      selected mustEqual 0
+    }
+    "select a record to fire a select trigger" in {
+      val results = exec(select(triggerTest.*) from triggerTest).toList
+      results must have size 1
+    }
+    "validate that one update was triggered" in {
+      inserted mustEqual 1
+      updated mustEqual 1
+      deleted mustEqual 0
+      selected mustEqual 1
+    }
+    "delete a record to fire a trigger" in {
+      exec(delete(triggerTest) where triggerTest.id === 1) mustEqual 1
+    }
+    "validate that one delete was triggered" in {
+      inserted mustEqual 1
+      updated mustEqual 1
+      deleted mustEqual 1
+      selected mustEqual 1
     }
   }
 }
@@ -406,7 +465,12 @@ object TestSpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_ty
     props(Index.unique("IDXNAME", firstName, lastName))
   }
 
-  val tables = List(lists, data, combinedUnique)
+  val triggerTest = new Table("trigger_test", Triggers.All) {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", NotNull, Searchable)
+  }
+
+  val tables = List(lists, data, combinedUnique, triggerTest)
 }
 
 case class Fruit(name: String)

@@ -29,7 +29,16 @@ trait Datastore extends Listenable with Logging {
   implicit def byteArrayConverter = ByteArrayConverter
   implicit def blobConverter = BlobConverter
 
+  /**
+   * Called when the datastore is being created for the first time. This does not mean the tables are being created but
+   * just the datastore.
+   */
+  def creating(): Unit = {}
+
   val tables: List[Table]
+
+  private lazy val tablesMap = tables.map(t => t.tableName.toLowerCase -> t).toMap
+  def tableByName(tableName: String) = tablesMap.get(tableName.toLowerCase)
 
   private var lastUpdated = System.nanoTime()
   val updater = Executor.scheduleWithFixedDelay(1.0, 1.0) {
@@ -72,10 +81,9 @@ trait Datastore extends Listenable with Logging {
 
   def create(ifNotExist: Boolean = true) = {
     val s = session
-    val statement = s.connection.createStatement()
     val sql = ddl(ifNotExist)
     transaction {
-      statement.execute(sql)
+      s.execute(sql)
     }
   }
 
@@ -91,21 +99,12 @@ trait Datastore extends Listenable with Logging {
 
     tables.foreach {
       case t => {
-        b.append(createTableReferences(t))
-      }
-    }
-
-    tables.foreach {
-      case t => {
-        b.append(createTableIndexes(t))
+        createTableExtras(t, b)
       }
     }
 
     b.toString()
   }
-
-  def transactionMode = TransactionMode.byValue(session.connection.getTransactionIsolation)
-  def transactionMode_=(mode: TransactionMode) = session.connection.setTransactionIsolation(mode.value)
 
   private val transactionLayers = new ThreadLocal[Int] {
     override def initialValue() = 0
@@ -126,29 +125,29 @@ trait Datastore extends Listenable with Logging {
     val isTop = layer == 0                                        // Is this the top-level transaction
     transactionLayers.set(layer + 1)                              // Increment the transaction layer
     active {
-      val previousAutoCommit = session.connection.getAutoCommit
-      session.connection.setAutoCommit(false)
+      val previousAutoCommit = session.autoCommit
+      session.autoCommit(b = false)
       val savepointName = s"transaction$layer"
-      val savepoint = session.connection.setSavepoint(savepointName)
+      val savepoint = session.savePoint(savepointName)
       try {
         val result = f
         if (isTop) {
-          session.connection.commit()
+          session.commit()
         }
         result
       } catch {
         case t: Throwable => {
           if (isTop) {
-            session.connection.rollback()
+            session.rollback()
           } else {
-            session.connection.rollback(savepoint)
+            session.rollback(savepoint)
           }
           throw t
         }
       } finally {
         transactionLayers.set(transactionLayers.get() - 1)          // Decrement the transaction layer
-        session.connection.setAutoCommit(previousAutoCommit)
-        session.connection.releaseSavepoint(savepoint)
+        session.autoCommit(previousAutoCommit)
+        session.releaseSavePoint(savepoint)
       }
     }
   }
@@ -163,9 +162,7 @@ trait Datastore extends Listenable with Logging {
 
   def createTableSQL(ifNotExist: Boolean, table: Table): String
 
-  def createTableReferences(table: Table): String
-
-  def createTableIndexes(table: Table): String
+  def createTableExtras(table: Table, b: StringBuilder): Unit
 
   protected def createSession() = new DatastoreSession(this, sessionTimeout, Thread.currentThread())
 
@@ -193,6 +190,13 @@ trait Datastore extends Listenable with Logging {
       case session => session.dispose()
     }
   }
+}
+
+object Datastore {
+  private val instance = new ThreadLocal[Datastore]
+
+  protected[query] def current(d: Datastore) = instance.set(d)
+  def apply() = instance.get()
 }
 
 class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Int] {
