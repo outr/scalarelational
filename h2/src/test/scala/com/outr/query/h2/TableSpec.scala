@@ -9,7 +9,6 @@ import java.sql.Blob
 import javax.sql.rowset.serial.SerialBlob
 import org.powerscala.IO
 
-import scala.language.reflectiveCalls
 import com.outr.query.table.property.Index
 import org.h2.jdbc.JdbcSQLException
 import com.outr.query.column.property.Searchable

@@ -9,7 +9,6 @@ import com.outr.query.h2.H2Memory
 import org.specs2.main.ArgumentsShortcuts
 import com.outr.query.orm.convert._
 import java.sql.Blob
-import scala.language.reflectiveCalls
 import java.io.File
 import org.powerscala.IO
 import com.outr.query.column.FileBlob
