@@ -8,15 +8,17 @@ import org.powerscala.event.processor.{UnitProcessor, ModifiableOptionProcessor,
 import org.powerscala.reflect.EnhancedClass
 import org.powerscala.ref.WeakReference
 import org.powerscala.event.Listenable
+import com.outr.query.table.property.TableProperty
 
 /**
  * MappedTable is the base-class used for mapping a class to a table.
  *
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class MappedTable[T](tableName: String)
-                             (implicit val manifest: Manifest[T],
-                              datastore: Datastore) extends Table(tableName)(datastore) {
+abstract class MappedTable[T](datastore: Datastore, name: String, tableProperties: TableProperty*)
+                             (implicit val manifest: Manifest[T]) extends Table(datastore, name, tableProperties: _*) with Listenable {
+  def this(datastore: Datastore, tableProperties: TableProperty*)(implicit manifest: Manifest[T]) = this(datastore, null.asInstanceOf[String], tableProperties: _*)
+
   MappedTable.synchronized {     // Map class to table so it can be found externally
     MappedTable.class2Table += clazz -> this
   }

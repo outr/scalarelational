@@ -11,12 +11,15 @@ import com.outr.query.orm.persistence.Persistence
 import com.outr.query.QueryResult
 import com.outr.query.ColumnValue
 import com.outr.query.orm.convert.ConversionResponse
+import com.outr.query.table.property.TableProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class ORMTable[T](tableName: String)(implicit manifest: Manifest[T], datastore: Datastore)
-  extends MappedTable[T](tableName)(manifest, datastore) {
+abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: TableProperty*)(implicit manifest: Manifest[T])
+                extends MappedTable[T](datastore, name, tableProperties: _*)(manifest) {
+  def this(datastore: Datastore, tableProperties: TableProperty*)(implicit manifest: Manifest[T]) = this(datastore, null.asInstanceOf[String], tableProperties: _*)
+
   private val _ormColumns = ListBuffer.empty[ORMColumn[T, _, _]]
   def ormColumns = _ormColumns.toList
 

@@ -3,16 +3,28 @@ package com.outr.query
 import scala.collection.mutable.ListBuffer
 import com.outr.query.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
 import scala.language.existentials
-import com.outr.query.convert.ColumnConverter
-import com.outr.query.table.property.TableProperty
+import com.outr.query.convert._
+import com.outr.query.table.property.{Linking, TableProperty}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(val tableName: String, val linking: Boolean, tableProperties: TableProperty*)(implicit val datastore: Datastore) {
-  def this(tableName: String, tableProperties: TableProperty*)(implicit datastore: Datastore) = this(tableName, false, tableProperties: _*)
+abstract class Table(val datastore: Datastore, name: String, tableProperties: TableProperty*) {
+  def this(datastore: Datastore, tableProperties: TableProperty*) = this(datastore, null.asInstanceOf[String], tableProperties: _*)
+
+  lazy val tableName = if (name == null) Table.generateName(getClass) else name
+  datastore.add(this)   // Make sure the Datastore knows about this table
 
   implicit def thisTable = this
+
+  implicit def booleanConverter = BooleanConverter
+  implicit def intConverter = IntConverter
+  implicit def longConverter = LongConverter
+  implicit def doubleConverter = DoubleConverter
+  implicit def bigDecimalConverter = BigDecimalConverter
+  implicit def stringConverter = StringConverter
+  implicit def byteArrayConverter = ByteArrayConverter
+  implicit def blobConverter = BlobConverter
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
@@ -75,7 +87,7 @@ abstract class Table(val tableName: String, val linking: Boolean, tablePropertie
       } else if (local2Foreign.contains(foreignTable)) {
         o2m = local2Foreign(foreignTable) :: o2m
       } else if (foreign2Local.contains(foreignTable)) {
-        if (foreignTable.linking) {
+        if (foreignTable.has(Linking)) {
           m2m = foreign2Local(foreignTable) :: m2m
         } else {
           m2o = foreign2Local(foreignTable) :: m2o
@@ -109,4 +121,11 @@ abstract class Table(val tableName: String, val linking: Boolean, tablePropertie
   def prop[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
 
   override def toString = s"Table($tableName)"
+}
+
+object Table {
+  def generateName(c: Class[_]) = {
+    val n = c.getSimpleName
+    "([A-Z])".r.replaceAllIn(n.charAt(0).toLower + n.substring(1, n.length - 1), m => "_" + m.group(0).toLowerCase)
+  }
 }

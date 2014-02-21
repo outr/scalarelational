@@ -1,12 +1,15 @@
 package com.outr.query.orm
 
 import com.outr.query.{QueryResult, Column, Datastore}
+import com.outr.query.table.property.TableProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class PolymorphicORMTable[T](tableName: String)(implicit manifest: Manifest[T], datastore: Datastore)
-                                      extends ORMTable[T](tableName)(manifest, datastore) {
+abstract class PolymorphicORMTable[T](datastore: Datastore, name: String, tableProperties: TableProperty*)(implicit manifest: Manifest[T])
+                                      extends ORMTable[T](datastore, name, tableProperties: _*)(manifest) {
+  def this(datastore: Datastore, tableProperties: TableProperty*)(implicit manifest: Manifest[T]) = this(datastore, null.asInstanceOf[String], tableProperties: _*)
+
   def caseClasses: Vector[Class[_ <: T]]
   def typeColumn: Column[Int]
 

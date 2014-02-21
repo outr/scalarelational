@@ -13,6 +13,7 @@ import scala.language.reflectiveCalls
 import java.io.File
 import org.powerscala.IO
 import com.outr.query.column.FileBlob
+import com.outr.query.table.property.Linking
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -296,95 +297,113 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
-  val person = new ORMTable[Person]("person") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name", Unique)
-    val date = orm[Long]("date")
-  }
-  val company = new ORMTable[Company]("company") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name", Unique)
-    val ownerId = orm[Int, Lazy[Person]]("ownerId", "owner", new LazyConverter[Person], new ForeignKey(person.id))
-  }
-  val domain = new ORMTable[CorporateDomain]("domain") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val url = orm[String]("url", Unique)
-    val companyId = orm[Int, Company]("companyId", "company", new ObjectConverter[Company], new ForeignKey(company.id))
-  }
-  val simple = new ORMTable[SimpleInstance]("simple") with ModifiedSupport[SimpleInstance] {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name")
-    val modified = orm[Long]("modified", NotNull)
-  }
-  val order = new ORMTable[Order]("orders") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val date = orm[Long]("date", NotNull)
-  }
-  val item = new ORMTable[Item]("item") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name", NotNull)
-  }
-  val orderItem = new Table("order_item_linking", linking = true) {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val orderId = column[Int]("orderId", new ForeignKey(order.id))
-    val itemId = column[Int]("itemId", new ForeignKey(item.id))
-  }
-  val country = new ORMTable[Country]("country") {
-    val name = orm[String]("name", Unique, NotNull, PrimaryKey)
-    val population = orm[Int]("population", NotNull)
-  }
-  val contentData = new ORMTable[ContentData]("contentData") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val content = orm[Blob]("content", NotNull)
-  }
-  val content = new ORMTable[Content]("content") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name", NotNull)
-    val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(contentData.id))
-  }
-  val user = new PolymorphicORMTable[User]("user") {
-    val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = orm[String]("name", NotNull)
-    val language = orm[String]("language", MappingOptional)
-    val userType = column[Int]("userType", NotNull)
-
-    override val caseClasses = Vector(classOf[Administrator], classOf[Developer], classOf[Employee])
-    def typeColumn = userType
-  }
+  def person = Person
+  def company = Company
+  def domain = CorporateDomain
+  def simple = SimpleInstance
+  def order = Order
+  def item = Item
+  def orderItem = OrderItem
+  def country = Country
+  def contentData = ContentData
+  def content = Content
+  def user = User
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
-
-  val tables = List(person, company, domain, simple, order, item, orderItem, country, contentData, content, user)
 }
 
 case class Person(name: String, date: Long = System.currentTimeMillis(), companies: LazyList[Company] = LazyList.Empty, id: Option[Int] = None)
 
+object Person extends ORMTable[Person](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", Unique)
+  val date = orm[Long]("date")
+}
+
 case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)
+
+object Company extends ORMTable[Company](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", Unique)
+  val ownerId = orm[Int, Lazy[Person]]("ownerId", "owner", new LazyConverter[Person], new ForeignKey(Person.id))
+}
 
 case class CorporateDomain(url: String, company: Company, id: Option[Int] = None)
 
+object CorporateDomain extends ORMTable[CorporateDomain](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val url = orm[String]("url", Unique)
+  val companyId = orm[Int, Company]("companyId", "company", new ObjectConverter[Company], new ForeignKey(Company.id))
+}
+
 case class SimpleInstance(name: String, modified: Long = 0L, id: Option[Int] = None)
+
+object SimpleInstance extends ORMTable[SimpleInstance](TestDatastore) with ModifiedSupport[SimpleInstance] {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name")
+  val modified = orm[Long]("modified", NotNull)
+}
 
 case class Order(items: LazyList[Item] = LazyList.Empty, date: Long = System.currentTimeMillis(), id: Option[Int] = None)
 
+object Order extends ORMTable[Order](TestDatastore, "orders") {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val date = orm[Long]("date", NotNull)
+}
+
 case class Item(name: String, orders: LazyList[Order] = LazyList.Empty, id: Option[Int] = None)
+
+object Item extends ORMTable[Item](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
+}
+
+object OrderItem extends Table(TestDatastore, Linking) {
+  val id = column[Int]("id", PrimaryKey, AutoIncrement)
+  val orderId = column[Int]("orderId", new ForeignKey(Order.id))
+  val itemId = column[Int]("itemId", new ForeignKey(Item.id))
+}
 
 case class Country(name: String, population: Int)
 
-case class Content(name: String, data: Transient[ContentData] = Transient.None, id: Option[Int] = None)
+object Country extends ORMTable[Country](TestDatastore) {
+  val name = orm[String]("name", Unique, NotNull, PrimaryKey)
+  val population = orm[Int]("population", NotNull)
+}
 
 case class ContentData(content: Blob, id: Option[Int] = None)
+
+object ContentData extends ORMTable[ContentData](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val content = orm[Blob]("content", NotNull)
+}
+
+case class Content(name: String, data: Transient[ContentData] = Transient.None, id: Option[Int] = None)
+
+object Content extends ORMTable[Content](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
+  val data = orm[Int, Transient[ContentData]]("dataId", "data", new TransientConverter[ContentData], new ForeignKey(ContentData.id))
+}
 
 trait User {
   def id: Option[Int]
   def name: String
 }
 
-object User {
+object User extends PolymorphicORMTable[User](TestDatastore) {
   val Administrator = 1
   val Developer = 2
   val Employee = 3
+
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
+  val language = orm[String]("language", MappingOptional)
+  val userType = column[Int]("userType", NotNull)
+
+  override val caseClasses = Vector(classOf[Administrator], classOf[Developer], classOf[Employee])
+  def typeColumn = userType
 }
 
 case class Administrator(name: String, id: Option[Int] = None) extends User

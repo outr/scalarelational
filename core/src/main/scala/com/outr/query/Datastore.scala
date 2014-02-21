@@ -7,27 +7,17 @@ import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
 import org.powerscala.concurrent.{Time, Executor}
 import org.powerscala.log.Logging
-import com.outr.query.convert._
-import scala.Some
+import org.powerscala.reflect._
+
+import scala.collection.mutable
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait Datastore extends Listenable with Logging {
-  implicit val thisDatastore = this
-
   private var _sessions = Map.empty[Thread, DatastoreSession]
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
-
-  implicit def booleanConverter = BooleanConverter
-  implicit def intConverter = IntConverter
-  implicit def longConverter = LongConverter
-  implicit def doubleConverter = DoubleConverter
-  implicit def bigDecimalConverter = BigDecimalConverter
-  implicit def stringConverter = StringConverter
-  implicit def byteArrayConverter = ByteArrayConverter
-  implicit def blobConverter = BlobConverter
 
   /**
    * Called when the datastore is being created for the first time. This does not mean the tables are being created but
@@ -35,9 +25,28 @@ trait Datastore extends Listenable with Logging {
    */
   def creating(): Unit = {}
 
-  val tables: List[Table]
+  @volatile private var mapInitialized = false
+  private var externalTables = List.empty[Table]
+  private lazy val tablesMap = synchronized {
+    val tables = getClass.methods.collect {
+      case m if m.args.isEmpty && m.returnType.`type`.hasType(classOf[Table]) => m[Table](this)
+    }
+    val map = mutable.ListMap(tables.map(t => t.tableName.toLowerCase -> t): _*)
+    externalTables.reverse.foreach {              // Add tables set before initialization
+      case t => map += t.tableName -> t
+    }
+    mapInitialized = true
+    map
+  }
+  protected[query] def add(table: Table) = synchronized {
+    if (mapInitialized) {
+      tablesMap += (table.tableName.toLowerCase -> table)
+    } else {
+      externalTables = table :: externalTables
+    }
+  }
+  def tables = tablesMap.values
 
-  private lazy val tablesMap = tables.map(t => t.tableName.toLowerCase -> t).toMap
   def tableByName(tableName: String) = tablesMap.get(tableName.toLowerCase)
 
   private var lastUpdated = System.nanoTime()
