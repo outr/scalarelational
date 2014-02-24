@@ -2,7 +2,7 @@ package com.outr.query.orm.convert
 
 import com.outr.query.orm.{PreloadedLazy, ORMTable, DelayedLazy, Lazy}
 import com.outr.query.{QueryResult, Column}
-import com.outr.query.property.ForeignKey
+import com.outr.query.column.property.ForeignKey
 
 /**
  * @author Matt Hicks <matt@outr.com>

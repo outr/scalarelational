@@ -3,7 +3,7 @@ package com.outr.query.orm
 import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
 import com.outr.query.Table
-import com.outr.query.property._
+import com.outr.query.column.property._
 import scala.Some
 import com.outr.query.h2.H2Memory
 import org.specs2.main.ArgumentsShortcuts

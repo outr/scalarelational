@@ -1,6 +1,6 @@
 package com.outr.query.orm
 
-import com.outr.query.property.ColumnProperty
+import com.outr.query.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

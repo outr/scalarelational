@@ -4,7 +4,7 @@ import com.outr.query.{Column, ColumnLike}
 import org.powerscala.enum.{Enumerated, EnumEntry}
 import org.powerscala.reflect._
 import java.sql.Blob
-import com.outr.query.property.IgnoreCase
+import com.outr.query.column.property.IgnoreCase
 
 /**
  * @author Matt Hicks <matt@outr.com>

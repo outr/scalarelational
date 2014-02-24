@@ -1,7 +1,7 @@
 package com.outr.query.orm.convert
 
 import com.outr.query.{QueryResult, Column}
-import com.outr.query.property.ForeignKey
+import com.outr.query.column.property.ForeignKey
 import com.outr.query.orm.MappedTable
 
 /**

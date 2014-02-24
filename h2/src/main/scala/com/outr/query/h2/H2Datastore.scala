@@ -5,7 +5,7 @@ import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
-import com.outr.query.property._
+import com.outr.query.column.property._
 import com.outr.query.convert.ColumnConverter
 import com.outr.query.Update
 import com.outr.query.LikeCondition

@@ -1,4 +1,4 @@
-package com.outr.query.property
+package com.outr.query.column.property
 
 /**
  * @author Matt Hicks <matt@outr.com>

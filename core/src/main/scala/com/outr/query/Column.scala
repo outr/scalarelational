@@ -1,8 +1,8 @@
 package com.outr.query
 
 import org.powerscala.reflect._
-import com.outr.query.property.ColumnProperty
 import com.outr.query.convert.ColumnConverter
+import com.outr.query.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

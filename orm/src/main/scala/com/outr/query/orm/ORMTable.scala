@@ -3,7 +3,7 @@ package com.outr.query.orm
 import com.outr.query._
 import com.outr.query.convert.ColumnConverter
 import com.outr.query.orm.convert._
-import com.outr.query.property.{ForeignKey, ColumnProperty}
+import com.outr.query.column.property.ForeignKey
 import org.powerscala.reflect._
 import scala.collection.mutable.ListBuffer
 import scala.language.existentials
@@ -12,6 +12,7 @@ import com.outr.query.QueryResult
 import com.outr.query.ColumnValue
 import com.outr.query.orm.convert.ConversionResponse
 import com.outr.query.table.property.TableProperty
+import com.outr.query.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

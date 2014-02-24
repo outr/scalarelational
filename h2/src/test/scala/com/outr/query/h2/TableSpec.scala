@@ -2,7 +2,7 @@ package com.outr.query.h2
 
 import org.specs2.mutable._
 import com.outr.query._
-import com.outr.query.property._
+import com.outr.query.column.property._
 import com.outr.query.convert.{ObjectSerializationConverter, StringConverter, ColumnConverter}
 import org.specs2.main.ArgumentsShortcuts
 import java.sql.Blob
@@ -11,7 +11,6 @@ import org.powerscala.IO
 
 import com.outr.query.table.property.Index
 import org.h2.jdbc.JdbcSQLException
-import com.outr.query.column.property.Searchable
 import com.outr.query.h2.trigger.TriggerType
 
 /**
@@ -480,7 +479,7 @@ object CombinedUnique extends Table(TestSpecialTypesDatastore) {
 
 object TriggerTest extends Table(TestSpecialTypesDatastore, Triggers.All) {
   val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val name = column[String]("name", NotNull, Searchable)
+  val name = column[String]("name", NotNull)
 }
 
 case class Fruit(name: String)

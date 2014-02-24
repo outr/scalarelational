@@ -45,18 +45,14 @@ object OUTRQueryBuild extends Build {
     .dependsOn(core, h2)
   lazy val search = Project("search", file("search"), settings = createSettings("outrquery-search"))
     .dependsOn(core, h2)
-    .settings(libraryDependencies ++= Seq(LuceneCore, LuceneAnalyzersCommon, LuceneQueries, LuceneQueryParser))
+    .settings(libraryDependencies ++= Seq(PowerScalaSearch))
 }
 
 object Dependencies {
   private val PowerScalaVersion = "1.6.3-SNAPSHOT"
-  private val LuceneVersion = "4.6.1"
 
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
+  val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
   val H2 = "com.h2database" % "h2" % "1.3.174"
-  val LuceneCore = "org.apache.lucene" % "lucene-core" % LuceneVersion
-  val LuceneAnalyzersCommon = "org.apache.lucene" % "lucene-analyzers-common" % LuceneVersion
-  val LuceneQueries = "org.apache.lucene" % "lucene-queries" % LuceneVersion
-  val LuceneQueryParser = "org.apache.lucene" % "lucene-queryparser" % LuceneVersion
   val Specs2 = "org.specs2" %% "specs2" % "2.2.3" % "test"
 }

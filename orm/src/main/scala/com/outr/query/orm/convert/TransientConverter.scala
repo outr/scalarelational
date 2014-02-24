@@ -2,7 +2,7 @@ package com.outr.query.orm.convert
 
 import com.outr.query.orm._
 import com.outr.query.Column
-import com.outr.query.property.ForeignKey
+import com.outr.query.column.property.ForeignKey
 import com.outr.query.QueryResult
 import scala.Some
 

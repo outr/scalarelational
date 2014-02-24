@@ -1,7 +1,7 @@
 package com.outr.query
 
 import scala.collection.mutable.ListBuffer
-import com.outr.query.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
+import com.outr.query.column.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
 import scala.language.existentials
 import com.outr.query.convert._
 import com.outr.query.table.property.{Linking, TableProperty}
