@@ -1,146 +1,142 @@
 package com.outr.query.orm
 
-import org.specs2.mutable._
 import com.outr.query.h2.H2Datastore
 import com.outr.query.Table
 import com.outr.query.column.property._
-import scala.Some
 import com.outr.query.h2.H2Memory
-import org.specs2.main.ArgumentsShortcuts
 import com.outr.query.orm.convert._
 import java.sql.Blob
 import java.io.File
 import org.powerscala.IO
 import com.outr.query.column.FileBlob
 import com.outr.query.table.property.Linking
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
-  addArguments(fullStackTrace)
-
+class ORMSpec extends WordSpec with Matchers {
   import TestDatastore._
 
   private var bill: Person = _
 
   "Person" should {
     "create the tables" in {
-      create() mustNotEqual null
+      create()
     }
     "insert 'John Doe' into the table" in {
       val john = Person("John Doe")
       val updated = person.insert(john)
-      updated.id mustEqual Some(1)
+      updated.id should equal(Some(1))
     }
     "insert 'Jane Doe' into the table" in {
       val jane = Person("Jane Doe")
       val updated = person.insert(jane)
-      updated.id mustEqual Some(2)
+      updated.id should equal(Some(2))
     }
     "query back all records" in {
       val results = person.query(select(person.*) from person).toList
-      results must have size 2
+      results.size should equal(2)
     }
     "query back 'John Doe' with only 'name'" in {
       val results = person.query(select(person.name) from person where person.name === "John Doe").toList
-      results must have size 1
+      results.size should equal(1)
       val john = results.head
-      john.id mustEqual None
-      john.name mustEqual "John Doe"
+      john.id should equal(None)
+      john.name should equal("John Doe")
     }
     "query back 'Jane Doe' with all fields" in {
       val results = person.query(select(person.*) from person where person.name === "Jane Doe").toList
-      results must have size 1
+      results.size should equal(1)
       val jane = results.head
-      jane.id mustEqual Some(2)
-      jane.name mustEqual "Jane Doe"
+      jane.id should equal(Some(2))
+      jane.name should equal("Jane Doe")
     }
     "update 'Jane Doe' to 'Janie Doe'" in {
       val jane = person.query(select(person.*) from person where person.name === "Jane Doe").toList.head
       person.update(jane.copy(name = "Janie Doe"))
       val janie = person.query(select(person.*) from person where person.name === "Janie Doe").toList.head
-      janie.name mustEqual "Janie Doe"
+      janie.name should equal("Janie Doe")
     }
     "delete 'Janie Doe' from the database" in {
       val janie = person.query(select(person.*) from person where person.name === "Janie Doe").toList.head
-      person.delete(janie) must not(throwA[Throwable])
+      person.delete(janie)
     }
     "insert person into database" in {
       bill = person.insert(Person("Bill Gates"))
-      bill.id.get mustNotEqual 0
+      bill.id.get shouldNot equal(0)
     }
     "insert company into database" in {
       val microsoft = company.insert(Company("Microsoft", Lazy(bill)))
-      microsoft.id.get mustNotEqual 0
-      microsoft.owner().id.get mustEqual bill.id.get
+      microsoft.id.get shouldNot equal(0)
+      microsoft.owner().id.get should equal(bill.id.get)
     }
     "query back company and lazy load the owner" in {
       val companies = company.query(select(company.*) from company).toList
-      companies must have size 1
+      companies.size should equal(1)
       val microsoft = companies.head
-      microsoft.name mustEqual "Microsoft"
-      microsoft.owner.loaded mustEqual false
+      microsoft.name should equal("Microsoft")
+      microsoft.owner.loaded should equal(false)
       val bill = microsoft.owner()
-      bill.name mustEqual "Bill Gates"
-      microsoft.owner.loaded mustEqual true
+      bill.name should equal("Bill Gates")
+      microsoft.owner.loaded should equal(true)
     }
     "insert company into database with a new owner" in {
       val steve = Person("Steve Jobs")
       val apple = company.insert(Company("Apple", Lazy(steve)))
-      apple.id.get mustNotEqual 0
-      apple.owner().id.get mustNotEqual 0
+      apple.id.get shouldNot equal(0)
+      apple.owner().id.get shouldNot equal(0)
     }
     "query new person back out of database" in {
       val people = person.query(select(person.*) from person where person.name === "Steve Jobs").toList
-      people must have size 1
+      people.size should equal(1)
       val steve = people.head
-      steve.name mustEqual "Steve Jobs"
+      steve.name should equal("Steve Jobs")
     }
     "access company via LazyList in person" in {
       val people = person.query(select(person.*) from person where person.name === "Steve Jobs").toList
-      people must have size 1
+      people.size should equal(1)
       val steve = people.head
       val companies = steve.companies()
-      companies must have size 1
+      companies.size should equal(1)
       val apple = companies.head
-      apple.name mustEqual "Apple"
+      apple.name should equal("Apple")
     }
     "insert some corporate domains" in {
       val apple = company.query(company.q where company.name === "Apple").toList.head
-      apple.name mustEqual "Apple"
+      apple.name should equal("Apple")
       val appleDomain = domain.insert(CorporateDomain("apple.com", apple))
-      appleDomain.id mustNotEqual None
+      appleDomain.id shouldNot equal(None)
     }
     "query back the corporate domain with the company" in {
       val appleDomain = domain.query(domain.q).toList.head
-      appleDomain.url mustEqual "apple.com"
-      appleDomain.id.get must be > 0
+      appleDomain.url should equal("apple.com")
+      appleDomain.id.get should be > 0
       val apple = appleDomain.company
-      apple mustNotEqual null
-      apple.name mustEqual "Apple"
-      apple.id.get must be > 0
+      apple shouldNot equal(null)
+      apple.name should equal("Apple")
+      apple.id.get should be > 0
     }
     "query partial and only persist partial" in {
       val steve = person.query(select(person.id, person.date) from person where person.name === "Steve Jobs").toList.head
       val newDate = System.currentTimeMillis()
       person.persist(steve.copy(date = newDate))
       val updated = person.query(person.q where person.name === "Steve Jobs").toList.head
-      updated.name mustEqual "Steve Jobs"
-      updated.date mustEqual newDate
+      updated.name should equal("Steve Jobs")
+      updated.date should equal(newDate)
     }
   }
   "SimpleInstance" should {
     "insert a single record without a 'modified' value and get a 'modified' value back" in {
       val original = SimpleInstance("test")
-      original.modified mustEqual 0L
+      original.modified should equal(0L)
       val current = System.currentTimeMillis()
       val record = simple.persist(original)
-      record.modified must beGreaterThanOrEqualTo(current)
+      record.modified should be >= current
     }
     "query the record back out with a modified value" in {
       val record = simple.query(simple.q).toList.head
-      record.modified mustNotEqual 0L
+      record.modified shouldNot equal(0L)
     }
   }
   "Orders and Items" should {
@@ -149,41 +145,41 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       val district9 = item.insert(Item("District 9 DVD"))
       val batarang = item.insert(Item("Batarang"))
 
-      elmo.id mustNotEqual None
-      district9.id mustNotEqual None
-      batarang.id mustNotEqual None
+      elmo.id shouldNot equal(None)
+      district9.id shouldNot equal(None)
+      batarang.id shouldNot equal(None)
 
-      order.insert(Order(LazyList(elmo))) mustNotEqual null
-      order.insert(Order(LazyList(district9, batarang))) mustNotEqual null
-      order.insert(Order(LazyList(district9, batarang, elmo))) mustNotEqual null
+      order.insert(Order(LazyList(elmo))) shouldNot equal(null)
+      order.insert(Order(LazyList(district9, batarang))) shouldNot equal(null)
+      order.insert(Order(LazyList(district9, batarang, elmo))) shouldNot equal(null)
     }
     "simple query items are correct" in {
       val results = exec(item.q).toList
-      results must have size 3
+      results.size should equal(3)
     }
     "simple query orders are correct" in {
       val results = exec(order.q).toList
-      results must have size 3
+      results.size should equal(3)
     }
     "simple query orderItem entries are correct" in {
       val results = exec(select(orderItem.*) from orderItem).toList
-      results must have size 6
+      results.size should equal(6)
     }
     "query back the orders and verify the correct data" in {
       val orders = order.query(order.q).toList
-      orders must have size 3
+      orders.size should equal(3)
       val o1 = orders.head
-      o1.items().length mustEqual 1
-      o1.items().head.name mustEqual "Tickle Me Elmo"
+      o1.items().length should equal(1)
+      o1.items().head.name should equal("Tickle Me Elmo")
       val o2 = orders.tail.head
-      o2.items().length mustEqual 2
-      o2.items().head.name mustEqual "District 9 DVD"
-      o2.items().tail.head.name mustEqual "Batarang"
+      o2.items().length should equal(2)
+      o2.items().head.name should equal("District 9 DVD")
+      o2.items().tail.head.name should equal("Batarang")
       val o3 = orders.tail.tail.head
-      o3.items().length mustEqual 3
-      o3.items().head.name mustEqual "District 9 DVD"
-      o3.items().tail.head.name mustEqual "Batarang"
-      o3.items().tail.tail.head.name mustEqual "Tickle Me Elmo"
+      o3.items().length should equal(3)
+      o3.items().head.name should equal("District 9 DVD")
+      o3.items().tail.head.name should equal("Batarang")
+      o3.items().tail.tail.head.name should equal("Tickle Me Elmo")
     }
   }
   "Countries" should {
@@ -191,24 +187,24 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
     val PopulationIn2012 = 313900000
 
     "insert one country" in {
-      country.merge(Country("USA", PopulationIn2011)) must not(throwA[Throwable])
+      country.merge(Country("USA", PopulationIn2011))
     }
     "query the country back" in {
       val results = country.query(country.q).toList
-      results must have size 1
+      results.size should equal(1)
       val usa = results.head
-      usa.name mustEqual "USA"
-      usa.population mustEqual PopulationIn2011
+      usa.name should equal("USA")
+      usa.population should equal(PopulationIn2011)
     }
     "merge a population change" in {
-      country.merge(Country("USA", PopulationIn2012)) must not(throwA[Throwable])
+      country.merge(Country("USA", PopulationIn2012))
     }
     "query only one country back" in {
       val results = country.query(country.q).toList
-      results must have size 1
+      results.size should equal(1)
       val usa = results.head
-      usa.name mustEqual "USA"
-      usa.population mustEqual PopulationIn2012
+      usa.name should equal("USA")
+      usa.population should equal(PopulationIn2012)
     }
   }
   "Content" should {
@@ -218,40 +214,40 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
       val file = File.createTempFile("tmp", ".txt")
       IO.copy(testContent, file)
       val data = contentData.persist(ContentData(new FileBlob(file)))
-      data.id mustNotEqual None
+      data.id shouldNot equal(None)
       val c = content.persist(Content("Test", Transient(data)))
-      c.id mustNotEqual None
+      c.id shouldNot equal(None)
     }
     "query back content and access data" in {
       val results = content.query(content.q).toList
-      results must have size 1
+      results.size should equal(1)
       val c = results.head
-      c.name mustEqual "Test"
+      c.name should equal("Test")
       c.data.use {
         case Some(data) => {
           val s = new String(data.content.getBytes(0, data.content.length().toInt), "UTF-8")
-          s mustEqual testContent
+          s should equal(testContent)
         }
         case None => throw new RuntimeException("No result found!")
       }
     }
     "remove data" in {
       val results = content.query(content.q).toList
-      results must have size 1
+      results.size should equal(1)
       val c = results.head
-      c.name mustEqual "Test"
+      c.name should equal("Test")
       val updated = content.persist(c.copy(name = "new name", data = Transient.None))
-      updated.data mustEqual Transient.None
+      updated.data should equal(Transient.None)
     }
     "set data back" in {
       val results = content.query(content.q).toList
-      results must have size 1
+      results.size should equal(1)
       val c = results.head
-      c.name mustEqual "new name"
+      c.name should equal("new name")
       c.data.use {
         case Some(data) => {
           val s = new String(data.content.getBytes(0, data.content.length().toInt), "UTF-8")
-          s mustEqual testContent
+          s should equal(testContent)
         }
         case None => throw new RuntimeException("No result found!")
       }
@@ -259,38 +255,38 @@ class ORMSpec extends Specification with ArgumentsShortcuts with ArgumentsArgs {
   }
   "User" should {
     "insert an Administrator" in {
-      user.persist(Administrator("Super User")) mustNotEqual null
+      user.persist(Administrator("Super User")) shouldNot equal(null)
     }
     "query back the Administrator by name" in {
       val results = user.query(user.q where user.name === "Super User").toList
-      results must have length 1
+      results should have length 1
       val result = results.head
-      result.getClass mustEqual classOf[Administrator]
-      result.name mustEqual "Super User"
+      result.getClass should equal(classOf[Administrator])
+      result.name should equal("Super User")
     }
     "insert a Developer" in {
-      user.persist(Developer("Superman", "Scala")) mustNotEqual null
+      user.persist(Developer("Superman", "Scala")) shouldNot equal(null)
     }
     "query back the Developer by name" in {
       val results = user.query(user.q where user.name === "Superman").toList
-      results must have length 1
+      results should have length 1
       val result = results.head
-      result.getClass mustEqual classOf[Developer]
-      result.name mustEqual "Superman"
-      result.asInstanceOf[Developer].language mustEqual "Scala"
+      result.getClass should equal(classOf[Developer])
+      result.name should equal("Superman")
+      result.asInstanceOf[Developer].language should equal("Scala")
     }
     "query back all users" in {
       val results = user.query(user.q).toList
-      results must have length 2
+      results should have length 2
       val admin = results.collectFirst {
         case u: Administrator => u
       }.get
-      admin.name mustEqual "Super User"
+      admin.name should equal("Super User")
       val dev = results.collectFirst {
         case u: Developer => u
       }.get
-      dev.name mustEqual "Superman"
-      dev.language mustEqual "Scala"
+      dev.name should equal("Superman")
+      dev.language should equal("Scala")
     }
   }
 }

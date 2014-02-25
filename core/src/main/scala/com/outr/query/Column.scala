@@ -18,6 +18,8 @@ class Column[T] private[query](val name: String,
 
   lazy val longName = s"${table.tableName}.$name"
 
+  lazy val index = table.columns.indexOf(this)
+
   table.addColumn(this)     // Add this column to the table
 
   /**
@@ -40,10 +42,8 @@ class Column[T] private[query](val name: String,
 
   def has(property: ColumnProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = _properties.contains(propertyName)
-  def get[P <: ColumnProperty](propertyName: String) = _properties.collectFirst {
-    case (key, property) if key == propertyName => property.asInstanceOf[P]
-  }
-  def prop[P <: ColumnProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
+  def get[P <: ColumnProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
+  def prop[P <: ColumnProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in column '$longName'."))
 
   override def toString = s"Column(${table.tableName}.$name)"
 }

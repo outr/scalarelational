@@ -18,5 +18,5 @@ class ForeignKey(val foreignColumn: Column[_]) extends ColumnProperty {
 object ForeignKey {
   val name = "foreignKey"
 
-  def apply(column: Column[_]) = column.prop[ForeignKey](name).getOrElse(throw new RuntimeException(s"No foreign key found on $column"))
+  def apply(column: Column[_]) = column.get[ForeignKey](name).getOrElse(throw new RuntimeException(s"No foreign key found on $column"))
 }

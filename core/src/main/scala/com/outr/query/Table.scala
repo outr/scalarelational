@@ -115,10 +115,8 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
 
   def has(property: TableProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = _properties.contains(propertyName)
-  def get[P <: TableProperty](propertyName: String) = _properties.collectFirst {
-    case (key, property) if key == propertyName => property.asInstanceOf[P]
-  }
-  def prop[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
+  def get[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
+  def prop[P <: TableProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in table '$tableName'."))
 
   override def toString = s"Table($tableName)"
 }

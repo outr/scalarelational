@@ -11,7 +11,7 @@ object OUTRQueryBuild extends Build {
     libraryDependencies ++= Seq(
       PowerScalaProperty,
       H2,
-      Specs2
+      ScalaTest
     ),
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"),
@@ -24,15 +24,14 @@ object OUTRQueryBuild extends Build {
           Some("releases" at nexus + "service/local/staging/deploy/maven2")
     },
     publishArtifact in Test := false,
-    parallelExecution in Test := false,
-    testOptions in Test += Tests.Argument("sequential")
+    parallelExecution in Test := false
   )
 
   private def createSettings(_name: String) = baseSettings ++ Seq(name := _name)
 
   // Aggregator
   lazy val root = Project("root", file("."), settings = createSettings("outrquery"))
-    .aggregate(core, orm, search, h2)
+    .aggregate(core, h2, orm, search)
 
   lazy val core = Project("core", file("core"), settings = createSettings("outrquery-core"))
 
@@ -54,5 +53,5 @@ object Dependencies {
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
   val H2 = "com.h2database" % "h2" % "1.3.174"
-  val Specs2 = "org.specs2" %% "specs2" % "2.2.3" % "test"
+  val ScalaTest = "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 }

@@ -1,29 +1,29 @@
 package com.outr.query.h2
 
-import org.specs2.mutable.Specification
 import org.powerscala.concurrent.Time
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class SessionSpec extends Specification {
+class SessionSpec extends WordSpec with Matchers {
   import TestDatastore._
 
   "session" should {
-    "wait for no all sessions to terminate" in {
+    "wait for all sessions to terminate" in {
       Time.waitFor(10.0) {
         sessions.isEmpty
-      } mustNotEqual false
+      } shouldNot equal(false)
     }
     "create a single session" in {
       create()
-      sessions.nonEmpty mustEqual true
+      sessions.nonEmpty should equal(true)
     }
     "timeout after 5 seconds when idling" in {
-      sessions.nonEmpty mustEqual true
+      sessions.nonEmpty should equal(true)
       Time.waitFor(10.0) {
         sessions.isEmpty
-      } mustNotEqual false
+      } shouldNot equal(false)
     }
     "keep a connection alive for several seconds with queries" in {
       create()      // Initialize our session
@@ -31,26 +31,26 @@ class SessionSpec extends Specification {
       val query = select(test.*) from test
       (0 until 30).foreach {
         case index => {
-          exec(query).toList.size mustEqual 0
-          session.disposed mustEqual false
+          exec(query).toList.size should equal(0)
+          session.disposed should equal(false)
           Time.sleep(1.0)
         }
       }
-      sessions.size mustEqual 1
-      session.disposed mustEqual false
+      sessions.size should equal(1)
+      session.disposed should equal(false)
     }
     "keep a connection alive with 'active' for several seconds" in {
-      sessions.size mustEqual 1
+      sessions.size should equal(1)
       val session = sessions.head
       active {
         Time.sleep(30.0)
       }
-      session.disposed mustEqual false
+      session.disposed should equal(false)
     }
     "timeout sessions before terminating" in {
       Time.waitFor(10.0) {
         sessions.isEmpty
-      } mustNotEqual false
+      } shouldNot equal(false)
     }
   }
 }
