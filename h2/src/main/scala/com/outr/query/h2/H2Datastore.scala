@@ -167,6 +167,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   }
 
   def exec(insert: Insert) = active {
+    if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
     val columnValues = insert.values.map(cv => cv.toSQL)

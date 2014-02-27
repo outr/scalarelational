@@ -24,7 +24,8 @@ object OUTRQueryBuild extends Build {
           Some("releases" at nexus + "service/local/staging/deploy/maven2")
     },
     publishArtifact in Test := false,
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    testOptions in Test += Tests.Argument("-oDF")
   )
 
   private def createSettings(_name: String) = baseSettings ++ Seq(name := _name)
@@ -43,7 +44,7 @@ object OUTRQueryBuild extends Build {
   lazy val orm = Project("orm", file("orm"), settings = createSettings("outrquery-orm"))
     .dependsOn(core, h2)
   lazy val search = Project("search", file("search"), settings = createSettings("outrquery-search"))
-    .dependsOn(core, h2)
+    .dependsOn(core, h2, orm)
     .settings(libraryDependencies ++= Seq(PowerScalaSearch))
 }
 

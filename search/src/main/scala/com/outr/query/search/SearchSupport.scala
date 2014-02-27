@@ -5,6 +5,7 @@ import com.outr.query.h2.trigger.{TriggerEvent, TriggerType}
 import com.outr.query.Table
 import org.powerscala.search.Search
 import java.io.File
+import org.powerscala.concurrent.Executor
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -12,6 +13,7 @@ import java.io.File
 trait SearchSupport extends H2Datastore {
   private var searchMap = Map.empty[Table, Search]
 
+  def processDelay = 0.0
   def delayedCommit = true
 
   final def searchForTable(table: Table) = synchronized {
@@ -31,9 +33,21 @@ trait SearchSupport extends H2Datastore {
 
   trigger.on {
     case evt if isSearchable(evt.table) => if (evt.triggerType.is(TriggerType.Insert, TriggerType.Update)) {
-      updateDocument(evt)
+      if (processDelay > 0.0) {
+        Executor.schedule(processDelay) {
+          updateDocument(evt)
+        }
+      } else {
+        updateDocument(evt)
+      }
     } else if (evt.triggerType.is(TriggerType.Delete)) {
-      deleteDocument(evt)
+      if (processDelay > 0.0) {
+        Executor.schedule(processDelay) {
+          deleteDocument(evt)
+        }
+      } else {
+        deleteDocument(evt)
+      }
     } else {
       // Ignore other types of trigger events
     }

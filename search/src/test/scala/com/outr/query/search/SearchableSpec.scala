@@ -1,13 +1,15 @@
 package com.outr.query.search
 
 import org.scalatest.{Matchers, WordSpec}
-import com.outr.query.h2.{H2Memory, H2Datastore}
+import com.outr.query.h2.H2Datastore
 import com.outr.query.Table
-import com.outr.query.column.property.{Unique, AutoIncrement, PrimaryKey}
+import com.outr.query.column.property.{NotNull, Unique, AutoIncrement, PrimaryKey}
 import org.powerscala.search.{DocumentUpdate, Search}
-import com.outr.query.h2.trigger.TriggerEvent
-import org.apache.lucene.document.{TextField, LongField, Field, StringField}
+import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.CategoryPath
+import com.outr.query.orm.ORMTable
+import com.outr.query.h2.trigger.TriggerEvent
+import com.outr.query.h2.H2Memory
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -35,6 +37,23 @@ class SearchableSpec extends WordSpec with Matchers {
       val results = TestDatastore.search.query.run()
       results.total should equal(2)
     }
+    "add a couple users into the datastore" in {
+      user.persist(User("John Doe", 30))
+      user.persist(User("Jane Doe", 28))
+      user.persist(User("Baby Doe", 3))
+    }
+    "search to find both test and user entries in the index" in {
+      val results = TestDatastore.search.query.run()
+      results.total should equal(5)
+    }
+    "search to find only test entries in the index" in {
+      val results = TestDatastore.search.query("type:test").run()
+      results.total should equal(2)
+    }
+    "search to find only user entries in the index" in {
+      val results = TestDatastore.search.query("type:user").run()
+      results.total should equal(3)
+    }
   }
 }
 
@@ -46,6 +65,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) with SearchSup
   override protected def createSearchForTable(table: Table) = search
 
   def test = TestTable
+  def user = User
 }
 
 object TestTable extends Table(TestDatastore) {
@@ -57,6 +77,14 @@ object TestTable extends Table(TestDatastore) {
   props(TestTableSearchable)
 }
 
+case class User(name: String, age: Int, id: Option[Int] = None)
+
+object User extends ORMTable[User](TestDatastore, UserSearchable) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", Unique)
+  val age = orm[Int]("age", NotNull)
+}
+
 object TestTableSearchable extends BasicSearchable {
   override def event2DocumentUpdate(evt: TriggerEvent) = {
     val id = evt(TestTable.id)
@@ -65,12 +93,27 @@ object TestTableSearchable extends BasicSearchable {
     val tags = evt(TestTable.tags).split(",").toList
     val fullText = s"$id $name ${tags.mkString(" ")}"
     val fields = List(
+      new StringField("docId", s"test$id", Field.Store.YES),
       new StringField("id", id.toString, Field.Store.YES),
       new StringField("name", name, Field.Store.YES),
       new LongField("date", date, Field.Store.YES),
-      new TextField("fullText", fullText, Field.Store.NO)
+      new TextField("fullText", fullText, Field.Store.NO),
+      new StringField("type", "test", Field.Store.YES)
     )
     val paths = tags.map(t => new CategoryPath("tag", t))
     DocumentUpdate(fields, paths)
+  }
+}
+
+object UserSearchable extends ORMSearchable[User] {
+  override def toDocumentUpdate(u: User) = {
+    DocumentUpdate(
+      new StringField("docId", s"user${u.id.get}", Field.Store.YES),
+      new StringField("id", u.id.get.toString, Field.Store.YES),
+      new StringField("name", u.name, Field.Store.YES),
+      new IntField("age", u.age, Field.Store.YES),
+      new TextField("fullText", s"${u.id.get} ${u.name} ${u.age}", Field.Store.NO),
+      new StringField("type", "user", Field.Store.YES)
+    )
   }
 }
