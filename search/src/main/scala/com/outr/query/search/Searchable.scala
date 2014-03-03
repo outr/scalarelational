@@ -36,19 +36,21 @@ trait BasicSearchable extends Searchable {
 }
 
 trait ORMSearchable[T] extends Searchable with Logging {
+  def updateById(id: Any, table: ORMTable[T], search: Search) = table.byId(id) match {
+    case Some(t) => {
+      val update = toDocumentUpdate(t)
+      search.update(update)
+    }
+    case None => warn(s"Unable to find instance in ${table.tableName} by id: $id.")
+  }
+
   def toDocumentUpdate(t: T): DocumentUpdate
 
   override def updateDocument(search: Search, evt: TriggerEvent) = {
     val table = evt.table.asInstanceOf[ORMTable[T]]
     val idColumn = table.primaryKeys.head
     val id = evt(idColumn)
-    table.byId(id) match {
-      case Some(t) => {
-        val update = toDocumentUpdate(t)
-        search.update(update)
-      }
-      case None => warn(s"Unable to find instance in ${table.tableName} by id: $id.")
-    }
+    updateById(id, table, search)
   }
 
   override def deleteDocument(search: Search, evt: TriggerEvent) = {
