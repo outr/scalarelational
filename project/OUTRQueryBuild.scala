@@ -13,6 +13,7 @@ object OUTRQueryBuild extends Build {
       H2,
       ScalaTest
     ),
+    fork := true,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"),
     publishTo <<= version {
