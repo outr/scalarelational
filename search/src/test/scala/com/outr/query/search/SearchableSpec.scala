@@ -10,6 +10,7 @@ import org.apache.lucene.facet.taxonomy.CategoryPath
 import com.outr.query.orm.ORMTable
 import com.outr.query.h2.trigger.TriggerEvent
 import com.outr.query.h2.H2Memory
+import org.apache.lucene.index.Term
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -116,4 +117,6 @@ object UserSearchable extends ORMSearchable[User] {
       new StringField("type", "user", Field.Store.YES)
     )
   }
+
+  override def deleteDocument(search: Search, evt: TriggerEvent) = search.delete(new Term("docId", s"user${evt(User.id)}"))
 }

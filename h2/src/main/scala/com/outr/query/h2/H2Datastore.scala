@@ -91,16 +91,16 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   private def createTableTriggers(table: Table, b: StringBuilder) = if (table.has(Triggers.name)) {
     val triggers = table.get[Triggers](Triggers.name).get
     if (triggers.has(TriggerType.Insert)) {
-      b.append(s"""CREATE TRIGGER ${table.tableName}_INSERT_TRIGGER AFTER INSERT ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+      b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_INSERT_TRIGGER AFTER INSERT ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
     }
     if (triggers.has(TriggerType.Update)) {
-      b.append(s"""CREATE TRIGGER ${table.tableName}_UPDATE_TRIGGER AFTER UPDATE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+      b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_UPDATE_TRIGGER AFTER UPDATE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
     }
     if (triggers.has(TriggerType.Delete)) {
-      b.append(s"""CREATE TRIGGER ${table.tableName}_DELETE_TRIGGER AFTER DELETE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+      b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_DELETE_TRIGGER AFTER DELETE ON ${table.tableName} FOR EACH ROW CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
     }
     if (triggers.has(TriggerType.Select)) {
-      b.append(s"""CREATE TRIGGER ${table.tableName}_SELECT_TRIGGER BEFORE SELECT ON ${table.tableName} CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+      b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_SELECT_TRIGGER BEFORE SELECT ON ${table.tableName} CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
     }
   }
 

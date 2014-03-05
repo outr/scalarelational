@@ -18,7 +18,7 @@ class TransientConverter[O](implicit manifest: Manifest[O]) extends ORMConverter
         case Some(value) => {
           val updated = foreignTable.persist(value)
           val id = foreignTable.idFor[Int](updated).get.value
-          ConversionResponse(Some(column(id)), Some(PreloadedTransient[O](Some(updated))))
+          ConversionResponse(Some(column(id)), Some(DynamicTransient(foreignTable, id)))
         }
         case None => Conversion.empty
       }

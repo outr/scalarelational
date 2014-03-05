@@ -34,7 +34,7 @@ case class PreloadedTransient[T](value: Option[T])(implicit val manifest: Manife
 }
 
 case class DynamicTransient[T](table: ORMTable[T], key: Any)(implicit val manifest: Manifest[T]) extends Transient[T] {
-  def use[R](f: Option[T] => R) = table.datastore.transaction {
+  def use[R](f: Option[T] => R) = table.datastore.active {
     val value = table.byId(key)
     f(value)
   }
