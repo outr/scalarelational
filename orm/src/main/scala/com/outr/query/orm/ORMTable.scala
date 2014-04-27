@@ -168,7 +168,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
         }
         case None => // Possible for columns to be returned that don't map to persistence
       }
-      case v => throw new RuntimeException(s"${v.getClass} is not supported in ORM results.")
+      case v => // Ignore non-columnvalues
     }
     val instance = caseClass.copy[T](null.asInstanceOf[T], args)
     idFor[Any](instance) match {
