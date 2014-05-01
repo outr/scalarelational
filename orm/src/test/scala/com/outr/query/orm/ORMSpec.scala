@@ -11,6 +11,7 @@ import org.powerscala.IO
 import com.outr.query.column.FileBlob
 import com.outr.query.table.property.Linking
 import org.scalatest.{Matchers, WordSpec}
+import com.outr.query.orm.existing.ExistingQuery
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -289,6 +290,18 @@ class ORMSpec extends WordSpec with Matchers {
       dev.language should equal("Scala")
     }
   }
+  "existing query" should {
+    val queryString = "SELECT id, name, language FROM user WHERE id = ?"
+    val existingQuery = new ExistingQuery[ExistingResult](TestDatastore, queryString)
+    "query back a specific result" in {
+      val results = existingQuery.query(List(2)).toList
+      results.length should equal(1)
+      val result = results.head
+      result.id should equal(2)
+      result.name should equal("Superman")
+      result.language should equal("Scala")
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -406,3 +419,5 @@ case class Administrator(name: String, id: Option[Int] = None) extends User
 case class Developer(name: String, language: String, id: Option[Int] = None) extends User
 
 case class Employee(name: String, id: Option[Int] = None) extends User
+
+case class ExistingResult(id: Int, name: String, language: String)

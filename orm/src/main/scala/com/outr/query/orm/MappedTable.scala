@@ -227,7 +227,7 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * @param query the query to utilize
    * @return iterator to cycle through instances derived from query result rows
    */
-  def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), this)
+  def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), result2Object)
 
   /**
    * True if the supplied instance has an id assigned (meaning it has been persisted).
