@@ -50,7 +50,7 @@ object OUTRQueryBuild extends Build {
 }
 
 object Dependencies {
-  private val PowerScalaVersion = "1.6.3-SNAPSHOT"
+  private val PowerScalaVersion = "1.6.4-SNAPSHOT"
 
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
