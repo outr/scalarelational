@@ -3,7 +3,7 @@ package com.outr.query.h2
 import com.outr.query._
 import com.outr.query.column.property._
 import com.outr.query.convert.{ObjectSerializationConverter, StringConverter, ColumnConverter}
-import java.sql.Blob
+import java.sql.{Timestamp, Blob}
 import javax.sql.rowset.serial.SerialBlob
 import org.powerscala.IO
 
@@ -36,7 +36,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, test)
-      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date BIGINT, PRIMARY KEY(id));")
+      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
     "create the table" in {
       create()
@@ -397,7 +397,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
 object TestTable extends Table(TestDatastore) {
   val id = column[Int]("id", PrimaryKey, AutoIncrement)
   val name = column[String]("name", Unique)
-  val date = column[Long]("date")
+  val date = column[Timestamp]("date")
 }
 
 object Suppliers extends Table(TestDatastore) {

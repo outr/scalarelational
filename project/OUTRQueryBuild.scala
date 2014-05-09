@@ -10,6 +10,7 @@ object OUTRQueryBuild extends Build {
     scalaVersion := "2.10.3",
     libraryDependencies ++= Seq(
       PowerScalaProperty,
+      Unbescape,
       H2,
       ScalaTest
     ),
@@ -55,5 +56,6 @@ object Dependencies {
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
   val H2 = "com.h2database" % "h2" % "1.3.174"
+  val Unbescape = "org.unbescape" % "unbescape" % "1.0"
   val ScalaTest = "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 }

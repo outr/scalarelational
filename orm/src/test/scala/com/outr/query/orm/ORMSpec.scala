@@ -5,7 +5,7 @@ import com.outr.query.Table
 import com.outr.query.column.property._
 import com.outr.query.h2.H2Memory
 import com.outr.query.orm.convert._
-import java.sql.Blob
+import java.sql.{Timestamp, Blob}
 import java.io.File
 import org.powerscala.IO
 import com.outr.query.column.FileBlob
@@ -326,7 +326,7 @@ case class Person(name: String, date: Long = System.currentTimeMillis(), compani
 object Person extends ORMTable[Person](TestDatastore) {
   val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
   val name = orm[String]("name", Unique)
-  val date = orm[Long]("date")
+  val date = orm[Timestamp, Long]("date")
 }
 
 case class Company(name: String, owner: Lazy[Person] = Lazy.None, id: Option[Int] = None)

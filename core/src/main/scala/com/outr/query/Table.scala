@@ -23,8 +23,10 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
   implicit def doubleConverter = DoubleConverter
   implicit def bigDecimalConverter = BigDecimalConverter
   implicit def stringConverter = StringConverter
+  implicit def wrappedStringConverter = WrappedStringConverter
   implicit def byteArrayConverter = ByteArrayConverter
   implicit def blobConverter = BlobConverter
+  implicit def timestampConverter = TimestampConverter
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]

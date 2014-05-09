@@ -3,8 +3,9 @@ package com.outr.query.convert
 import com.outr.query.{Column, ColumnLike}
 import org.powerscala.enum.{Enumerated, EnumEntry}
 import org.powerscala.reflect._
-import java.sql.Blob
+import java.sql.{Timestamp, Blob}
 import com.outr.query.column.property.IgnoreCase
+import com.outr.query.column.WrappedString
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -59,6 +60,15 @@ object StringConverter extends ColumnConverter[String] {
   def fromSQLType(column: ColumnLike[String], value: Any) = value.asInstanceOf[String]
 }
 
+object WrappedStringConverter extends ColumnConverter[WrappedString] {
+  def sqlType(column: ColumnLike[WrappedString]) = column match {
+    case c: Column[_] if c.has(IgnoreCase) => StringConverter.VarcharIngoreCaseType
+    case _ => StringConverter.VarcharType
+  }
+  def toSQLType(column: ColumnLike[WrappedString], value: WrappedString) = value.value
+  def fromSQLType(column: ColumnLike[WrappedString], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
+}
+
 object ByteArrayConverter extends ColumnConverter[Array[Byte]] {
   def sqlType(column: ColumnLike[Array[Byte]]) = "BINARY(1000)"
   def toSQLType(column: ColumnLike[Array[Byte]], value: Array[Byte]) = value
@@ -69,6 +79,12 @@ object BlobConverter extends ColumnConverter[Blob] {
   def sqlType(column: ColumnLike[Blob]) = "BLOB"
   def toSQLType(column: ColumnLike[Blob], value: Blob) = value
   def fromSQLType(column: ColumnLike[Blob], value: Any) = value.asInstanceOf[Blob]
+}
+
+object TimestampConverter extends ColumnConverter[Timestamp] {
+  def sqlType(column: ColumnLike[Timestamp]) = "TIMESTAMP"
+  def toSQLType(column: ColumnLike[Timestamp], value: Timestamp) = value
+  def fromSQLType(column: ColumnLike[Timestamp], value: Any) = value.asInstanceOf[Timestamp]
 }
 
 class EnumConverter[T <: EnumEntry](implicit manifest: Manifest[T]) extends ColumnConverter[T] {

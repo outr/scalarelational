@@ -27,6 +27,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   private var ormPersistence = Map.empty[EnhancedClass, ORMPersistence[T]]
 
   implicit val optionInt2IntConverter = new Option2ValueConverter[Int]
+  implicit val timestamp2LongConverter = Timestamp2Long
 
   // Looks up or generates an ORMPersistence instance for a concrete case class
   protected def persistenceFor(caseClass: EnhancedClass) = synchronized {
