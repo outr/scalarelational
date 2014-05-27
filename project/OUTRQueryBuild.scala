@@ -5,9 +5,9 @@ import Dependencies._
 
 object OUTRQueryBuild extends Build {
   val baseSettings = Defaults.defaultSettings ++ Seq(
-    version := "1.0.0-SNAPSHOT",
+    version := "1.0.1-SNAPSHOT",
     organization := "com.outr.query",
-    scalaVersion := "2.10.3",
+    scalaVersion := "2.11.1",
     libraryDependencies ++= Seq(
       PowerScalaProperty,
       Unbescape,
@@ -27,7 +27,27 @@ object OUTRQueryBuild extends Build {
     },
     publishArtifact in Test := false,
     parallelExecution in Test := false,
-    testOptions in Test += Tests.Argument("-oDF")
+    testOptions in Test += Tests.Argument("-oDF"),
+    pomExtra := <url>http://outr.com</url>
+      <licenses>
+        <license>
+          <name>BSD-style</name>
+          <url>http://www.opensource.org/licenses/bsd-license.php</url>
+          <distribution>repo</distribution>
+        </license>
+      </licenses>
+      <scm>
+        <developerConnection>scm:https://github.com/darkfrog26/outrquery.git</developerConnection>
+        <connection>scm:https://github.com/darkfrog26/outrquery.git</connection>
+        <url>https://github.com/darkfrog26/outrquery</url>
+      </scm>
+      <developers>
+        <developer>
+          <id>darkfrog</id>
+          <name>Matt Hicks</name>
+          <url>http://matthicks.com</url>
+        </developer>
+      </developers>
   )
 
   private def createSettings(_name: String) = baseSettings ++ Seq(name := _name)
@@ -56,6 +76,6 @@ object Dependencies {
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
   val H2 = "com.h2database" % "h2" % "latest.release"
-  val Unbescape = "org.unbescape" % "unbescape" % "1.0"
+  val Unbescape = "org.unbescape" % "unbescape" % "latest.release"
   val ScalaTest = "org.scalatest" %% "scalatest" % "latest.release" % "test"
 }
