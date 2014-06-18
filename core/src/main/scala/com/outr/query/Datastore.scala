@@ -221,6 +221,8 @@ case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
   def apply[T](function: SQLFunction[T]) = values.collectFirst {
     case fv: SQLFunctionValue[_] if fv.function == function => fv.value.asInstanceOf[T]
   }.getOrElse(throw new RuntimeException(s"Unable to find function value: $function in result."))
+
+  override def toString = s"${table.tableName}: ${values.mkString(", ")}"
 }
 
 class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {

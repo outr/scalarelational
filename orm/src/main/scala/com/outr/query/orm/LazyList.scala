@@ -63,12 +63,10 @@ object LazyList {
                                      (implicit originManifest: Manifest[Origin],
                                       destinationManifest: Manifest[Destination]): Unit = {
     if (originFieldName != null) {
-      val originCaseValue = originTable.clazz.caseValue(originFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$originFieldName' in ${originTable.clazz.name}"))
-      new LazyListConnectionM2M[Origin, Destination, C](originTable, originCaseValue, linkingTableOriginId, linkingTableDestinationId, destinationTable, destinationManifest)
+      new LazyListConnectionM2M[Origin, Destination, C](originTable, originFieldName, linkingTableOriginId, linkingTableDestinationId, destinationTable, destinationManifest)
     }
     if (destinationFieldName != null) {
-      val destinationCaseValue = destinationTable.clazz.caseValue(destinationFieldName).getOrElse(throw new RuntimeException(s"Unable to find '$destinationFieldName' in ${destinationTable.clazz.name}"))
-      new LazyListConnectionM2M[Destination, Origin, C](destinationTable, destinationCaseValue, linkingTableDestinationId, linkingTableOriginId, originTable, originManifest)
+      new LazyListConnectionM2M[Destination, Origin, C](destinationTable, destinationFieldName, linkingTableDestinationId, linkingTableOriginId, originTable, originManifest)
     }
   }
 
@@ -139,7 +137,7 @@ class LazyListConnectionO2M[Origin, ListItem, C](table: ORMTable[Origin],
 }
 
 class LazyListConnectionM2M[Origin, ListItem, C](table: ORMTable[Origin],
-                                                 caseValue: CaseValue,
+                                                 fieldName: String,
                                                  linkingTableOrigin: Column[C],
                                                  linkingTableListItem: Column[C],
                                                  foreignTable: ORMTable[ListItem],
@@ -148,9 +146,25 @@ class LazyListConnectionM2M[Origin, ListItem, C](table: ORMTable[Origin],
   val linkingTable = linkingTableOrigin.table
   val foreignTablePrimaryKey = foreignTable.primaryKeys.head.asInstanceOf[Column[C]]
 
+  private var map = Map.empty[Class[_], CaseValue]
+  private def caseValueFor(clazz: Class[_]) = synchronized {
+    map.get(clazz) match {
+      case Some(caseValue) => caseValue
+      case None => {
+        val caseValue = clazz.caseValue(fieldName).getOrElse(throw new RuntimeException(s"Unable to find '$fieldName' in ${clazz.name}"))
+        map += clazz -> caseValue
+        caseValue
+      }
+    }
+  }
+  if (table.getClass.isCase) {
+    caseValueFor(table.getClass)      // Preload when it's a case class
+  }
+
   // After persisting, persist entries, insert linking records, and update LazyList with ids
   table.persisted.on {
     case origin => if (!LazyListConnectionM2M.persisting.get()) {
+      val caseValue = caseValueFor(origin.getClass)
       LazyListConnectionM2M.persisting.set(true)
       try {
         val lzy = caseValue[LazyList[ListItem]](origin.asInstanceOf[AnyRef])
@@ -192,6 +206,7 @@ class LazyListConnectionM2M[Origin, ListItem, C](table: ORMTable[Origin],
         val id = idColumnValue.value
         val query = foreignTable.q innerJoin linkingTable on foreignTablePrimaryKey === linkingTableListItem where linkingTableOrigin === id
         val lzy = DelayedLazyList[ListItem](foreignTable, query)(listItemManifest)
+        val caseValue = caseValueFor(origin.getClass)
         caseValue.copy(origin, lzy)
       }
       case None => origin   // No id found for the queried object, perhaps not part of the query

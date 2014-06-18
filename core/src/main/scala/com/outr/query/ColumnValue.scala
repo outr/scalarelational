@@ -18,4 +18,6 @@ case class ColumnValue[T](column: ColumnLike[T],
     case Some(converter) => converter.toSQLType(column, value)
     case None => column.converter.toSQLType(column, value)
   }
+
+  override def toString = s"$column = $value"
 }

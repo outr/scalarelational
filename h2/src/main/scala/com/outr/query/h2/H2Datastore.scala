@@ -3,6 +3,7 @@ package com.outr.query.h2
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
+import org.powerscala.event.FunctionalListener
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.column.property._
@@ -34,6 +35,12 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
 
   val dataSource = JdbcConnectionPool.create(mode.url, dbUser, dbPassword)
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
+
+  val querying = new UnitProcessor[Query]("querying")
+  val inserting = new UnitProcessor[Insert]("inserting")
+  val merging = new UnitProcessor[Merge]("merging")
+  val updating = new UnitProcessor[Update]("updating")
+  val deleting = new UnitProcessor[Delete]("deleting")
 
   def createTableSQL(ifNotExist: Boolean, table: Table) = {
     val b = new StringBuilder
@@ -162,6 +169,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   def exec(query: Query) = active {
     val (sql, args) = sqlFromQuery(query)
 
+    querying.fire(query)
     val resultSet = session.executeQuery(sql, args)
     new QueryResultsIterator(resultSet, query)
   }
@@ -173,6 +181,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val columnValues = insert.values.map(cv => cv.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
+    inserting.fire(insert)
     val keys = session.executeInsert(insertString, columnValues)
     new GeneratedKeysIterator(keys)
   }
@@ -183,6 +192,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val columnValues = merge.values.map(cv => cv.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
+    merging.fire(merge)
     session.executeUpdate(mergeString, columnValues)
   }
 
@@ -195,6 +205,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val (where, whereArgs) = where2SQL(update.whereCondition)
     args = args ::: whereArgs
     val sql = s"UPDATE ${update.table.tableName} SET $sets$where"
+    updating.fire(update)
     session.executeUpdate(sql, args)
   }
 
@@ -204,6 +215,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
     val sql = s"DELETE FROM ${delete.table.tableName}$where"
+    deleting.fire(delete)
     session.executeUpdate(sql, args)
   }
 

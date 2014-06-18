@@ -302,6 +302,16 @@ class ORMSpec extends WordSpec with Matchers {
       result.language should equal("Scala")
     }
   }
+  "validating corner cases" should {
+    "create a company, set the owner, then verify it queries back with the user properly" in {
+      val company = SpecialCompany.persist(SpecialCompany("Superco"))
+      val company2 = SpecialCompany.persist(company.copy(name = "Supercompany"))
+      val user = Person.persist(Person("Me"))
+      SpecialCompany.persist(company.copy(owner = Transient(user)))
+      val updated = SpecialCompany.byId(company.id.get).get
+      updated.owner.use(o => o.get.name should equal("Me"))
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -316,6 +326,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   def contentData = ContentData
   def content = Content
   def user = User
+  def specialCompany = SpecialCompany
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
@@ -335,6 +346,14 @@ object Company extends ORMTable[Company](TestDatastore) {
   val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
   val name = orm[String]("name", Unique)
   val ownerId = orm[Int, Lazy[Person]]("ownerId", "owner", new LazyConverter[Person], new ForeignKey(Person.id))
+}
+
+case class SpecialCompany(name: String, owner: Transient[Person] = Transient.None, id: Option[Int] = None)
+
+object SpecialCompany extends ORMTable[SpecialCompany](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", Unique)
+  val ownerId = orm[Int, Transient[Person]]("ownerId", "owner", new TransientConverter[Person], new ForeignKey(Person.id))
 }
 
 case class CorporateDomain(url: String, company: Company, id: Option[Int] = None)

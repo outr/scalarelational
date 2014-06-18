@@ -5,6 +5,8 @@ import com.outr.query.column.property.ForeignKey
 import com.outr.query.orm.MappedTable
 
 /**
+ * ObjectConverter is similar to LazyConverter except it inlines the object instance within the class instead of lazy loading.
+ *
  * @author Matt Hicks <matt@outr.com>
  */
 class ObjectConverter[O](implicit manifest: Manifest[O]) extends ORMConverter[Int, O] {
