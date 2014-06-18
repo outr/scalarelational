@@ -132,7 +132,7 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
     val mapped = object2Row(modified)
     val insert = Insert(mapped.columnValues)
     if (insert.values.isEmpty) {
-      throw new RuntimeException(s"Cannot insert $t (${t.getClass.getName}) with empty insert!")
+      throw new RuntimeException(s"Cannot insert $t (${t.getClass.getName}")
     }
     val result = datastore.exec(insert).toList.headOption match {
       case Some(id) => updateWithId(mapped.updated, id)

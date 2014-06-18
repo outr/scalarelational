@@ -116,9 +116,12 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
 
   override def object2Row(instance: T, onlyChanges: Boolean) = {
     var updated = instance
-    val cached = if (onlyChanges) {
+    val cached = if (onlyChanges) {     // Find the changed case values and return them in a Set if there is a previously cached instance of this object
       idFor[Any](instance) match {
-        case Some(columnValue) => this.cached(columnValue.value).map(t => clazz.diff(t.asInstanceOf[AnyRef], instance.asInstanceOf[AnyRef]).map(t => t._1).toSet).getOrElse(null)
+        case Some(columnValue) => {
+          val cachedValue = this.cached(columnValue.value)
+          cachedValue.map(t => instance.getClass.diff(t.asInstanceOf[AnyRef], instance.asInstanceOf[AnyRef]).map(t => t._1).toSet).orNull
+        }
         case None => null
       }
     } else {
