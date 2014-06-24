@@ -26,8 +26,14 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
 
   private var ormPersistence = Map.empty[EnhancedClass, ORMPersistence[T]]
 
+  // TODO: extract as objects to reduce duplicate object instantiation
   implicit val optionInt2IntConverter = new Option2ValueConverter[Int]
+  implicit val optionLong2LongConverter = new Option2ValueConverter[Long]
+  implicit val optionDouble2DoubleConverter = new Option2ValueConverter[Double]
+  implicit val optionString2StringConverter = new Option2ValueConverter[String]
   implicit val timestamp2LongConverter = Timestamp2Long
+
+  implicit def listString2StringConverter = ListStringConverter
 
   // Looks up or generates an ORMPersistence instance for a concrete case class
   protected def persistenceFor(caseClass: EnhancedClass) = synchronized {
@@ -234,7 +240,7 @@ class ORMPersistence[T](table: ORMTable[T], caseClass: EnhancedClass) {
   val caseValues = caseClass.caseValues.map(cv => cv.name -> cv).toMap
   val persistence = table.ormColumns.collect {
     case ormColumn if caseValues.contains(ormColumn.fieldName) => ormColumn.persistence(caseValues(ormColumn.fieldName))
-    case ormColumn if !ormColumn.column.has(MappingOptional) => throw new RuntimeException(s"Unable to find case value in $caseClass for ${ormColumn.fieldName}.")
+    case ormColumn if !ormColumn.column.has(MappingOptional) => throw new RuntimeException(s"Unable to find case value in $caseClass for ${ormColumn.fieldName} in table: ${table.tableName}.")
   }
   val column2PersistenceMap = Map(persistence.map(p => p.column.asInstanceOf[Column[Any]] -> p): _*)
 }

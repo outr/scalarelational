@@ -91,6 +91,9 @@ class EnumConverter[T <: EnumEntry](implicit manifest: Manifest[T]) extends Colu
   val enumerated = manifest.runtimeClass.instance.getOrElse(throw new RuntimeException("Unable to find companion for ${manifest.runtimeClass}")).asInstanceOf[Enumerated[T]]
 
   def sqlType(column: ColumnLike[T]) = s"VARCHAR(${Int.MaxValue})"
-  def toSQLType(column: ColumnLike[T], value: T) = value.name
+  def toSQLType(column: ColumnLike[T], value: T) = value match {
+    case null => null
+    case _ => value.name
+  }
   def fromSQLType(column: ColumnLike[T], value: Any) = enumerated(value.asInstanceOf[String])
 }
