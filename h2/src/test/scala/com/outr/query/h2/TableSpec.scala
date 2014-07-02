@@ -38,8 +38,16 @@ class TableSpec extends WordSpec with Matchers {
       val sql = TestDatastore.createTableSQL(ifNotExist = true, test)
       sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
+    "verify that there are no tables currently created" in {
+      TestDatastore.jdbcTables should equal(Set.empty)
+      TestDatastore.empty should equal(true)
+    }
     "create the table" in {
       create()
+    }
+    "verify that tables exist" in {
+      TestDatastore.jdbcTables shouldNot equal(Set.empty)
+      TestDatastore.empty should equal(false)
     }
     "insert a record" in {
       val id = insert(test.name("John Doe")).toList.head

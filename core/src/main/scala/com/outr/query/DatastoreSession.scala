@@ -15,7 +15,7 @@ class DatastoreSession private[query](val datastore: Datastore, val timeout: Dou
   val store = new MapStorage[Any, Any]()
   @volatile private var connectionCreated = false
 
-  private lazy val connection = {
+  lazy val connection = {
     val c = datastore.dataSource.getConnection
     connectionCreated = true
     Datastore.current(datastore)

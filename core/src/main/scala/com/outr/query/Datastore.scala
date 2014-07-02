@@ -88,6 +88,19 @@ trait Datastore extends Listenable with Logging {
   def dataSource: DataSource
   def sessionTimeout = 5.0
 
+  def jdbcTables = active {
+    val s = session
+    val meta = s.connection.getMetaData
+    val results = meta.getTables(null, "PUBLIC", "%", null)
+    try {
+      new ResultSetIterator(results).map(_.getString("TABLE_NAME")).toSet
+    } finally {
+      results.close()
+    }
+  }
+
+  def empty() = jdbcTables.isEmpty
+
   def create(ifNotExist: Boolean = true) = {
     val s = session
     val sql = ddl(ifNotExist)
@@ -99,15 +112,19 @@ trait Datastore extends Listenable with Logging {
   def ddl(ifNotExist: Boolean = true) = {
     val b = new StringBuilder
 
+    val existingTables = jdbcTables
+
     tables.foreach {
-      case t => {
+      case t => if (!existingTables.contains(t.tableName.toUpperCase)) {
         b.append(createTableSQL(ifNotExist, t))
         b.append("\r\n")
+      } else {
+        debug(s"Table already exists: ${t.tableName}")
       }
     }
 
     tables.foreach {
-      case t => {
+      case t => if (!existingTables.contains(t.tableName.toUpperCase)) {
         createTableExtras(t, b)
       }
     }
@@ -245,4 +262,9 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
   } else {
     throw new RuntimeException("No results for the query!")
   }
+}
+
+class ResultSetIterator(results: ResultSet) extends Iterator[ResultSet] {
+  def hasNext = results.next()
+  def next() = results
 }
