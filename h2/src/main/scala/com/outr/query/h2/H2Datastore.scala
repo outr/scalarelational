@@ -227,7 +227,7 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       s"${c.column.longName} ${c.operator.symbol} NULL"
     }
     case c: DirectCondition[_] => {
-      args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[Column[Any]], c.value)
+      args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"
     }
     case c: LikeCondition[_] => {
@@ -238,7 +238,13 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       args += c.regex.toString()
       s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
     }
-    case c: RangeCondition[_] => throw new UnsupportedOperationException("RangeCondition isn't supported yet!")
+    case c: RangeCondition[_] => {
+      c.values.foreach {
+        case v => args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], v)
+      }
+      val entries = c.values.map(v => "?").mkString("(", ", ", ")")
+      s"${c.column.longName} ${c.operator.symbol}$entries"
+    }
     case c: Conditions => {
       val sql = c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")
       s"($sql)"

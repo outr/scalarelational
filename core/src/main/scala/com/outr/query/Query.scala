@@ -25,6 +25,9 @@ case class Query(expressions: List[SelectExpression],
   def leftJoin(table: Table) = join(table, joinType = JoinType.Left)
   def leftJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Left, alias = alias.tableAlias)
 
+  def leftOuterJoin(table: Table) = join(table, joinType = JoinType.LeftOuter)
+  def leftOuterJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.LeftOuter, alias = alias.tableAlias)
+
   def limit(value: Int) = copy(_limit = value)
   def offset(value: Int) = copy(_offset = value)
 
