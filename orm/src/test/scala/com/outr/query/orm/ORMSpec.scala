@@ -312,6 +312,20 @@ class ORMSpec extends WordSpec with Matchers {
       updated.owner.use(o => o.get.name should equal("Me"))
     }
   }
+  "persistence with exception handling" should {
+    "insert a unique name successfully" in {
+      UniqueName.persist(UniqueName("johndoe"))
+    }
+    "insert the same unique name and auto-correct" in {
+      UniqueName.persist(UniqueName("johndoe"))
+    }
+    "query back two distinct UniqueNames" in {
+      val names = UniqueName.query(UniqueName.q).toVector
+      names.length should equal(2)
+      names(0).name should equal("johndoe")
+      names(1).name should equal("johndoe1")
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -327,6 +341,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   def content = Content
   def user = User
   def specialCompany = SpecialCompany
+  def uniqueName = UniqueName
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
@@ -440,3 +455,22 @@ case class Developer(name: String, language: String, id: Option[Int] = None) ext
 case class Employee(name: String, id: Option[Int] = None) extends User
 
 case class ExistingResult(id: Int, name: String, language: String)
+
+case class UniqueName(name: String, id: Option[Int] = None) {
+  def incrementName = name match {
+    case UniqueName.IncrementedName(value, number) => copy(name = s"$value${number.toInt + 1}")
+    case _ => copy(name = s"${name}1")
+  }
+}
+
+object UniqueName extends ORMTable[UniqueName](TestDatastore) {
+  private val IncrementedName = """(.*)(\d+)""".r
+
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull, Unique)
+
+  persistFailing.on {
+    case (un, t) if t.getMessage.contains("PUBLIC.UNIQUE_NAME(NAME)") => Some(un.incrementName)
+    case _ => None
+  }
+}

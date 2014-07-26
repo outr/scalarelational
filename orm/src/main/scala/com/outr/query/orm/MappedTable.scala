@@ -4,11 +4,13 @@ import com.outr.query._
 import com.outr.query.QueryResult
 import com.outr.query.ColumnValue
 import scala.Some
-import org.powerscala.event.processor.{UnitProcessor, ModifiableOptionProcessor, ModifiableProcessor}
+import org.powerscala.event.processor.{OptionProcessor, UnitProcessor, ModifiableOptionProcessor, ModifiableProcessor}
 import org.powerscala.reflect.EnhancedClass
 import org.powerscala.ref.WeakReference
 import org.powerscala.event.Listenable
 import com.outr.query.table.property.TableProperty
+
+import scala.annotation.tailrec
 
 /**
  * MappedTable is the base-class used for mapping a class to a table.
@@ -45,6 +47,11 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * avoid deletion.
    */
   val deleting = new ModifiableOptionProcessor[T]("deleting")
+  /**
+   * Fired if an exception is thrown during persistence (insert, update, or merge). If Some(t) is returned the attempt
+   * is made another time with the updated value.
+   */
+  val persistFailing = new OptionProcessor[(T, Throwable), T]("persistFailing")
   /**
    * Fired immediate after successful persisting. Persisted is called after insert, merge, and update.
    */
@@ -127,21 +134,28 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * @param t the instance to insert
    * @return updated instance reflecting any changes resulting from the insert
    */
-  def insert(t: T): T = {
+  final def insert(t: T): T = {
     val modified = inserting.fire(persisting.fire(t))
-    val mapped = object2Row(modified)
-    val insert = Insert(mapped.columnValues)
-    if (insert.values.isEmpty) {
-      throw new RuntimeException(s"Cannot insert $t (${t.getClass.getName}")
+    try {
+      val mapped = object2Row(modified)
+      val insert = Insert(mapped.columnValues)
+      if (insert.values.isEmpty) {
+        throw new RuntimeException(s"Cannot insert $t (${t.getClass.getName}")
+      }
+      val result = datastore.exec(insert).toList.headOption match {
+        case Some(id) => updateWithId(mapped.updated, id)
+        case None => mapped.updated
+      }
+      updateCached(idFor(result).get.value, result) // Update the caching value
+      val updated2 = persisted.fire(result)
+      inserted.fire(updated2)
+      updated2
+    } catch {
+      case t: Throwable => persistFailing.fire(modified -> t) match {
+        case None => throw t
+        case Some(u) => insert(u)
+      }
     }
-    val result = datastore.exec(insert).toList.headOption match {
-      case Some(id) => updateWithId(mapped.updated, id)
-      case None => mapped.updated
-    }
-    updateCached(idFor(result).get.value, result)   // Update the caching value
-    val updated2 = persisted.fire(result)
-    inserted.fire(updated2)
-    updated2
   }
 
   /**
@@ -150,21 +164,28 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * @param t the instance to update
    * @return updated instance reflecting any changes resulting from the update to the database
    */
-  def update(t: T): T = {
+  final def update(t: T): T = {
     val modified = updating.fire(persisting.fire(t))
-    val mapped = object2Row(modified)
-    if (mapped.columnValues.nonEmpty) {
-      val columnValue = idFor[Any](mapped.updated).getOrElse(throw new RuntimeException(s"No id found for $t"))
-      val update = Update(mapped.columnValues, this).where(columnValue2Condition(columnValue))
-      val updatedRows = datastore.exec(update)
-      if (updatedRows != 1) {
-        throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+    try {
+      val mapped = object2Row(modified)
+      if (mapped.columnValues.nonEmpty) {
+        val columnValue = idFor[Any](mapped.updated).getOrElse(throw new RuntimeException(s"No id found for $t"))
+        val update = Update(mapped.columnValues, this).where(columnValue2Condition(columnValue))
+        val updatedRows = datastore.exec(update)
+        if (updatedRows != 1) {
+          throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+        }
+        updateCached(idFor(mapped.updated).get.value, mapped.updated)
       }
-      updateCached(idFor(mapped.updated).get.value, mapped.updated)
+      val updated2 = persisted.fire(mapped.updated)
+      this.updated.fire(updated2)
+      updated2
+    } catch {
+      case t: Throwable => persistFailing.fire(modified -> t) match {
+        case None => throw t
+        case Some(u) => update(u)
+      }
     }
-    val updated2 = persisted.fire(mapped.updated)
-    this.updated.fire(updated2)
-    updated2
   }
 
   /**
@@ -174,19 +195,26 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * @param t the instance to merge
    * @return updated instance reflecting any changes resulting from the merge
    */
-  def merge(t: T): T = {
+  final def merge(t: T): T = {
     val modified = merging.fire(persisting.fire(t))
-    val mapped = object2Row(modified, onlyChanges = false)
-    val key = primaryKeys.head
-    if (primaryKeys.tail.nonEmpty) {
-      throw new RuntimeException(s"Cannot merge with more than one primary key ($tableName)!")
+    try {
+      val mapped = object2Row(modified, onlyChanges = false)
+      val key = primaryKeys.head
+      if (primaryKeys.tail.nonEmpty) {
+        throw new RuntimeException(s"Cannot merge with more than one primary key ($tableName)!")
+      }
+      val merge = Merge(key, mapped.columnValues)
+      datastore.exec(merge)
+      updateCached(idFor(mapped.updated).get.value, mapped.updated)   // Update the caching value
+      val updated2 = persisted.fire(mapped.updated)
+      merged.fire(updated2)
+      updated2
+    } catch {
+      case t: Throwable => persistFailing.fire(modified -> t) match {
+        case None => throw t
+        case Some(u) => merge(u)
+      }
     }
-    val merge = Merge(key, mapped.columnValues)
-    datastore.exec(merge)
-    updateCached(idFor(mapped.updated).get.value, mapped.updated)   // Update the caching value
-    val updated2 = persisted.fire(mapped.updated)
-    merged.fire(updated2)
-    updated2
   }
 
   /**

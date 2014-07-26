@@ -27,6 +27,7 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
   implicit def byteArrayConverter = ByteArrayConverter
   implicit def blobConverter = BlobConverter
   implicit def timestampConverter = TimestampConverter
+  implicit def javaLongConverter = JavaLongConverter
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]

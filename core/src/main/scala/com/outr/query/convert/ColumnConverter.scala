@@ -36,6 +36,12 @@ object LongConverter extends ColumnConverter[Long] {
   def fromSQLType(column: ColumnLike[Long], value: Any) = value.asInstanceOf[Long]
 }
 
+object JavaLongConverter extends ColumnConverter[java.lang.Long] {
+  def sqlType(column: ColumnLike[java.lang.Long]) = "BIGINT"
+  def toSQLType(column: ColumnLike[java.lang.Long], value: java.lang.Long) = value
+  def fromSQLType(column: ColumnLike[java.lang.Long], value: Any) = value.asInstanceOf[java.lang.Long]
+}
+
 object DoubleConverter extends ColumnConverter[Double] {
   def sqlType(column: ColumnLike[Double]) = "DOUBLE"
   def toSQLType(column: ColumnLike[Double], value: Double) = value
@@ -95,5 +101,8 @@ class EnumConverter[T <: EnumEntry](implicit manifest: Manifest[T]) extends Colu
     case null => null
     case _ => value.name
   }
-  def fromSQLType(column: ColumnLike[T], value: Any) = enumerated(value.asInstanceOf[String])
+  def fromSQLType(column: ColumnLike[T], value: Any) = value match {
+    case null => null.asInstanceOf[T]
+    case s: String => enumerated(s)
+  }
 }

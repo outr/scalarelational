@@ -33,6 +33,8 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   implicit val optionString2StringConverter = new Option2ValueConverter[String]
   implicit val timestamp2LongConverter = Timestamp2Long
 
+  implicit val optionLong2JavaLongConverter = Option2ValueConverter[java.lang.Long, Long]((l: java.lang.Long) => if (l != null) Some(l.toLong) else None, (o: Option[Long]) => if (o.nonEmpty) new java.lang.Long(o.get) else null)
+
   implicit def listString2StringConverter = ListStringConverter
 
   // Looks up or generates an ORMPersistence instance for a concrete case class
