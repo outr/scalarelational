@@ -11,6 +11,8 @@ sealed trait Lazy[T] extends (() => T) {
 
   def loaded: Boolean
   def get(): Option[T]
+  def isEmpty: Boolean
+  final def nonEmpty = !isEmpty
 
   def apply() = get().get
   def getOrElse(f: => T) = get() match {
@@ -29,6 +31,7 @@ object Lazy {
 
 case class PreloadedLazy[T](value: Option[T])(implicit val manifest: Manifest[T]) extends Lazy[T] {
   def loaded = true
+  def isEmpty = value.isEmpty
 
   def get() = value
 }
@@ -37,6 +40,7 @@ case class DelayedLazy[T](table: ORMTable[T], key: Any)(implicit val manifest: M
   @volatile private var _loaded = false
   @volatile private var value: Option[T] = null
   def loaded = _loaded
+  def isEmpty = if (key == null) true else get().isEmpty
 
   def get() = synchronized {
     if (!loaded) {

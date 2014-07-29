@@ -1,5 +1,6 @@
 package com.outr.query.search
 
+import org.apache.lucene.facet.FacetField
 import org.scalatest.{Matchers, WordSpec}
 import com.outr.query.h2.H2Datastore
 import com.outr.query.Table
@@ -26,6 +27,7 @@ class SearchableSpec extends WordSpec with Matchers {
       insert(test.name("first"), test.date(System.currentTimeMillis()), test.tags("count,one,test"))
       insert(test.name("second"), test.date(System.currentTimeMillis()), test.tags("count,two,test"))
       insert(test.name("third"), test.date(System.currentTimeMillis()), test.tags("count,three,test"))
+      search.commit()
     }
     "search to find the entries in the index" in {
       val results = TestDatastore.search.query.run()
@@ -42,6 +44,7 @@ class SearchableSpec extends WordSpec with Matchers {
       user.persist(User("John Doe", 30))
       user.persist(User("Jane Doe", 28))
       user.persist(User("Baby Doe", 3))
+      search.commit()
     }
     "search to find both test and user entries in the index" in {
       val results = TestDatastore.search.query.run()
@@ -55,11 +58,17 @@ class SearchableSpec extends WordSpec with Matchers {
       val results = TestDatastore.search.query("type:user").run()
       results.total should equal(3)
     }
+    "search to find only user entries with the name starting with Jane" in {
+      val results = TestDatastore.search.query.term("user", "type").prefix("Jane", "name").run()
+      results.total should equal(1)
+      results.docs(0).get("name") should equal("Jane Doe")
+    }
   }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) with SearchSupport {
   val search = new Search("fullText")
+  search.facetsConfig.setMultiValued("tag", true)
 
   override def delayedCommit = false      // For testing purposes we want immediate commits
 
@@ -100,9 +109,8 @@ object TestTableSearchable extends BasicSearchable {
       new LongField("date", date, Field.Store.YES),
       new TextField("fullText", fullText, Field.Store.NO),
       new StringField("type", "test", Field.Store.YES)
-    )
-    val paths = tags.map(t => new CategoryPath("tag", t))
-    DocumentUpdate(fields, paths)
+    ) ::: tags.map(t => new FacetField("tag", t))
+    DocumentUpdate(fields, Nil)
   }
 }
 

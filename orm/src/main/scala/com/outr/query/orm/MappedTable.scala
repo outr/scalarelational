@@ -258,7 +258,7 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
    * @param query the query to utilize
    * @return iterator to cycle through instances derived from query result rows
    */
-  def query(query: Query) = new ORMResultsIterator[T](datastore.exec(query), result2Object)
+  def query(query: Query = q) = new ORMResultsIterator[T](datastore.exec(query), result2Object)
 
   /**
    * True if the supplied instance has an id assigned (meaning it has been persisted).
@@ -291,7 +291,7 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
       throw new RuntimeException(s"Cannot query by id for a table that doesn't have exactly one primary key (has ${primaryKeys.size} primary keys)")
     }
     val pk = primaryKeys.head.asInstanceOf[Column[Any]]
-    val query = Query(*, this).where(pk === primaryKey)
+    val query = q where (pk === primaryKey)
     val results = this.query(query).toList
     if (results.nonEmpty && results.tail.nonEmpty) {
       throw new RuntimeException(s"Query byId for ${pk.name} == $primaryKey returned ${results.size} results.")

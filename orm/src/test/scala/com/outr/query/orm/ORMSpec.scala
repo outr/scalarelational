@@ -326,6 +326,43 @@ class ORMSpec extends WordSpec with Matchers {
       names(1).name should equal("johndoe1")
     }
   }
+  "persistence with object converter that must not be null" should {
+    "insert a named user" in {
+      NamedUser.persist(NamedUser("Test User", UniqueName("testing")))
+    }
+    "query back the named user" in {
+      val namedOption = NamedUser.query(NamedUser.q where UniqueName.name === "testing").headOption
+      namedOption shouldNot equal(None)
+      val named = namedOption.get
+      named.id shouldNot equal(None)
+      named.username shouldNot equal(null)
+      named.username.name should equal("testing")
+    }
+    "update the test user" in {
+      val user = NamedUser.query().head
+      user.name should equal("Test User")
+      NamedUser.persist(user.copy(name = "Testing User"))
+    }
+    "verify the name changed properly" in {
+      val user = NamedUser.query().head
+      user.name should equal("Testing User")
+      user.username.name should equal("testing")
+    }
+    "update the username" in {
+      val user = NamedUser.query().head
+      NamedUser.persist(user.copy(username = user.username.copy(name = "testuser")))
+    }
+    "verify the username changed properly" in {
+      val user = NamedUser.query().head
+      user.name should equal("Testing User")
+      user.username.name should equal("testuser")
+    }
+    "query user by id" in {
+      val user = NamedUser.byId(1).get
+      user.name should equal("Testing User")
+      user.username.name should equal("testuser")
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -342,6 +379,7 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   def user = User
   def specialCompany = SpecialCompany
   def uniqueName = UniqueName
+  def namedUser = NamedUser
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
@@ -473,4 +511,14 @@ object UniqueName extends ORMTable[UniqueName](TestDatastore) {
     case (un, t) if t.getMessage.contains("PUBLIC.UNIQUE_NAME(NAME)") => Some(un.incrementName)
     case _ => None
   }
+}
+
+case class NamedUser(name: String, username: UniqueName, id: Option[Int] = None) {
+  if (username == null) throw new NullPointerException("Username must not be null!")
+}
+
+object NamedUser extends ORMTable[NamedUser](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
+  val usernameId = orm[Int, UniqueName]("usernameId", "username", new ObjectConverter[UniqueName], new ForeignKey(UniqueName.id), NotNull, Unique)
 }

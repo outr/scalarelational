@@ -30,6 +30,12 @@ object IntConverter extends ColumnConverter[Int] {
   def fromSQLType(column: ColumnLike[Int], value: Any) = value.asInstanceOf[Int]
 }
 
+object JavaIntConverter extends ColumnConverter[java.lang.Integer] {
+  def sqlType(column: ColumnLike[java.lang.Integer]) = "INTEGER"
+  def toSQLType(column: ColumnLike[java.lang.Integer], value: java.lang.Integer) = value
+  def fromSQLType(column: ColumnLike[java.lang.Integer], value: Any) = value.asInstanceOf[java.lang.Integer]
+}
+
 object LongConverter extends ColumnConverter[Long] {
   def sqlType(column: ColumnLike[Long]) = "BIGINT"
   def toSQLType(column: ColumnLike[Long], value: Long) = value
@@ -46,6 +52,12 @@ object DoubleConverter extends ColumnConverter[Double] {
   def sqlType(column: ColumnLike[Double]) = "DOUBLE"
   def toSQLType(column: ColumnLike[Double], value: Double) = value
   def fromSQLType(column: ColumnLike[Double], value: Any) = value.asInstanceOf[Double]
+}
+
+object JavaDoubleConverter extends ColumnConverter[java.lang.Double] {
+  def sqlType(column: ColumnLike[java.lang.Double]) = "DOUBLE"
+  def toSQLType(column: ColumnLike[java.lang.Double], value: java.lang.Double) = value
+  def fromSQLType(column: ColumnLike[java.lang.Double], value: Any) = value.asInstanceOf[java.lang.Double]
 }
 
 object BigDecimalConverter extends ColumnConverter[BigDecimal] {
