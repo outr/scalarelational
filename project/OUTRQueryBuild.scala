@@ -5,9 +5,9 @@ import Dependencies._
 
 object OUTRQueryBuild extends Build {
   val baseSettings = Defaults.defaultSettings ++ Seq(
-    version := "1.0.1-SNAPSHOT",
+    version := "1.0.2-SNAPSHOT",
     organization := "com.outr.query",
-    scalaVersion := "2.11.1",
+    scalaVersion := "2.11.2",
     libraryDependencies ++= Seq(
       PowerScalaProperty,
       Unbescape,
@@ -71,7 +71,7 @@ object OUTRQueryBuild extends Build {
 }
 
 object Dependencies {
-  private val PowerScalaVersion = "latest.integration"
+  private val PowerScalaVersion = "1.6.6-SNAPSHOT"
 
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
