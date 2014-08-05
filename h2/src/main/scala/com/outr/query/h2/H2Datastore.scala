@@ -1,5 +1,7 @@
 package com.outr.query.h2
 
+import java.io.File
+
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
@@ -164,6 +166,25 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       ""
     }
     s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset" -> args
+  }
+
+  def exportTable(table: Table, file: File, drop: Boolean = true) = {
+    val command = new StringBuilder("SCRIPT ")
+    if (drop) {
+      command.append("DROP ")
+    }
+    command.append("TO '")
+    command.append(file.getCanonicalPath)
+    command.append("' TABLE ")
+    command.append(table.tableName)
+
+//    val command = s"SCRIPT TO '${file.getCanonicalPath}' TABLE ${table.tableName}"
+    session.execute(command.toString)
+  }
+
+  def importScript(file: File) = {
+    val command = s"RUNSCRIPT FROM '${file.getCanonicalPath}'"
+    session.execute(command)
   }
 
   def exec(query: Query) = active {
