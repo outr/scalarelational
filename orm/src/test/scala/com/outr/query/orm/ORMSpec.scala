@@ -182,6 +182,43 @@ class ORMSpec extends WordSpec with Matchers {
       o3.items().tail.head.name should equal("Batarang")
       o3.items().tail.tail.head.name should equal("Tickle Me Elmo")
     }
+    "remove all the orders" in {
+      val orders = order.query().toList
+      orders.foreach {
+        case order => {
+          exec(delete(OrderItem) where OrderItem.orderId === order.id.get)
+          Order.delete(order)
+        }
+      }
+    }
+    "verify no orders are in the system" in {
+      order.query().toList should equal(Nil)
+    }
+    "create one order with one item" in {
+      val item = Item.query(Item.q where Item.name === "Tickle Me Elmo").head
+      val order = Order(items = LazyList(item))
+      Order.persist(order)
+    }
+    "verify one order exists with one item" in {
+      val orders = Order.query().toList
+      orders.size should equal(1)
+      val order = orders.head
+      order.items().size should equal(1)
+      order.items().head.name should equal("Tickle Me Elmo")
+    }
+    "update the order with a different item" in {
+      val item = Item.query(Item.q where Item.name === "District 9 DVD").head
+      val order = Order.query().head
+      val updated = order.copy(items = LazyList(item))
+      Order.persist(updated)
+    }
+    "verify one order exists with the new item" in {
+      val orders = Order.query().toList
+      orders.size should equal(1)
+      val order = orders.head
+      order.items().size should equal(1)
+      order.items().head.name should equal("District 9 DVD")
+    }
   }
   "Countries" should {
     val PopulationIn2011 = 311600000

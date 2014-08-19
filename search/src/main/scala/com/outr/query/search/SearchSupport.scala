@@ -12,9 +12,14 @@ import org.powerscala.concurrent.Executor
  */
 trait SearchSupport extends H2Datastore {
   private var searchMap = Map.empty[Table, Search]
+  private var subTriggers = Map.empty[Table, Table]
 
   def processDelay = 0.0
   def delayedCommit = true
+
+  def subTrigger(table: Table, searchableTable: Table) = synchronized {
+    subTriggers += table -> searchableTable
+  }
 
   final def searchForTable(table: Table) = synchronized {
     searchMap.get(table) match {
@@ -32,26 +37,29 @@ trait SearchSupport extends H2Datastore {
   def directory: Option[File] = None
 
   trigger.on {
-    case evt if isSearchable(evt.table) => if (evt.triggerType.is(TriggerType.Insert, TriggerType.Update)) {
-      if (processDelay > 0.0) {
-        Executor.schedule(processDelay) {
-          updateDocument(evt)
-        }
-      } else {
+    case evt if isSearchable(evt.table) => triggeredFor(evt)
+    case evt if subTriggers.contains(evt.table) => triggeredFor(evt.copy(table = subTriggers(evt.table)))
+    case _ => // Ignore non-searchable table triggers
+  }
+
+  private def triggeredFor(evt: TriggerEvent) = if (evt.triggerType.is(TriggerType.Insert, TriggerType.Update)) {
+    if (processDelay > 0.0) {
+      Executor.schedule(processDelay) {
         updateDocument(evt)
       }
-    } else if (evt.triggerType.is(TriggerType.Delete)) {
-      if (processDelay > 0.0) {
-        Executor.schedule(processDelay) {
-          deleteDocument(evt)
-        }
-      } else {
+    } else {
+      updateDocument(evt)
+    }
+  } else if (evt.triggerType.is(TriggerType.Delete)) {
+    if (processDelay > 0.0) {
+      Executor.schedule(processDelay) {
         deleteDocument(evt)
       }
     } else {
-      // Ignore other types of trigger events
+      deleteDocument(evt)
     }
-    case _ => // Ignore non-searchable table triggers
+  } else {
+    // Ignore other types of trigger events
   }
 
   private def updateDocument(evt: TriggerEvent) = {
