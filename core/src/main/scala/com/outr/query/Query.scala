@@ -13,6 +13,7 @@ case class Query(expressions: List[SelectExpression],
                  _offset: Int = -1) extends WhereSupport[Query] {
   def fields(expressions: SelectExpression*) = copy(expressions = this.expressions ::: expressions.toList)
   def fields(expressions: List[SelectExpression]) = copy(expressions = this.expressions ::: expressions)
+  def withoutField(expression: SelectExpression) = copy(expressions = expressions.filterNot(se => se == expression))
   def clearFields() = copy(expressions = Nil)
   def from(table: Table) = copy(table = table)
   def where(condition: Condition) = copy(whereCondition = condition)

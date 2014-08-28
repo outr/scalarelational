@@ -44,6 +44,14 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   val updating = new UnitProcessor[Update]("updating")
   val deleting = new UnitProcessor[Delete]("deleting")
 
+  private var functions = Set.empty[H2Function]
+
+  def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {
+    val f = H2Function(this, obj, methodName, functionName)
+    functions += f
+    f
+  }
+
   def createTableSQL(ifNotExist: Boolean, table: Table) = {
     val b = new StringBuilder
 
@@ -110,6 +118,16 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
     }
     if (triggers.has(TriggerType.Select)) {
       b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_SELECT_TRIGGER BEFORE SELECT ON ${table.tableName} CALL "com.outr.query.h2.trigger.TriggerInstance";\r\n\r\n""")
+    }
+  }
+
+  override def createExtras(b: StringBuilder) = {
+    createFunctions(b)
+  }
+
+  private def createFunctions(b: StringBuilder) = {
+    functions.foreach {
+      case f => b.append(s"""CREATE ALIAS IF NOT EXISTS ${f.name} FOR "${f.obj.getClass.getName.replaceAll("[$]", "")}.${f.methodName}";\r\n\r\n""")
     }
   }
 

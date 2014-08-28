@@ -129,6 +129,8 @@ trait Datastore extends Listenable with Logging {
       }
     }
 
+    createExtras(b)
+
     b.toString()
   }
 
@@ -189,6 +191,8 @@ trait Datastore extends Listenable with Logging {
   def createTableSQL(ifNotExist: Boolean, table: Table): String
 
   def createTableExtras(table: Table, b: StringBuilder): Unit
+
+  def createExtras(b: StringBuilder): Unit
 
   protected def createSession() = new DatastoreSession(this, sessionTimeout, Thread.currentThread())
 

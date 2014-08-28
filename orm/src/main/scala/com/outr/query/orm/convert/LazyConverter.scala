@@ -33,6 +33,6 @@ class LazyConverter[O](implicit manifest: Manifest[O]) extends ORMConverter[Int,
     val foreignTable = foreignColumn.table.asInstanceOf[ORMTable[O]]
     Some(DelayedLazy(foreignTable, c))
   } else {
-    None
+    Some(Lazy.None[O])
   }
 }
