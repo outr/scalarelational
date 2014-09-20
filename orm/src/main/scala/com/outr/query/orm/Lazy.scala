@@ -20,6 +20,11 @@ sealed trait Lazy[T] extends (() => T) {
     case None => f
   }
 
+  override def equals(obj: scala.Any) = obj match {
+    case l: Lazy[_] => l.get() == get()
+    case _ => false
+  }
+
   override def toString() = s"${getClass.getSimpleName}(${get()})"
 }
 

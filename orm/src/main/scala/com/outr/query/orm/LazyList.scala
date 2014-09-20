@@ -14,9 +14,16 @@ trait LazyList[T] extends (() => List[T]) {
     throw new RuntimeException("Cannot set LazyList generic type to AnyRef.")
   }
 
+  override def equals(obj: scala.Any) = obj match {
+    case ll: LazyList[_] => ll().toSet == apply().toSet
+    case _ => false
+  }
+
   def manifest: Manifest[T]
 
   def loaded: Boolean
+
+  override def toString() = s"${getClass.getSimpleName}"
 }
 
 object LazyList {
