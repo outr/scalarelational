@@ -281,7 +281,10 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
       c.values.foreach {
         case v => args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], v)
       }
-      val entries = c.values.map(v => "?").mkString("(", ", ", ")")
+      val entries = c.operator match {
+        case Operator.Between => c.values.map(v => "?").mkString(" AND ")
+        case _ => c.values.map(v => "?").mkString("(", ", ", ")")
+      }
       s"${c.column.longName} ${c.operator.symbol}$entries"
     }
     case c: Conditions => {
