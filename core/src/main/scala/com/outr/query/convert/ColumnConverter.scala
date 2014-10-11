@@ -4,7 +4,7 @@ import com.outr.query.{Column, ColumnLike}
 import org.powerscala.enum.{Enumerated, EnumEntry}
 import org.powerscala.reflect._
 import java.sql.{Timestamp, Blob}
-import com.outr.query.column.property.IgnoreCase
+import com.outr.query.column.property.{NumericStorage, IgnoreCase}
 import com.outr.query.column.WrappedString
 
 /**
@@ -61,7 +61,13 @@ object JavaDoubleConverter extends ColumnConverter[java.lang.Double] {
 }
 
 object BigDecimalConverter extends ColumnConverter[BigDecimal] {
-  def sqlType(column: ColumnLike[BigDecimal]) = "DECIMAL(20, 2)"
+  def sqlType(column: ColumnLike[BigDecimal]) = {
+    val numericStorage = column match {
+      case c: Column[BigDecimal] => c.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
+      case _ => NumericStorage.DefaultBigDecimal
+    }
+    s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
+  }
   def toSQLType(column: ColumnLike[BigDecimal], value: BigDecimal) = value.underlying()
   def fromSQLType(column: ColumnLike[BigDecimal], value: Any) = BigDecimal(value.asInstanceOf[java.math.BigDecimal])
 }
