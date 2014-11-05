@@ -1,13 +1,12 @@
-import sbt._
-import Keys._
-
 import Dependencies._
+import sbt.Keys._
+import sbt._
 
 object OUTRQueryBuild extends Build {
-  val baseSettings = Defaults.defaultSettings ++ Seq(
+  val baseSettings = Defaults.coreDefaultSettings ++ Seq(
     version := "1.0.3-SNAPSHOT",
     organization := "com.outr.query",
-    scalaVersion := "2.11.2",
+    scalaVersion := "2.11.4",
     libraryDependencies ++= Seq(
       PowerScalaProperty,
       Unbescape,
@@ -75,7 +74,7 @@ object Dependencies {
 
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
-  val H2 = "com.h2database" % "h2" % "latest.release"
-  val Unbescape = "org.unbescape" % "unbescape" % "latest.release"
-  val ScalaTest = "org.scalatest" %% "scalatest" % "latest.release" % "test"
+  val H2 = "com.h2database" % "h2" % "1.4.182"
+  val Unbescape = "org.unbescape" % "unbescape" % "1.1.0.RELEASE"
+  val ScalaTest = "org.scalatest" %% "scalatest" % "2.2.2" % "test"
 }
