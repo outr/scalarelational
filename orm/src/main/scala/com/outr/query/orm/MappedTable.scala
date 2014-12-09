@@ -173,7 +173,7 @@ abstract class MappedTable[T](datastore: Datastore, name: String, tablePropertie
         val update = Update(mapped.columnValues, this).where(columnValue2Condition(columnValue))
         val updatedRows = datastore.exec(update)
         if (updatedRows != 1) {
-          throw new RuntimeException(s"Attempt to update single instance failed. Updated $updated but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
+          throw new RuntimeException(s"Attempt to update single instance failed ($update). Updated $updatedRows but expected to update 1 record. Primary Keys: ${primaryKeys.map(c => c.name).mkString(", ")}")
         }
         updateCached(idFor(mapped.updated).get.value, mapped.updated)
       }
