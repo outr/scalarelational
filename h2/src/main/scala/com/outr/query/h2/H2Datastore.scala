@@ -329,4 +329,10 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   } else {
     "" -> Nil
   }
+
+  override def dispose() = {
+    super.dispose()
+
+    dataSource.dispose()
+  }
 }

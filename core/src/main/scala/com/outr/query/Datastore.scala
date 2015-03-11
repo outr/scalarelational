@@ -215,7 +215,7 @@ trait Datastore extends Listenable with Logging {
       s.activeQueries.decrementAndGet()
     }
   }
-  def dispose() = {
+  def dispose(): Unit = {
     sessions.foreach {
       case session => session.dispose()
     }
