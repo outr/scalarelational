@@ -1,7 +1,7 @@
 package com.outr.query.orm
 
 import com.outr.query.h2.H2Datastore
-import com.outr.query.Table
+import com.outr.query.{QueryResult, Column, Table}
 import com.outr.query.column.property._
 import com.outr.query.h2.H2Memory
 import com.outr.query.orm.convert._
@@ -400,6 +400,45 @@ class ORMSpec extends WordSpec with Matchers {
       user.username.name should equal("testuser")
     }
   }
+  "persisting object with List pointing another table" should {
+    "insert businesses and clients" in {
+      val client1 = Client("Client 1")
+      val client2 = Client("Client 2")
+      val client3 = Client("Client 3")
+
+      Business.persist(Business("Biz 1", List(client1, client2)))
+      Business.persist(Business("Biz 2", List(client3)))
+      Business.persist(Business("Biz 3"))
+    }
+    "query back three clients" in {
+      val clients = Client.query().toList
+      clients.length should equal(3)
+      clients.find(c => c.name == "Client 1") should not equal None
+      clients.find(c => c.name == "Client 2") should not equal None
+      clients.find(c => c.name == "Client 3") should not equal None
+    }
+    "query Biz 1 back with two clients" in {
+      val business = Business.query(Business.q where Business.name === "Biz 1").head
+      business.name should equal("Biz 1")
+      business.clients should not equal null
+      business.clients.length should equal(2)
+      business.clients(0).name should equal("Client 1")
+      business.clients(1).name should equal("Client 2")
+    }
+    "query Biz 2 back with one client" in {
+      val business = Business.query(Business.q where Business.name === "Biz 2").head
+      business.name should equal("Biz 2")
+      business.clients should not equal null
+      business.clients.length should equal(1)
+      business.clients.head.name should equal("Client 3")
+    }
+    "query Biz 3 back with no clients" in {
+      val business = Business.query(Business.q where Business.name === "Biz 3").head
+      business.name should equal("Biz 3")
+      business.clients should not equal null
+      business.clients.length should equal(0)
+    }
+  }
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
@@ -417,6 +456,8 @@ object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
   def specialCompany = SpecialCompany
   def uniqueName = UniqueName
   def namedUser = NamedUser
+  def business = Business
+  def client = Client
 
   LazyList.connect[Person, Company, Int](person, "companies", company.ownerId)
   LazyList.connect[Order, Item, Int](order, "items", orderItem.itemId, item, "orders", orderItem.orderId)
@@ -558,4 +599,33 @@ object NamedUser extends ORMTable[NamedUser](TestDatastore) {
   val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
   val name = orm[String]("name", NotNull)
   val usernameId = orm[Int, UniqueName]("usernameId", "username", new ObjectConverter[UniqueName], new ForeignKey(UniqueName.id), NotNull, Unique)
+}
+
+case class Business(name: String, clients: List[Client] = Nil, id: Option[Int] = None)
+
+object Business extends ORMTable[Business](TestDatastore) {
+  implicit val clientListConverter = new ORMConverter[String, List[Client]] {
+    override def fromORM(column: Column[String], o: List[Client]) = {
+      val clients = o.map(Client.persist)
+      val s = clients.map(_.id.get).mkString(",")
+      Conversion[String, List[Client]](Some(column(s)))
+    }
+
+    override def toORM(column: Column[String], c: String, result: QueryResult): Option[List[Client]] = {
+      Some(c.split(",").collect {
+        case id if id.nonEmpty => Client.byId(id.toInt)
+      }.flatten.toList)
+    }
+  }
+
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
+  val clients = orm[String, List[Client]]("clients", NotNull)
+}
+
+case class Client(name: String, id: Option[Int] = None)
+
+object Client extends ORMTable[Client](TestDatastore) {
+  val id = orm[Int, Option[Int]]("id", PrimaryKey, AutoIncrement)
+  val name = orm[String]("name", NotNull)
 }
