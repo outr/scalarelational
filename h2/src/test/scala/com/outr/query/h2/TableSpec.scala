@@ -394,7 +394,7 @@ class TableSpec extends WordSpec with Matchers {
   }
 }
 
-object TestDatastore extends H2Datastore(mode = H2Memory("test")) {
+object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) {
   def test = TestTable
   def suppliers = Suppliers
   def coffees = Coffees

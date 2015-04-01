@@ -6,6 +6,7 @@ import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
 import org.powerscala.event.FunctionalListener
+import org.powerscala.property.Property
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.column.property._
@@ -30,12 +31,20 @@ import com.outr.query.h2.trigger.{TriggerType, TriggerEvent}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
-                            val dbUser: String = "sa",
-                            val dbPassword: String = "sa") extends Datastore with Logging {
+abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
+                                     val dbUser: String = "sa",
+                                     val dbPassword: String = "sa") extends Datastore with Logging {
   Class.forName("org.h2.Driver")
 
-  val dataSource = JdbcConnectionPool.create(mode.url, dbUser, dbPassword)
+  val modeProperty = Property[H2ConnectionMode](default = Some(mode))
+  val dataSourceProperty = Property[JdbcConnectionPool]()
+
+  updateDataSource()
+  modeProperty.change.on {
+    case evt => updateDataSource()      // Update the data source if the mode changes
+  }
+
+  val dataSource = dataSourceProperty()
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
   val querying = new UnitProcessor[Query]("querying")
@@ -45,6 +54,14 @@ abstract class H2Datastore protected(val mode: H2ConnectionMode = H2Memory(),
   val deleting = new UnitProcessor[Delete]("deleting")
 
   private var functions = Set.empty[H2Function]
+
+  def updateDataSource() = {
+    dataSourceProperty.get match {
+      case Some(ds) => ds.dispose()
+      case None => // No previous dataSource
+    }
+    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, dbUser, dbPassword)
+  }
 
   def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {
     val f = H2Function(this, obj, methodName, functionName)

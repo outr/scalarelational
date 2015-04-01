@@ -7,7 +7,6 @@ import com.outr.query.Table
 import com.outr.query.column.property.{NotNull, Unique, AutoIncrement, PrimaryKey}
 import org.powerscala.search.{DocumentUpdate, Search}
 import org.apache.lucene.document._
-import org.apache.lucene.facet.taxonomy.CategoryPath
 import com.outr.query.orm.ORMTable
 import com.outr.query.h2.trigger.TriggerEvent
 import com.outr.query.h2.H2Memory
