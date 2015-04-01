@@ -69,10 +69,10 @@ object OUTRQueryBuild extends Build {
 }
 
 object Dependencies {
-  private val PowerScalaVersion = "1.6.8-SNAPSHOT"
+  private val PowerScalaVersion = "1.6.9-SNAPSHOT"
 
   val PowerScalaProperty = "org.powerscala" %% "powerscala-property" % PowerScalaVersion
   val PowerScalaSearch = "org.powerscala" %% "powerscala-search" % PowerScalaVersion
-  val H2 = "com.h2database" % "h2" % "1.4.184"
-  val ScalaTest = "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+  val H2 = "com.h2database" % "h2" % "1.4.186"
+  val ScalaTest = "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 }
