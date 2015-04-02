@@ -68,6 +68,12 @@ trait Datastore extends Listenable with Logging {
       }
     }
   }
+  def clearSessions() = synchronized {
+    _sessions.values.foreach {
+      case session => session.dispose()
+    }
+    _sessions = Map.empty[Thread, DatastoreSession]
+  }
 
   def select(expressions: SelectExpression*) = Query(expressions.toList)
   def select(expressions: List[SelectExpression]) = Query(expressions)
@@ -216,9 +222,7 @@ trait Datastore extends Listenable with Logging {
     }
   }
   def dispose(): Unit = {
-    sessions.foreach {
-      case session => session.dispose()
-    }
+    clearSessions()
   }
 }
 

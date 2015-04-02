@@ -39,12 +39,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   val modeProperty = Property[H2ConnectionMode](default = Some(mode))
   val dataSourceProperty = Property[JdbcConnectionPool]()
 
-  updateDataSource()
-  modeProperty.change.on {
-    case evt => updateDataSource()      // Update the data source if the mode changes
-  }
-
-  val dataSource = dataSourceProperty()
+  def dataSource = dataSourceProperty()
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
   val querying = new UnitProcessor[Query]("querying")
@@ -55,7 +50,17 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
   private var functions = Set.empty[H2Function]
 
+  init()
+
+  private def init() = {
+    updateDataSource()
+    modeProperty.change.on {
+      case evt => updateDataSource()      // Update the data source if the mode changes
+    }
+  }
+
   def updateDataSource() = {
+    clearSessions()
     dataSourceProperty.get match {
       case Some(ds) => ds.dispose()
       case None => // No previous dataSource

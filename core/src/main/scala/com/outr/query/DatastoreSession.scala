@@ -4,10 +4,12 @@ import org.powerscala.concurrent.{AtomicInt, Temporal}
 import org.powerscala.MapStorage
 import java.sql.{Statement, Savepoint}
 
+import org.powerscala.log.Logging
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class DatastoreSession private[query](val datastore: Datastore, val timeout: Double, thread: Thread) extends Temporal {
+class DatastoreSession private[query](val datastore: Datastore, val timeout: Double, thread: Thread) extends Temporal with Logging {
   private[query] val activeQueries = new AtomicInt(0)
   /**
    * Allows storage of key/value pairs on this session that will be removed upon disposal

@@ -24,7 +24,6 @@ trait ColumnLike[T] extends SelectExpression {
     }
     try {
       val value = EnhancedMethod.convertTo(name, toConvert, manifest.runtimeClass).asInstanceOf[T]
-      println(s"$toConvert converted to $value (${manifest.runtimeClass} - $longName)")
       apply(value)
     } catch {
       case t: Throwable => {
