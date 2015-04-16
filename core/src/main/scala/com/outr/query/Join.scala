@@ -14,12 +14,14 @@ case class PartialJoin(query: Query, table: Table, joinType: JoinType, alias: St
   def on(condition: Condition) = query.copy(joins = (Join(table, joinType, condition, alias) :: query.joins.reverse).reverse)
 }
 
-class JoinType private() extends EnumEntry
+sealed abstract class JoinType extends EnumEntry
 
 object JoinType extends Enumerated[JoinType] {
-  val Join = new JoinType
-  val Left = new JoinType
-  val LeftOuter = new JoinType
-  val Inner = new JoinType
-  val Outer = new JoinType
+  case object Join extends JoinType
+  case object Left extends JoinType
+  case object LeftOuter extends JoinType
+  case object Inner extends JoinType
+  case object Outer extends JoinType
+
+  val values = findValues.toVector
 }

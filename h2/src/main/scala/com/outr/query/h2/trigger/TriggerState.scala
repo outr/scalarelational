@@ -5,9 +5,11 @@ import org.powerscala.enum.{Enumerated, EnumEntry}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class TriggerState private() extends EnumEntry
+sealed abstract class TriggerState extends EnumEntry
 
 object TriggerState extends Enumerated[TriggerState] {
-  val Before = new TriggerState
-  val After = new TriggerState
+  case object Before extends TriggerState
+  case object After extends TriggerState
+
+  val values = findValues.toVector
 }

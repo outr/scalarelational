@@ -5,18 +5,20 @@ import org.powerscala.enum.{Enumerated, EnumEntry}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class Operator private(val symbol: String) extends EnumEntry
+sealed abstract class Operator(val symbol: String) extends EnumEntry
 
 object Operator extends Enumerated[Operator] {
-  val Equal = new Operator("=")
-  val NotEqual = new Operator("!=")
-  val GreaterThan = new Operator(">")
-  val LessThan = new Operator("<")
-  val GreaterThanOrEqual = new Operator(">=")
-  val LessThanOrEqual = new Operator("<=")
-  val Between = new Operator("BETWEEN")
-  val Like = new Operator("LIKE")
-  val In = new Operator("IN")
-  val Is = new Operator("IS")
-  val IsNot = new Operator("IS NOT")
+  case object Equal extends Operator("=")
+  case object NotEqual extends Operator("!=")
+  case object GreaterThan extends Operator(">")
+  case object LessThan extends Operator("<")
+  case object GreaterThanOrEqual extends Operator(">=")
+  case object LessThanOrEqual extends Operator("<=")
+  case object Between extends Operator("BETWEEN")
+  case object Like extends Operator("LIKE")
+  case object In extends Operator("IN")
+  case object Is extends Operator("IS")
+  case object IsNot extends Operator("IS NOT")
+
+  val values = findValues.toVector
 }

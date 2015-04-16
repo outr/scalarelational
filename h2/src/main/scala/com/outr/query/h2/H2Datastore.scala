@@ -326,6 +326,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
           case JoinType.Join => " JOIN "
           case JoinType.Left => " LEFT JOIN "
           case JoinType.LeftOuter => " LEFT OUTER JOIN "
+          case JoinType.Outer => " OUTER JOIN "
         }
         b.append(pre)
         b.append(join.table.tableName)

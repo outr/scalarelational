@@ -5,15 +5,13 @@ import org.powerscala.enum.{Enumerated, EnumEntry}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class TransactionMode private(val value: Int) extends EnumEntry {
-
-}
+sealed abstract class TransactionMode(val value: Int) extends EnumEntry
 
 object TransactionMode extends Enumerated[TransactionMode] {
   /**
    * A constant indicating that transactions are not supported.
    */
-  val None = new TransactionMode(0)
+  case object None extends TransactionMode(0)
   /**
    * A constant indicating that
    * dirty reads, non-repeatable reads and phantom reads can occur.
@@ -22,14 +20,14 @@ object TransactionMode extends Enumerated[TransactionMode] {
    * committed (a "dirty read").  If any of the changes are rolled back,
    * the second transaction will have retrieved an invalid row.
    */
-  val ReadUncommitted = new TransactionMode(1)
+  case object ReadUncommitted extends TransactionMode(1)
   /**
    * A constant indicating that
    * dirty reads are prevented; non-repeatable reads and phantom
    * reads can occur.  This level only prohibits a transaction
    * from reading a row with uncommitted changes in it.
    */
-  val ReadCommitted = new TransactionMode(2)
+  case object ReadCommitted extends TransactionMode(2)
   /**
    * A constant indicating that
    * dirty reads and non-repeatable reads are prevented; phantom
@@ -40,7 +38,7 @@ object TransactionMode extends Enumerated[TransactionMode] {
    * rereads the row, getting different values the second time
    * (a "non-repeatable read").
    */
-  val RepeatableRead = new TransactionMode(4)
+  case object RepeatableRead extends TransactionMode(4)
   /**
    * A constant indicating that
    * dirty reads, non-repeatable reads and phantom reads are prevented.
@@ -52,7 +50,9 @@ object TransactionMode extends Enumerated[TransactionMode] {
    * rereads for the same condition, retrieving the additional
    * "phantom" row in the second read.
    */
-  val Serializable = new TransactionMode(8)
+  case object Serializable extends TransactionMode(8)
 
   def byValue(value: Int) = values.find(m => m.value == value).getOrElse(throw new RuntimeException(s"Unable to find TransactionMode by value: $value"))
+
+  val values = findValues.toVector
 }

@@ -10,17 +10,19 @@ trait SQLFunction[T] extends SelectExpression {
   def functionType: FunctionType
 }
 
-class FunctionType private(val sql: String) extends EnumEntry
+sealed abstract class FunctionType(val sql: String) extends EnumEntry
 
 object FunctionType extends Enumerated[FunctionType] {
-  val Avg = new FunctionType("AVG")
-  val BoolAnd = new FunctionType("BOOL_AND")
-  val BoolOr = new FunctionType("BOOL_OR")
-  val Count = new FunctionType("COUNT")
-  val GroupConcat = new FunctionType("GROUP_CONCAT")
-  val Max = new FunctionType("MAX")
-  val Min = new FunctionType("MIN")
-  val Sum = new FunctionType("SUM")
+  case object Avg extends FunctionType("AVG")
+  case object BoolAnd extends FunctionType("BOOL_AND")
+  case object BoolOr extends FunctionType("BOOL_OR")
+  case object Count extends FunctionType("COUNT")
+  case object GroupConcat extends FunctionType("GROUP_CONCAT")
+  case object Max extends FunctionType("MAX")
+  case object Min extends FunctionType("MIN")
+  case object Sum extends FunctionType("SUM")
+
+  val values = findValues.toVector
 }
 
 case class SimpleFunction[T](functionType: FunctionType, column: ColumnLike[_]) extends SQLFunction[T]

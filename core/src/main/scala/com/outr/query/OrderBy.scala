@@ -7,9 +7,11 @@ import org.powerscala.enum.{Enumerated, EnumEntry}
  */
 case class OrderBy(expression: SelectExpression, direction: OrderDirection)
 
-class OrderDirection private(val sql: String) extends EnumEntry
+sealed abstract class OrderDirection(val sql: String) extends EnumEntry
 
 object OrderDirection extends Enumerated[OrderDirection] {
-  val Ascending = new OrderDirection("ASC")
-  val Descending = new OrderDirection("DESC")
+  case object Ascending extends OrderDirection("ASC")
+  case object Descending extends OrderDirection("DESC")
+
+  val values = findValues.toVector
 }

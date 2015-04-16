@@ -6,7 +6,7 @@ object OUTRQueryBuild extends Build {
   val baseSettings = Defaults.coreDefaultSettings ++ Seq(
     version := "1.0.4-SNAPSHOT",
     organization := "com.outr.query",
-    scalaVersion := "2.11.5",
+    scalaVersion := "2.11.6",
     libraryDependencies ++= Seq(
       PowerScalaProperty,
       H2,
