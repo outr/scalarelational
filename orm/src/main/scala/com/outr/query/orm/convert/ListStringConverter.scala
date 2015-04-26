@@ -12,6 +12,6 @@ object ListStringConverter extends ORMConverter[String, List[String]] {
 
   override def toORM(column: Column[String], c: String, result: QueryResult): Option[List[String]] = c match {
     case "" | null => Some(Nil)
-    case _ => Some(c.split("|").toList)
+    case _ => Some(c.split('|').toList)
   }
 }
