@@ -26,7 +26,6 @@ class SearchableSpec extends WordSpec with Matchers {
       insert(test.name("first"), test.date(System.currentTimeMillis()), test.tags("count,one,test"))
       insert(test.name("second"), test.date(System.currentTimeMillis()), test.tags("count,two,test"))
       insert(test.name("third"), test.date(System.currentTimeMillis()), test.tags("count,three,test"))
-      search.commit()
     }
     "search to find the entries in the index" in {
       val results = TestDatastore.search.query.run()
@@ -43,7 +42,6 @@ class SearchableSpec extends WordSpec with Matchers {
       user.persist(User("John Doe", 30))
       user.persist(User("Jane Doe", 28))
       user.persist(User("Baby Doe", 3))
-      search.commit()
     }
     "search to find both test and user entries in the index" in {
       val results = TestDatastore.search.query.run()
@@ -60,7 +58,24 @@ class SearchableSpec extends WordSpec with Matchers {
     "search to find only user entries with the name starting with Jane" in {
       val results = TestDatastore.search.query.term("user", "type").prefix("Jane", "name").run()
       results.total should equal(1)
-      results.docs(0).get("name") should equal("Jane Doe")
+      results.docs.head.get("name") should equal("Jane Doe")
+    }
+    "add a user into datastore in a transaction" in {
+      transaction {
+        user.persist(User("Another Doe", 40))
+      }
+      val results = TestDatastore.search.query.term("user", "type").prefix("Another", "name").run()
+      results.total should equal(1)
+    }
+    "add a user into datastore in a transaction and rollback" in {
+      an [RuntimeException] should be thrownBy transaction {
+        transaction {
+          user.persist(User("Temporary Doe", 50))
+          throw new RuntimeException
+        }
+      }
+      val results = TestDatastore.search.query.term("user", "type").prefix("Temporary", "name").run()
+      results.total should equal(0)
     }
   }
 }

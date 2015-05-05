@@ -6,6 +6,7 @@ import com.outr.query.Table
 import org.powerscala.search.Search
 import java.io.File
 import org.powerscala.concurrent.Executor
+import org.powerscala.transactional
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -15,7 +16,7 @@ trait SearchSupport extends H2Datastore {
   private var subTriggers = Map.empty[Table, Table]
 
   def processDelay = 0.0
-  def delayedCommit = true
+  def delayedCommit = false
 
   def subTrigger(table: Table, searchableTable: Table) = synchronized {
     subTriggers += table -> searchableTable
@@ -65,20 +66,25 @@ trait SearchSupport extends H2Datastore {
   private def updateDocument(evt: TriggerEvent) = {
     val search = searchForTable(evt.table)
     searchable(evt.table).updateDocument(search, evt)
-    if (delayedCommit) {
-      search.requestCommit()
-    } else {
-      search.commit()
-    }
+    transactionalCommit(search)
   }
 
   private def deleteDocument(evt: TriggerEvent) = {
     val search = searchForTable(evt.table)
     searchable(evt.table).deleteDocument(search, evt)
-    if (delayedCommit) {
-      search.requestCommit()
-    } else {
-      search.commit()
+    transactionalCommit(search)
+  }
+
+  private def transactionalCommit(search: Search) = {
+    transactional.transaction.onCommit() {
+      if (delayedCommit) {
+        search.requestCommit()
+      } else {
+        search.commit()
+      }
+    }
+    transactional.transaction.onRollback() {
+      search.rollback()
     }
   }
 

@@ -3,6 +3,7 @@ package com.outr.query
 import javax.sql.DataSource
 
 import java.sql.ResultSet
+import org.powerscala.transactional
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
 import org.powerscala.concurrent.{Time, Executor}
@@ -140,10 +141,6 @@ trait Datastore extends Listenable with Logging {
     b.toString()
   }
 
-  private val transactionLayers = new ThreadLocal[Int] {
-    override def initialValue() = 0
-  }
-
   /**
    * Creates a transaction for the contents of the supplied function. If an exception is thrown the contents will be
    * rolled back to the savepoint created before the function was invoked. If no exception occurs the transaction
@@ -151,40 +148,71 @@ trait Datastore extends Listenable with Logging {
    * will defer commit until the last transaction is ended.
    *
    * @param f the function to execute within the transaction
-   * @tparam T the return value from the function
-   * @return T
+   * @tparam R the return value from the function
+   * @return R
    */
-  def transaction[T](f: => T) = {
-    val layer = transactionLayers.get()
-    val isTop = layer == 0                                        // Is this the top-level transaction
-    transactionLayers.set(layer + 1)                              // Increment the transaction layer
+  def transaction[R](f: => R): R = {
+    val autoCommit = session.autoCommit
+    val depth = transactional.transaction.depth
+    val root = depth == 0
     active {
-      val previousAutoCommit = session.autoCommit
-      session.autoCommit(b = false)
-      val savepointName = s"transaction$layer"
-      val savepoint = session.savePoint(savepointName)
-      try {
-        val result = f
-        if (isTop) {
-          session.commit()
-        }
-        result
-      } catch {
-        case t: Throwable => {
-          if (isTop) {
-            session.rollback()
-          } else {
-            session.rollback(savepoint)
+      transactional.transaction {
+        try {
+          val result = f
+          if (root) {
+            try {
+              session.commit()
+            } catch {
+              case exc: Throwable => error("Exception trying to commit transaction.", exc)
+            }
           }
-          throw t
+          result
+        } catch {
+          case t: Throwable => {
+            if (root) session.rollback()
+            throw t
+          }
+        } finally {
+          if (root) {
+            session.autoCommit(autoCommit)
+          }
         }
-      } finally {
-        transactionLayers.set(transactionLayers.get() - 1)          // Decrement the transaction layer
-        session.autoCommit(previousAutoCommit)
-        session.releaseSavePoint(savepoint)
       }
     }
   }
+  // TODO: test this again after I figure out why savepoints aren't working like expected
+  /*def transaction[R](f: => R): R = {
+    val autoCommit = session.autoCommit
+    val depth = transactional.transaction.depth
+    val root = depth == 0
+    val savePointName = s"savePoint$depth"
+    active {
+      transactional.transaction {
+        val savePoint = session.savePoint(savePointName)
+        try {
+          val result = f
+          if (root) {
+            try {
+              session.commit()
+            } catch {
+              case exc: Throwable => error("Exception trying to commit transaction.", exc)
+            }
+          }
+          result
+        } catch {
+          case t: Throwable => {
+            session.rollback(savePoint)
+            throw t
+          }
+        } finally {
+          session.releaseSavePoint(savePoint)
+          if (root) {
+            session.autoCommit(autoCommit)
+          }
+        }
+      }
+    }
+  }*/
 
   def sqlFromQuery(query: Query): (String, List[Any])
 
