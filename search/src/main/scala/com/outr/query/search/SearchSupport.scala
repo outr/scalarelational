@@ -3,7 +3,9 @@ package com.outr.query.search
 import com.outr.query.h2.H2Datastore
 import com.outr.query.h2.trigger.{TriggerEvent, TriggerType}
 import com.outr.query.Table
-import org.powerscala.search.Search
+import org.apache.lucene.document.Document
+import org.apache.lucene.index.Term
+import org.powerscala.search.{DocumentUpdate, Search}
 import java.io.File
 import org.powerscala.concurrent.Executor
 import org.powerscala.transactional
@@ -65,26 +67,41 @@ trait SearchSupport extends H2Datastore {
 
   private def updateDocument(evt: TriggerEvent) = {
     val search = searchForTable(evt.table)
-    searchable(evt.table).updateDocument(search, evt)
-    transactionalCommit(search)
+    searchable(evt.table).updateDocument(evt) match {
+      case Some(doc) => update(search, doc)
+      case None => // No document supplied
+    }
   }
 
   private def deleteDocument(evt: TriggerEvent) = {
     val search = searchForTable(evt.table)
-    searchable(evt.table).deleteDocument(search, evt)
-    transactionalCommit(search)
+    searchable(evt.table).deleteDocument(evt) match {
+      case Left(updateOption) => updateOption match {
+        case Some(update) => delete(search, update)
+        case None => // No document supplied
+      }
+      case Right(term) => delete(search, term)
+    }
   }
 
-  private def transactionalCommit(search: Search) = {
+  def update(search: Search, update: DocumentUpdate) = {
     transactional.transaction.onCommit() {
-      if (delayedCommit) {
-        search.requestCommit()
-      } else {
-        search.commit()
-      }
+      search.update(update)
+      search.commit()     // TODO: figure out a better way to handle this
     }
-    transactional.transaction.onRollback() {
-      search.rollback()
+  }
+
+  def delete(search: Search, update: DocumentUpdate) = {
+    transactional.transaction.onCommit() {
+      search.delete(update)
+      search.commit()
+    }
+  }
+
+  def delete(search: Search, term: Term) = {
+    transactional.transaction.onCommit() {
+      search.delete(term)
+      search.commit()
     }
   }
 

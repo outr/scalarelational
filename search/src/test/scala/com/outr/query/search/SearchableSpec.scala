@@ -124,21 +124,21 @@ object TestTableSearchable extends BasicSearchable {
       new TextField("fullText", fullText, Field.Store.NO),
       new StringField("type", "test", Field.Store.YES)
     ) ::: tags.map(t => new FacetField("tag", t))
-    DocumentUpdate(fields, Nil)
+    Some(DocumentUpdate(fields, Nil))
   }
 }
 
-object UserSearchable extends ORMSearchable[User] {
+object UserSearchable extends ORMSearchable(User) {
   override def toDocumentUpdate(u: User) = {
-    DocumentUpdate(
+    Some(DocumentUpdate(
       new StringField("docId", s"user${u.id.get}", Field.Store.YES),
       new StringField("id", u.id.get.toString, Field.Store.YES),
       new StringField("name", u.name, Field.Store.YES),
       new IntField("age", u.age, Field.Store.YES),
       new TextField("fullText", s"${u.id.get} ${u.name} ${u.age}", Field.Store.NO),
       new StringField("type", "user", Field.Store.YES)
-    )
+    ))
   }
 
-  override def deleteDocument(search: Search, evt: TriggerEvent) = search.delete(new Term("docId", s"user${evt(User.id)}"))
+  override def deleteDocument(evt: TriggerEvent) = Right(new Term("docId", s"user${evt(User.id)}"))
 }
