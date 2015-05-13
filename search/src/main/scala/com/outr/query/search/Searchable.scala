@@ -36,7 +36,9 @@ trait BasicSearchable extends Searchable {
   override def deleteDocument(evt: TriggerEvent) = Left(event2DocumentUpdate(evt))
 }
 
-abstract class ORMSearchable[T](table: ORMTable[T]) extends Searchable with Logging {
+trait ORMSearchable[T] extends Searchable with Logging {
+  def table: ORMTable[T]
+
   def updateById(id: Any, table: ORMTable[T]) = table.byId(id) match {
     case Some(t) => toDocumentUpdate(t)
     case None => {
@@ -49,6 +51,8 @@ abstract class ORMSearchable[T](table: ORMTable[T]) extends Searchable with Logg
 
   def update(t: T) = toDocumentUpdate(t) match {
     case Some(update) => {
+      info(s"Table: $table")
+      info(s"Datastore: ${table.datastore}")
       val datastore = table.datastore.asInstanceOf[SearchSupport]
       datastore.update(datastore.searchForTable(table), update)
     }

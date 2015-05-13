@@ -128,7 +128,9 @@ object TestTableSearchable extends BasicSearchable {
   }
 }
 
-object UserSearchable extends ORMSearchable(User) {
+object UserSearchable extends ORMSearchable[User] {
+  override def table = User
+
   override def toDocumentUpdate(u: User) = {
     Some(DocumentUpdate(
       new StringField("docId", s"user${u.id.get}", Field.Store.YES),
