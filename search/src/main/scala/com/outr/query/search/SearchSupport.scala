@@ -85,35 +85,35 @@ trait SearchSupport extends H2Datastore {
   }
 
   def update(search: Search, update: DocumentUpdate) = {
-    transactional.transaction.onCommit() {
-      info(s"Updating document: $update")
+//    transactional.transaction.onCommit() {
+//      info(s"Updating document: $update")
       search.update(update)
       commit(search)
-    }
+//    }
   }
 
   def delete(search: Search, update: DocumentUpdate) = {
-    transactional.transaction.onCommit() {
-      info(s"Deleting $update")
+//    transactional.transaction.onCommit() {
+//      info(s"Deleting $update")
       search.delete(update)
       commit(search)
-    }
+//    }
   }
 
   def delete(search: Search, term: Term) = {
-    transactional.transaction.onCommit() {
-      info(s"Deleting $term")
+//    transactional.transaction.onCommit() {
+//      info(s"Deleting $term")
       search.delete(term)
       commit(search)
-    }
+//    }
   }
 
   private def commit(search: Search) = {
     if (delayedCommit) {
-      info("request commit!")
+//      info("request commit!")
       search.requestCommit()
     } else {
-      info("commit!")
+//      info("commit!")
       search.commit() // TODO: figure out a better way to handle this
     }
   }
