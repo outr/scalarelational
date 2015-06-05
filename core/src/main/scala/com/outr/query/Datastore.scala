@@ -15,8 +15,7 @@ import scala.collection.mutable
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging {
-  private var _sessions = Map.empty[Thread, DatastoreSession]
+trait Datastore extends Listenable with Logging with SessionSupport {
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
@@ -50,32 +49,6 @@ trait Datastore extends Listenable with Logging {
 
   def tableByName(tableName: String) = tablesMap.get(tableName.toLowerCase)
 
-  private var lastUpdated = System.nanoTime()
-  val updater = Executor.scheduleWithFixedDelay(1.0, 1.0) {
-    val current = System.nanoTime()
-    val delta = Time.fromNanos(current - lastUpdated)
-    update(delta)
-    lastUpdated = current
-  }
-
-  def sessions = _sessions.values
-  def session = synchronized {
-    _sessions.get(Thread.currentThread()) match {
-      case Some(s) => s
-      case None => {
-        val s = createSession()
-        _sessions += Thread.currentThread() -> s
-        s
-      }
-    }
-  }
-  def clearSessions() = synchronized {
-    _sessions.values.foreach {
-      case session => session.dispose()
-    }
-    _sessions = Map.empty[Thread, DatastoreSession]
-  }
-
   def select(expressions: SelectExpression*) = Query(expressions.toList)
   def select(expressions: List[SelectExpression]) = Query(expressions)
   def insert(values: ColumnValue[_]*) = {
@@ -96,9 +69,8 @@ trait Datastore extends Listenable with Logging {
   def delete(table: Table) = Delete(table)
 
   def dataSource: DataSource
-  def sessionTimeout = 5.0
 
-  def jdbcTables = active {
+  def jdbcTables = session {
     val s = session
     val meta = s.connection.getMetaData
     val results = meta.getTables(null, "PUBLIC", "%", null)
@@ -144,79 +116,6 @@ trait Datastore extends Listenable with Logging {
     b.toString()
   }
 
-  /**
-   * Creates a transaction for the contents of the supplied function. If an exception is thrown the contents will be
-   * rolled back to the savepoint created before the function was invoked. If no exception occurs the transaction
-   * will be committed (but only if it is not a nested transaction). Layering of transactions is supported and
-   * will defer commit until the last transaction is ended.
-   *
-   * @param f the function to execute within the transaction
-   * @tparam R the return value from the function
-   * @return R
-   */
-  def transaction[R](f: => R): R = {
-    val autoCommit = session.autoCommit
-    val depth = transactional.transaction.depth
-    val root = depth == 0
-    active {
-      transactional.transaction {
-        try {
-          val result = f
-          if (root) {
-            try {
-              session.commit()
-            } catch {
-              case exc: Throwable => error("Exception trying to commit transaction.", exc)
-            }
-          }
-          result
-        } catch {
-          case t: Throwable => {
-            if (root) session.rollback()
-            throw t
-          }
-        } finally {
-          if (root) {
-            session.autoCommit(autoCommit)
-          }
-        }
-      }
-    }
-  }
-  // TODO: test this again after I figure out why savepoints aren't working like expected
-  /*def transaction[R](f: => R): R = {
-    val autoCommit = session.autoCommit
-    val depth = transactional.transaction.depth
-    val root = depth == 0
-    val savePointName = s"savePoint$depth"
-    active {
-      transactional.transaction {
-        val savePoint = session.savePoint(savePointName)
-        try {
-          val result = f
-          if (root) {
-            try {
-              session.commit()
-            } catch {
-              case exc: Throwable => error("Exception trying to commit transaction.", exc)
-            }
-          }
-          result
-        } catch {
-          case t: Throwable => {
-            session.rollback(savePoint)
-            throw t
-          }
-        } finally {
-          session.releaseSavePoint(savePoint)
-          if (root) {
-            session.autoCommit(autoCommit)
-          }
-        }
-      }
-    }
-  }*/
-
   def sqlFromQuery(query: Query): (String, List[Any])
 
   def exec(query: Query): QueryResultsIterator
@@ -231,30 +130,7 @@ trait Datastore extends Listenable with Logging {
 
   def createExtras(b: StringBuilder): Unit
 
-  protected def createSession() = new DatastoreSession(this, sessionTimeout, Thread.currentThread())
-
-  protected[query] def cleanup(thread: Thread, session: DatastoreSession) = synchronized {
-    _sessions -= thread
-  }
-
-  protected def update(delta: Double) = {
-    sessions.foreach {
-      case session => session.update(delta)
-    }
-  }
-  def active[T](f: => T): T = {
-    val s = session
-    s.checkIn()
-    s.activeQueries.incrementAndGet()
-    try {
-      f
-    } finally {
-      s.activeQueries.decrementAndGet()
-    }
-  }
-  def dispose(): Unit = {
-    clearSessions()
-  }
+  def dispose() = {}
 }
 
 object Datastore {
@@ -284,7 +160,6 @@ case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
 class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
   def hasNext = rs.next()
   def next() = {
-    query.table.datastore.session.checkIn()       // Keep the session alive
     val values = query.expressions.zipWithIndex.map {
       case (expression, index) => expression match {
         case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], column.converter.fromSQLType(column, rs.getObject(index + 1)), None)

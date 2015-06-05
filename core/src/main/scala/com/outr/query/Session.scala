@@ -1,27 +1,20 @@
 package com.outr.query
 
-import org.powerscala.concurrent.{AtomicInt, Temporal}
-import org.powerscala.MapStorage
-import java.sql.{Statement, Savepoint}
-
-import org.powerscala.log.Logging
+import java.sql.{Statement, Connection}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class DatastoreSession private[query](val datastore: Datastore, val timeout: Double, thread: Thread) extends Temporal with Logging {
-  private[query] val activeQueries = new AtomicInt(0)
-  /**
-   * Allows storage of key/value pairs on this session that will be removed upon disposal
-   */
-  val store = new MapStorage[Any, Any]()
-  @volatile private var connectionCreated = false
+case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
+  private var _connection: Option[Connection] = None
 
-  lazy val connection = {
-    val c = datastore.dataSource.getConnection
-    connectionCreated = true
-    Datastore.current(datastore)
-    c
+  def connection = _connection match {
+    case Some(c) => c
+    case None => {
+      val c = datastore.dataSource.getConnection
+      _connection = Option(c)
+      c
+    }
   }
 
   def execute(sql: String) = {
@@ -71,29 +64,14 @@ class DatastoreSession private[query](val datastore: Datastore, val timeout: Dou
   def transactionMode = TransactionMode.byValue(connection.getTransactionIsolation)
   def transactionMode_=(mode: TransactionMode) = connection.setTransactionIsolation(mode.value)
   def savePoint(name: String) = connection.setSavepoint(name)
-  def releaseSavePoint(savePoint: Savepoint) = connection.releaseSavepoint(savePoint)
 
   def commit() = connection.commit()
-  def rollback(savePoint: Savepoint = null) = if (savePoint != null) {
-    connection.rollback(savePoint)
-  } else {
-    connection.rollback()
-  }
+  def rollback() = connection.rollback()
 
-  override def checkIn() = super.checkIn()
-
-  override def update(delta: Double) = {
-    if (activeQueries() > 0) {
-      checkIn()       // Check in if there is an active query
+  protected[query] def dispose() = {
+    _connection match {
+      case Some(c) => c.close()
+      case None => // No connection ever created
     }
-    super.update(delta)
-  }
-
-  def dispose() = {
-    store.clear()
-    if (connectionCreated) {
-      connection.close()
-    }
-    datastore.cleanup(thread, this)
   }
 }

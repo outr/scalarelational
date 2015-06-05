@@ -4,7 +4,7 @@ import sbt._
 
 object OUTRQueryBuild extends Build {
   val baseSettings = Defaults.coreDefaultSettings ++ Seq(
-    version := "1.0.4",
+    version := "1.1.0-SNAPSHOT",
     organization := "com.outr.query",
     scalaVersion := "2.11.6",
     libraryDependencies ++= Seq(
@@ -52,20 +52,13 @@ object OUTRQueryBuild extends Build {
 
   // Aggregator
   lazy val root = Project("root", file("."), settings = createSettings("outrquery"))
-    .aggregate(core, h2, orm, search)
+    .aggregate(core, h2)
 
   lazy val core = Project("core", file("core"), settings = createSettings("outrquery-core"))
 
   // Implementations
   lazy val h2 = Project("h2", file("h2"), settings = createSettings("outrquery-h2"))
     .dependsOn(core)
-
-  // Add-ons
-  lazy val orm = Project("orm", file("orm"), settings = createSettings("outrquery-orm"))
-    .dependsOn(core, h2)
-  lazy val search = Project("search", file("search"), settings = createSettings("outrquery-search"))
-    .dependsOn(core, h2, orm)
-    .settings(libraryDependencies ++= Seq(PowerScalaSearch))
 }
 
 object Dependencies {

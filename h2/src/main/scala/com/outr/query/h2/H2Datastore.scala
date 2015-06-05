@@ -60,7 +60,6 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   def updateDataSource() = {
-    clearSessions()
     dataSourceProperty.get match {
       case Some(ds) => ds.dispose()
       case None => // No previous dataSource
@@ -227,7 +226,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     session.execute(command)
   }
 
-  def exec(query: Query) = active {
+  def exec(query: Query) = {
     val (sql, args) = sqlFromQuery(query)
 
     querying.fire(query)
@@ -235,7 +234,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     new QueryResultsIterator(resultSet, query)
   }
 
-  def exec(insert: Insert) = active {
+  def exec(insert: Insert) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
@@ -247,7 +246,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     new GeneratedKeysIterator(keys)
   }
   
-  def exec(merge: Merge) = active {
+  def exec(merge: Merge) = {
     val table = merge.key.table
     val columnNames = merge.values.map(cv => cv.column.name).mkString(", ")
     val columnValues = merge.values.map(cv => cv.toSQL)
@@ -257,7 +256,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     session.executeUpdate(mergeString, columnValues)
   }
 
-  def exec(update: Update) = active {
+  def exec(update: Update) = {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
     val setArgs = update.values.map(cv => cv.toSQL)
@@ -270,7 +269,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     session.executeUpdate(sql, args)
   }
 
-  def exec(delete: Delete) = active {
+  def exec(delete: Delete) = {
     var args = List.empty[Any]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)
@@ -354,8 +353,6 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   override def dispose() = {
-    super.dispose()
-
     dataSource.dispose()
   }
 }

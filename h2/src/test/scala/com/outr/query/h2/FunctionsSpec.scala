@@ -11,29 +11,39 @@ import org.scalatest.{Matchers, WordSpec}
  * @author Matt Hicks <matt@outr.com>
  */
 class FunctionsSpec extends WordSpec with Matchers {
+  import FunctionsDatastore._
+
   "FunctionsTest" should {
     "create the tables" in {
-      FunctionsDatastore.create()
+      session {
+        create()
+      }
     }
     "invoke the createUser function" in {
-      FunctionsDatastore.createUser("John Doe", 21)
+      session {
+        createUser("John Doe", 21)
+      }
     }
     "get the created user out via byName function" in {
-      val results = FunctionsDatastore.byName("John Doe")
-      try {
-        results.next() should equal(true)
-        results.getString("name") should equal("John Doe")
-      } finally {
-        results.close()
+      session {
+        val results = byName("John Doe")
+        try {
+          results.next() should equal(true)
+          results.getString("name") should equal("John Doe")
+        } finally {
+          results.close()
+        }
       }
     }
     "query the created user out" in {
-      val query = FunctionsDatastore.select(Users.*) from Users
-      val results = FunctionsDatastore.exec(query).toList
-      results.size should equal(1)
-      val result = results.head
-      result(Users.name) should equal("John Doe")
-      result(Users.age) should equal(21)
+      session {
+        val query = select(Users.*) from Users
+        val results = exec(query).toList
+        results.size should equal(1)
+        val result = results.head
+        result(Users.name) should equal("John Doe")
+        result(Users.age) should equal(21)
+      }
     }
   }
 }

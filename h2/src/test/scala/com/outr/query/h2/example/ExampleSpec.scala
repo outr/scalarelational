@@ -13,21 +13,26 @@ class ExampleSpec extends WordSpec with Matchers {
 
   "example" should {
     "create the database" in {
-      create()
+      session {
+        create()
+      }
     }
     "populate some data for suppliers" in {
-      import Suppliers._
+      session {
+        import Suppliers._
 
-      // Clean and type-safe inserts
-      insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199"))
-      insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460"))
-      // Short-hand when using values in order
-      insertInto(suppliers, 150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")
+        // Clean and type-safe inserts
+        insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199"))
+        insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460"))
+        // Short-hand when using values in order
+        insertInto(suppliers, 150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")
+      }
     }
     "populate some data for coffees" in {
-      import Coffees._
+      session {
+        import Coffees._
 
-
+      }
     }
   }
 }

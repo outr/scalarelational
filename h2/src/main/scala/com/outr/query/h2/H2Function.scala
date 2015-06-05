@@ -22,11 +22,11 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
     s
   }
 
-  def call(args: Any*) = datastore.active {
+  def call(args: Any*) = datastore.session {
     buildStatement(args: _*).execute()
   }
 
-  def query(args: Any*) = datastore.active {
+  def query(args: Any*) = datastore.session {
     buildStatement(args: _*).executeQuery()
   }
 }

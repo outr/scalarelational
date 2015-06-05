@@ -42,7 +42,6 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
     case c if c.has(ForeignKey.name) => c
   }
   lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
-  lazy val (one2One, one2Many, many2One, many2Many) = loadRelationships()
 
   props(tableProperties: _*)      // Add properties from constructor
 
@@ -62,7 +61,7 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
   def * = columns
 
   def getColumn[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
-  def columnsByName[T](names: String*) = names.map(name => getColumn[T](name)).flatten
+  def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
                (implicit converter: DataType[T], manifest: Manifest[T]) = {
@@ -74,32 +73,6 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
                (implicit manifest: Manifest[T]) = {
     val c = new Column[T](name, converter, manifest, this)
     c.props(properties: _*)
-  }
-
-  private def loadRelationships() = {
-    val local2Foreign = Map(columns.collect {
-      case c if c.has(ForeignKey.name) => ForeignKey(c).foreignColumn.table -> c
-    }: _*)
-    val foreign2Local = Map(_foreignColumns.map(c => c.table -> c): _*)
-    val foreignTables = local2Foreign.keySet ++ foreign2Local.keySet
-    var o2o = List.empty[Column[_]]
-    var o2m = List.empty[Column[_]]
-    var m2o = List.empty[Column[_]]
-    var m2m = List.empty[Column[_]]
-    foreignTables.foreach {
-      case foreignTable => if (local2Foreign.contains(foreignTable) && foreign2Local.contains(foreignTable)) {
-        o2o = local2Foreign(foreignTable) :: o2o
-      } else if (local2Foreign.contains(foreignTable)) {
-        o2m = local2Foreign(foreignTable) :: o2m
-      } else if (foreign2Local.contains(foreignTable)) {
-        if (foreignTable.has(Linking)) {
-          m2m = foreign2Local(foreignTable) :: m2m
-        } else {
-          m2o = foreign2Local(foreignTable) :: m2o
-        }
-      }
-    }
-    (o2o.reverse, o2m.reverse, m2o.reverse, m2m.reverse)
   }
 
   /**
