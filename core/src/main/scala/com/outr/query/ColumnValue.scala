@@ -1,6 +1,6 @@
 package com.outr.query
 
-import com.outr.query.convert.ColumnConverter
+import com.outr.query.datatype.DataType
 import org.powerscala.reflect._
 
 /**
@@ -8,7 +8,7 @@ import org.powerscala.reflect._
  */
 case class ColumnValue[T](column: ColumnLike[T],
                           value: T,
-                          converterOverride: Option[ColumnConverter[T]]) extends ExpressionValue[T] {
+                          converterOverride: Option[DataType[T]]) extends ExpressionValue[T] {
   if (value.asInstanceOf[AnyRef] != null && !value.getClass.hasType(column.manifest.runtimeClass)) {
     throw new RuntimeException(s"Unable to set column-value $value (${value.getClass.getName}) when ${column.manifest.runtimeClass.getName} is expected in ${column.longName}.")
   }

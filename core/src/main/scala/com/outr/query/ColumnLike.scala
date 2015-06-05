@@ -1,7 +1,7 @@
 package com.outr.query
 
 import scala.util.matching.Regex
-import com.outr.query.convert.ColumnConverter
+import com.outr.query.datatype.DataType
 import org.powerscala.reflect.EnhancedMethod
 
 /**
@@ -11,12 +11,12 @@ trait ColumnLike[T] extends SelectExpression {
   def name: String
   def longName: String
   def table: Table
-  def converter: ColumnConverter[T]
+  def converter: DataType[T]
   def manifest: Manifest[T]
 
   def sqlType = converter.sqlType(this)
 
-  def apply(value: T, converterOverride: Option[ColumnConverter[T]] = None) = ColumnValue[T](this, value, converterOverride)
+  def apply(value: T, converterOverride: Option[DataType[T]] = None) = ColumnValue[T](this, value, converterOverride)
   def value(v: Any) = {
     val toConvert = v match {
       case cv: ColumnValue[_] => cv.toSQL

@@ -1,7 +1,7 @@
 package com.outr.query.orm
 
 import com.outr.query._
-import com.outr.query.convert.ColumnConverter
+import com.outr.query.datatype.DataType
 import com.outr.query.orm.convert._
 import com.outr.query.column.property.ForeignKey
 import org.powerscala.reflect._
@@ -62,7 +62,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
 
   def orm[C, F](columnName: String,
                 fieldName: String,
-                columnConverter: ColumnConverter[C],
+                columnConverter: DataType[C],
                 ormConverter: ORMConverter[C, F],
                 properties: ColumnProperty*)
                (implicit columnManifest: Manifest[C], fieldManifest: Manifest[F]): Column[C] = synchronized {
@@ -73,13 +73,13 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   }
 
   def orm[C, F](name: String, properties: ColumnProperty*)
-               (implicit columnConverter: ColumnConverter[C],
+               (implicit columnConverter: DataType[C],
                 ormConverter: ORMConverter[C, F],
                 columnManifest: Manifest[C], fieldManifest: Manifest[F]): Column[C] = {
     orm[C, F](name, name, columnConverter, ormConverter, properties: _*)
   }
 
-  def orm[C, F](name: String, columnConverter: ColumnConverter[C], properties: ColumnProperty*)
+  def orm[C, F](name: String, columnConverter: DataType[C], properties: ColumnProperty*)
                (implicit ormConverter: ORMConverter[C, F],
                 columnManifest: Manifest[C],
                 fieldManifest: Manifest[F]): Column[C] = {
@@ -87,7 +87,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   }
 
   def orm[C, F](name: String,
-                columnConverter: ColumnConverter[C],
+                columnConverter: DataType[C],
                 ormConverter: ORMConverter[C, F],
                 properties: ColumnProperty*)
                (implicit columnManifest: Manifest[C], fieldManifest: Manifest[F]): Column[C] = {
@@ -95,7 +95,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   }
 
   def orm[C, F](columnName: String, fieldName: String, properties: ColumnProperty*)
-               (implicit columnConverter: ColumnConverter[C],
+               (implicit columnConverter: DataType[C],
                 ormConverter: ORMConverter[C, F],
                 columnManifest: Manifest[C],
                 fieldManifest: Manifest[F]): Column[C] = {
@@ -103,23 +103,23 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
   }
 
   def orm[C, F](columnName: String, fieldName: String, ormConverter: ORMConverter[C, F], properties: ColumnProperty*)
-               (implicit columnConverter: ColumnConverter[C],
+               (implicit columnConverter: DataType[C],
                 columnManifest: Manifest[C],
                 fieldManifest: Manifest[F]): Column[C] = {
     orm[C, F](columnName, fieldName, columnConverter, ormConverter, properties: _*)
   }
 
   def orm[C](name: String, properties: ColumnProperty*)
-            (implicit columnConverter: ColumnConverter[C], manifest: Manifest[C]): Column[C] = {
+            (implicit columnConverter: DataType[C], manifest: Manifest[C]): Column[C] = {
     orm[C, C](name, name, columnConverter, new SameTypeORMConverter[C], properties: _*)
   }
 
   def orm[C](columnName: String, fieldName: String, properties: ColumnProperty*)
-            (implicit columnConverter: ColumnConverter[C], manifest: Manifest[C]) = {
+            (implicit columnConverter: DataType[C], manifest: Manifest[C]) = {
     orm[C, C](columnName, fieldName, columnConverter, new SameTypeORMConverter[C], properties: _*)
   }
 
-  def orm[C](name: String, columnConverter: ColumnConverter[C], properties: ColumnProperty*)
+  def orm[C](name: String, columnConverter: DataType[C], properties: ColumnProperty*)
             (implicit manifest: Manifest[C]) = {
     orm[C, C](name, name, columnConverter, new SameTypeORMConverter[C], properties: _*)
   }
@@ -232,7 +232,7 @@ abstract class ORMTable[T](datastore: Datastore, name: String, tableProperties: 
 case class ORMColumn[T, C, F](table: ORMTable[T],
                               column: Column[C],
                               fieldName: String,
-                              columnConverter: ColumnConverter[C],
+                              columnConverter: DataType[C],
                               ormConverter: ORMConverter[C, F],
                               properties: List[ColumnProperty],
                               columnClass: EnhancedClass,

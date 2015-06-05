@@ -86,6 +86,9 @@ trait Datastore extends Listenable with Logging {
       None
     }
   }
+  def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
+    case (value, column) => column.asInstanceOf[Column[Any]](value)
+  }: _*)
   def merge(key: Column[_], values: ColumnValue[_]*) = {
     exec(Merge(key, values.toList))
   }

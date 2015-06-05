@@ -10,7 +10,7 @@ import org.powerscala.property.Property
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
 import com.outr.query.column.property._
-import com.outr.query.convert.ColumnConverter
+import com.outr.query.datatype.DataType
 import com.outr.query.Update
 import com.outr.query.LikeCondition
 import com.outr.query.Join
@@ -288,7 +288,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
       s"${c.column.longName} ${c.operator.symbol} NULL"
     }
     case c: DirectCondition[_] => {
-      args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], c.value)
+      args += c.column.converter.asInstanceOf[DataType[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"
     }
     case c: LikeCondition[_] => {
@@ -301,7 +301,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     }
     case c: RangeCondition[_] => {
       c.values.foreach {
-        case v => args += c.column.converter.asInstanceOf[ColumnConverter[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], v)
+        case v => args += c.column.converter.asInstanceOf[DataType[Any]].toSQLType(c.column.asInstanceOf[ColumnLike[Any]], v)
       }
       val entries = c.operator match {
         case Operator.Between => c.values.map(v => "?").mkString(" AND ")

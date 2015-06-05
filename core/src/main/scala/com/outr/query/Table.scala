@@ -3,7 +3,7 @@ package com.outr.query
 import scala.collection.mutable.ListBuffer
 import com.outr.query.column.property.{ColumnProperty, AutoIncrement, ForeignKey, PrimaryKey}
 import scala.language.existentials
-import com.outr.query.convert._
+import com.outr.query.datatype._
 import com.outr.query.table.property.{Linking, TableProperty}
 
 /**
@@ -17,19 +17,19 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
 
   implicit def thisTable = this
 
-  implicit def booleanConverter = BooleanConverter
-  implicit def intConverter = IntConverter
-  implicit def longConverter = LongConverter
-  implicit def doubleConverter = DoubleConverter
-  implicit def bigDecimalConverter = BigDecimalConverter
-  implicit def stringConverter = StringConverter
-  implicit def wrappedStringConverter = WrappedStringConverter
-  implicit def byteArrayConverter = ByteArrayConverter
-  implicit def blobConverter = BlobConverter
-  implicit def timestampConverter = TimestampConverter
-  implicit def javaIntConverter = JavaIntConverter
-  implicit def javaLongConverter = JavaLongConverter
-  implicit def javaDoubleConverter = JavaDoubleConverter
+  implicit def booleanConverter = BooleanDataType
+  implicit def intConverter = IntDataType
+  implicit def longConverter = LongDataType
+  implicit def doubleConverter = DoubleDataType
+  implicit def bigDecimalConverter = BigDecimalDataType
+  implicit def stringConverter = StringDataType
+  implicit def wrappedStringConverter = WrappedStringDataType
+  implicit def byteArrayConverter = ByteArrayDataType
+  implicit def blobConverter = BlobDataType
+  implicit def timestampConverter = TimestampDataType
+  implicit def javaIntConverter = JavaIntDataType
+  implicit def javaLongConverter = JavaLongDataType
+  implicit def javaDoubleConverter = JavaDoubleDataType
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
@@ -65,12 +65,12 @@ abstract class Table(val datastore: Datastore, name: String, tableProperties: Ta
   def columnsByName[T](names: String*) = names.map(name => getColumn[T](name)).flatten
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: ColumnConverter[T], manifest: Manifest[T]) = {
+               (implicit converter: DataType[T], manifest: Manifest[T]) = {
     val c = new Column[T](name, converter, manifest, this)
     c.props(properties: _*)
   }
 
-  def column[T](name: String, converter: ColumnConverter[T], properties: ColumnProperty*)
+  def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]) = {
     val c = new Column[T](name, converter, manifest, this)
     c.props(properties: _*)

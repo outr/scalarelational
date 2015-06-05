@@ -2,7 +2,7 @@ package com.outr.query.h2
 
 import com.outr.query._
 import com.outr.query.column.property._
-import com.outr.query.convert.{ObjectSerializationConverter, StringConverter, ColumnConverter}
+import com.outr.query.datatype.{ObjectSerializationConverter, StringDataType, DataType}
 import java.sql.{Timestamp, Blob}
 import javax.sql.rowset.serial.SerialBlob
 import org.powerscala.IO
@@ -459,8 +459,8 @@ object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types"
 }
 
 object Lists extends Table(SpecialTypesDatastore) {
-  implicit val listStringConverter = new ColumnConverter[List[String]] {
-    def sqlType(column: ColumnLike[List[String]]) = StringConverter.VarcharType
+  implicit val listStringConverter = new DataType[List[String]] {
+    def sqlType(column: ColumnLike[List[String]]) = StringDataType.VarcharType
 
     def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
 

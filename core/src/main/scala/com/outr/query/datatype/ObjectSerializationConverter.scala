@@ -1,4 +1,4 @@
-package com.outr.query.convert
+package com.outr.query.datatype
 
 import com.outr.query.ColumnLike
 import java.io.{ByteArrayInputStream, ObjectInputStream, ByteArrayOutputStream, ObjectOutputStream}
@@ -8,7 +8,7 @@ import java.io.{ByteArrayInputStream, ObjectInputStream, ByteArrayOutputStream, 
  *
  * @author Matt Hicks <matt@outr.com>
  */
-class ObjectSerializationConverter[T <: AnyRef] extends ColumnConverter[T] {
+class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
   def sqlType(column: ColumnLike[T]) = s"BINARY(${Int.MaxValue})"
 
   def toSQLType(column: ColumnLike[T], value: T) = if (value != null) {

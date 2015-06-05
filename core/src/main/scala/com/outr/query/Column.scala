@@ -1,14 +1,14 @@
 package com.outr.query
 
 import org.powerscala.reflect._
-import com.outr.query.convert.ColumnConverter
+import com.outr.query.datatype.DataType
 import com.outr.query.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 class Column[T] private[query](val name: String,
-                        val converter: ColumnConverter[T],
+                        val converter: DataType[T],
                         val manifest: Manifest[T],
                         val table: Table) extends ColumnLike[T] {
   private var _properties = Map.empty[String, ColumnProperty]
