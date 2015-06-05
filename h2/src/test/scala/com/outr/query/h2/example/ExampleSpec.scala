@@ -14,12 +14,12 @@ class ExampleSpec extends WordSpec with Matchers {
   "example" should {
     "create the database" in {
       session {
-        create()
+        create(suppliers, coffees)
       }
     }
     "populate some data for suppliers" in {
       session {
-        import Suppliers._
+        import suppliers._
 
         // Clean and type-safe inserts
         insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199"))
@@ -30,7 +30,7 @@ class ExampleSpec extends WordSpec with Matchers {
     }
     "populate some data for coffees" in {
       session {
-        import Coffees._
+        import coffees._
 
       }
     }
@@ -38,23 +38,20 @@ class ExampleSpec extends WordSpec with Matchers {
 }
 
 object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
-  def suppliers = Suppliers
-  def coffees = Coffees
-}
+  object suppliers extends Table("SUPPLIERS") {
+    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val name = column[String]("SUP_NAME")
+    val street = column[String]("STREET")
+    val city = column[String]("CITY")
+    val state = column[String]("STATE")
+    val zip = column[String]("ZIP")
+  }
 
-object Suppliers extends Table(ExampleDatastore) {
-  val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
-  val name = column[String]("SUP_NAME")
-  val street = column[String]("STREET")
-  val city = column[String]("CITY")
-  val state = column[String]("STATE")
-  val zip = column[String]("ZIP")
-}
-
-object Coffees extends Table(ExampleDatastore) {
-  val name = column[String]("COF_NAME", PrimaryKey)
-  val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
-  val price = column[Double]("PRICE")
-  val sales = column[Int]("SALES")
-  val total = column[Int]("TOTAL")
+  object coffees extends Table("COFFEES") {
+    val name = column[String]("COF_NAME", PrimaryKey)
+    val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
+    val price = column[Double]("PRICE")
+    val sales = column[Int]("SALES")
+    val total = column[Int]("TOTAL")
+  }
 }

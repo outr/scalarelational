@@ -29,16 +29,18 @@ class TableSpec extends WordSpec with Matchers {
       test.columns.size should equal(3)
     }
     "verify the create table String is correct" in {
-      val sql = TestDatastore.createTableSQL(ifNotExist = true, test)
+      val sql = TestDatastore.createTableSQL(test)
       sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
     "verify that there are no tables currently created" in {
-      TestDatastore.jdbcTables should equal(Set.empty)
-      TestDatastore.empty should equal(true)
+      session {
+        TestDatastore.jdbcTables should equal(Set.empty)
+        TestDatastore.empty should equal(true)
+      }
     }
     "create the table" in {
-      transaction {
-        create()
+      session {
+        create(test, suppliers, coffees, names, fruitColors)
       }
     }
     "verify that tables exist" in {
@@ -173,7 +175,7 @@ class TableSpec extends WordSpec with Matchers {
   }
   "suppliers" should {
     import TestDatastore._
-    import Suppliers._
+    import suppliers._
     "insert three suppliers" in {
       session {
         acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).get
@@ -187,7 +189,7 @@ class TableSpec extends WordSpec with Matchers {
   }
   "coffees" should {
     import TestDatastore._
-    import Coffees._
+    import coffees._
     "insert five coffees" in {
       session {
         insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0))
@@ -267,7 +269,7 @@ class TableSpec extends WordSpec with Matchers {
   }
   "names" should {
     import TestDatastore._
-    import Names._
+    import names._
 
     val queryAll = select(*) from names orderBy(name asc)
 
@@ -313,7 +315,7 @@ class TableSpec extends WordSpec with Matchers {
   }
   "fruit colors" should {
     import TestDatastore._
-    import FruitColors._
+    import fruitColors._
 
     "insert an Orange" in {
       session {
@@ -334,7 +336,7 @@ class TableSpec extends WordSpec with Matchers {
     import TestCrossReferenceDatastore._
     "create the tables successfully" in {
       session {
-        TestCrossReferenceDatastore.create()
+        TestCrossReferenceDatastore.create(first, second)
       }
     }
   }
@@ -350,7 +352,7 @@ class TableSpec extends WordSpec with Matchers {
 
     "create the tables successfully" in {
       session {
-        create()
+        create(lists, data, combinedUnique, triggerTest)
       }
     }
     "insert a List[String] entry" in {
@@ -474,101 +476,86 @@ class TableSpec extends WordSpec with Matchers {
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) {
-  def test = TestTable
-  def suppliers = Suppliers
-  def coffees = Coffees
-  def names = Names
-  def fruitColors = FruitColors
-}
-
-object TestTable extends Table(TestDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val name = column[String]("name", Unique)
-  val date = column[Timestamp]("date")
-}
-
-object Suppliers extends Table(TestDatastore) {
-  val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
-  val name = column[String]("SUP_NAME")
-  val street = column[String]("STREET")
-  val city = column[String]("CITY")
-  val state = column[String]("STATE")
-  val zip = column[String]("ZIP")
-}
-
-object Coffees extends Table(TestDatastore) {
-  val name = column[String]("COF_NAME", PrimaryKey)
-  val supID = column[Int]("SUP_ID", new ForeignKey(TestDatastore.suppliers.id))
-  val price = column[Double]("PRICE")
-  val sales = column[Int]("SALES")
-  val total = column[Int]("TOTAL")
-}
-
-object Names extends Table(TestDatastore) {
-  val name = column[String]("name", PrimaryKey, Unique, NotNull)
-  val age = column[Int]("age", NotNull, Indexed("idxage"))
-}
-
-object FruitColors extends Table(TestDatastore) {
-  val color = column[String]("color", NotNull)
-  val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit], NotNull)
+  object test extends Table("test_table") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", Unique)
+    val date = column[Timestamp]("date")
+  }
+  object suppliers extends Table("SUPPLIER") {
+    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val name = column[String]("SUP_NAME")
+    val street = column[String]("STREET")
+    val city = column[String]("CITY")
+    val state = column[String]("STATE")
+    val zip = column[String]("ZIP")
+  }
+  object coffees extends Table("COFFEE") {
+    val name = column[String]("COF_NAME", PrimaryKey)
+    val supID = column[Int]("SUP_ID", new ForeignKey(TestDatastore.suppliers.id))
+    val price = column[Double]("PRICE")
+    val sales = column[Int]("SALES")
+    val total = column[Int]("TOTAL")
+  }
+  object names extends Table("names") {
+    val name = column[String]("name", PrimaryKey, Unique, NotNull)
+    val age = column[Int]("age", NotNull, Indexed("idxage"))
+  }
+  object fruitColors extends Table("fruit_colors") {
+    val color = column[String]("color", NotNull)
+    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit], NotNull)
+  }
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
-  First.secondId.props(new ForeignKey(Second.id))
-}
+  object first extends Table("first") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name")
+    val secondId = column[Int]("secondId")
+  }
 
-object First extends Table(TestCrossReferenceDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val name = column[String]("name")
-  val secondId = column[Int]("secondId")
-}
+  object second extends Table("second") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val value = column[Int]("value")
+    val firstId = column[Int]("firstId", new ForeignKey(first.id))
+  }
 
-object Second extends Table(TestCrossReferenceDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val value = column[Int]("value")
-  val firstId = column[Int]("firstId", new ForeignKey(First.id))
+  first.secondId.props(new ForeignKey(second.id))
 }
 
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
-  def lists = Lists
-  def data = Data
-  def combinedUnique = CombinedUnique
-  def triggerTest = TriggerTest
-}
+  object lists extends Table("lists") {
+    implicit val listStringConverter = new DataType[List[String]] {
+      def sqlType(column: ColumnLike[List[String]]) = StringDataType.VarcharType
 
-object Lists extends Table(SpecialTypesDatastore) {
-  implicit val listStringConverter = new DataType[List[String]] {
-    def sqlType(column: ColumnLike[List[String]]) = StringDataType.VarcharType
+      def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
 
-    def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
-
-    def fromSQLType(column: ColumnLike[List[String]], value: Any) = value match {
-      case null => Nil
-      case s: String => s.split('|').toList
+      def fromSQLType(column: ColumnLike[List[String]], value: Any) = value match {
+        case null => Nil
+        case s: String => s.split('|').toList
+      }
     }
+
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val strings = column[List[String]]("strings")
   }
 
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val strings = column[List[String]]("strings")
-}
+  object data extends Table("data") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val content = column[Blob]("content")
+  }
 
-object Data extends Table(SpecialTypesDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val content = column[Blob]("content")
-}
+  object combinedUnique extends Table("combined_unique") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val firstName = column[String]("firstName", NotNull)
+    val lastName = column[String]("lastName", NotNull)
 
-object CombinedUnique extends Table(SpecialTypesDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val firstName = column[String]("firstName", NotNull)
-  val lastName = column[String]("lastName", NotNull)
+    props(Index.unique("IDXNAME", firstName, lastName))
+  }
 
-  props(Index.unique("IDXNAME", firstName, lastName))
-}
-
-object TriggerTest extends Table(SpecialTypesDatastore, Triggers.All) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val name = column[String]("name", NotNull)
+  object triggerTest extends Table("trigger_test", Triggers.All) {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", NotNull)
+  }
 }
 
 case class Fruit(name: String)

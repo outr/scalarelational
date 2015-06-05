@@ -4,7 +4,6 @@ import java.sql.Connection
 
 import com.outr.query.Table
 import com.outr.query.column.property._
-import com.outr.query.h2.Names._
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -16,7 +15,7 @@ class FunctionsSpec extends WordSpec with Matchers {
   "FunctionsTest" should {
     "create the tables" in {
       session {
-        create()
+        create(users)
       }
     }
     "invoke the createUser function" in {
@@ -37,19 +36,23 @@ class FunctionsSpec extends WordSpec with Matchers {
     }
     "query the created user out" in {
       session {
-        val query = select(Users.*) from Users
+        val query = select(users.*) from users
         val results = exec(query).toList
         results.size should equal(1)
         val result = results.head
-        result(Users.name) should equal("John Doe")
-        result(Users.age) should equal(21)
+        result(users.name) should equal("John Doe")
+        result(users.age) should equal(21)
       }
     }
   }
 }
 
 object FunctionsDatastore extends H2Datastore(mode = H2Memory("functions")) {
-  def users = Users
+  object users extends Table("users") {
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name", NotNull, Unique)
+    val age = column[Int]("age", NotNull)
+  }
 
   val createUser = function(Functions, "createUser") {
     case f => (name: String, age: Int) => f.call(name, age)
@@ -57,12 +60,6 @@ object FunctionsDatastore extends H2Datastore(mode = H2Memory("functions")) {
   val byName = function(Functions, "byName") {
     case f => (name: String) => f.query(name)
   }
-}
-
-object Users extends Table(FunctionsDatastore) {
-  val id = column[Int]("id", PrimaryKey, AutoIncrement)
-  val name = column[String]("name", NotNull, Unique)
-  val age = column[Int]("age", NotNull)
 }
 
 object Functions {

@@ -73,13 +73,10 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     f
   }
 
-  def createTableSQL(ifNotExist: Boolean, table: Table) = {
+  def createTableSQL(table: Table) = {
     val b = new StringBuilder
 
-    b.append("CREATE TABLE ")
-    if (ifNotExist) {
-      b.append("IF NOT EXISTS ")
-    }
+    b.append("CREATE TABLE IF NOT EXISTS ")
     b.append(table.tableName)
     b.append('(')
     b.append(table.columns.map(c => column2SQL(c)).mkString(", "))

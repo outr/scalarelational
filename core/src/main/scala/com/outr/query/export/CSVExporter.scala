@@ -9,14 +9,14 @@ import java.io.{FileWriter, File}
 object CSVExporter {
   private val NewLine = "\r\n"
 
-  def exportDatastore(datastore: Datastore, directory: File) = {
+  def exportTables(directory: File, tables: Table*) = {
     directory.mkdirs()
-    datastore.tables.foreach {
-      case table => exportTable(table, new File(directory, s"${table.tableName.toLowerCase}.csv"))
+    tables.foreach {
+      case table => exportTable(new File(directory, s"${table.tableName.toLowerCase}.csv"), table)
     }
   }
 
-  def exportTable(table: Table, file: File) = {
+  def exportTable(file: File, table: Table) = {
     val writer = new FileWriter(file)
     try {
       val columnNames = table.columns.map(c => c.name).mkString(",")

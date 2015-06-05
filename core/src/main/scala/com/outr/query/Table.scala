@@ -9,10 +9,9 @@ import com.outr.query.table.property.{Linking, TableProperty}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(val datastore: Datastore, name: String, tableProperties: TableProperty*) {
-  def this(datastore: Datastore, tableProperties: TableProperty*) = this(datastore, null.asInstanceOf[String], tableProperties: _*)
-
+abstract class Table(name: String, tableProperties: TableProperty*)(implicit val datastore: Datastore) {
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
+
   datastore.add(this)   // Make sure the Datastore knows about this table
 
   implicit def thisTable = this

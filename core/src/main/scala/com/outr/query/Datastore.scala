@@ -3,51 +3,30 @@ package com.outr.query
 import javax.sql.DataSource
 
 import java.sql.ResultSet
-import org.powerscala.transactional
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.event.Listenable
-import org.powerscala.concurrent.{Time, Executor}
 import org.powerscala.log.Logging
-import org.powerscala.reflect._
-
-import scala.collection.mutable
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait Datastore extends Listenable with Logging with SessionSupport {
+  implicit def thisDatastore: Datastore = this
+
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
+
+  private var _tables = Map.empty[String, Table]
+  protected[query] def add(table: Table) = synchronized {
+    _tables += table.tableName.toLowerCase -> table
+  }
+  def tableByName(name: String) = _tables.get(name.toLowerCase)
 
   /**
    * Called when the datastore is being created for the first time. This does not mean the tables are being created but
    * just the datastore.
    */
   def creating(): Unit = {}
-
-  @volatile private var mapInitialized = false
-  private var externalTables = List.empty[Table]
-  private lazy val tablesMap = synchronized {
-    val tables = getClass.methods.collect {
-      case m if m.args.isEmpty && m.returnType.`type`.hasType(classOf[Table]) => m[Table](this)
-    }
-    val map = mutable.ListMap(tables.map(t => t.tableName.toLowerCase -> t): _*)
-    externalTables.reverse.foreach {              // Add tables set before initialization
-      case t => map += t.tableName -> t
-    }
-    mapInitialized = true
-    map
-  }
-  protected[query] def add(table: Table) = synchronized {
-    if (mapInitialized) {
-      tablesMap += (table.tableName.toLowerCase -> table)
-    } else {
-      externalTables = table :: externalTables
-    }
-  }
-  def tables = tablesMap.values
-
-  def tableByName(tableName: String) = tablesMap.get(tableName.toLowerCase)
 
   def select(expressions: SelectExpression*) = Query(expressions.toList)
   def select(expressions: List[SelectExpression]) = Query(expressions)
@@ -70,7 +49,7 @@ trait Datastore extends Listenable with Logging with SessionSupport {
 
   def dataSource: DataSource
 
-  def jdbcTables = session {
+  def jdbcTables = {
     val s = session
     val meta = s.connection.getMetaData
     val results = meta.getTables(null, "PUBLIC", "%", null)
@@ -83,22 +62,22 @@ trait Datastore extends Listenable with Logging with SessionSupport {
 
   def empty() = jdbcTables.isEmpty
 
-  def create(ifNotExist: Boolean = true) = {
+  def create(tables: Table*) = {
+    if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
     val s = session
-    val sql = ddl(ifNotExist)
-    transaction {
-      s.execute(sql)
-    }
+    val sql = ddl(tables: _*)
+    s.execute(sql)
   }
 
-  def ddl(ifNotExist: Boolean = true) = {
+  def ddl(tables: Table*) = {
+    if (tables.isEmpty) throw new RuntimeException(s"Datastore.ddl must include all tables that need to be generated.")
     val b = new StringBuilder
 
     val existingTables = jdbcTables
 
     tables.foreach {
       case t => if (!existingTables.contains(t.tableName.toUpperCase)) {
-        b.append(createTableSQL(ifNotExist, t))
+        b.append(createTableSQL(t))
         b.append("\r\n")
       } else {
         debug(s"Table already exists: ${t.tableName}")
@@ -124,7 +103,7 @@ trait Datastore extends Listenable with Logging with SessionSupport {
   def exec(update: Update): Int
   def exec(delete: Delete): Int
 
-  def createTableSQL(ifNotExist: Boolean, table: Table): String
+  def createTableSQL(table: Table): String
 
   def createTableExtras(table: Table, b: StringBuilder): Unit
 
