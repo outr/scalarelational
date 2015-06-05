@@ -40,7 +40,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     }
   }
 
-  def executeInsert(sql: String, args: List[Any]) = {
+  def executeInsert(sql: String, args: Seq[Any]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach {
@@ -50,7 +50,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
-  def executeQuery(sql: String, args: List[Any]) = {
+  def executeQuery(sql: String, args: Seq[Any]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach {

@@ -1,6 +1,7 @@
 package com.outr.query.export
 
-import com.outr.query.{Datastore, Table}
+import com.outr.query.Table
+import com.outr.query.simple._
 import java.io.{FileWriter, File}
 
 /**
@@ -23,7 +24,7 @@ object CSVExporter {
       writer.write(columnNames)
       writer.write(NewLine)
 
-      val query = table.datastore.select(table.*) from table orderBy table.primaryKeys.head.asc
+      val query = select(table.*) from table orderBy table.primaryKeys.head.asc
       val results = table.datastore.exec(query)
       results.foreach {
         case r => {

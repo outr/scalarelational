@@ -6,6 +6,8 @@ import com.outr.query.Table
 import com.outr.query.column.property._
 import org.scalatest.{Matchers, WordSpec}
 
+import com.outr.query.simple._
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */

@@ -28,25 +28,6 @@ trait Datastore extends Listenable with Logging with SessionSupport {
    */
   def creating(): Unit = {}
 
-  def select(expressions: SelectExpression*) = Query(expressions.toList)
-  def select(expressions: List[SelectExpression]) = Query(expressions)
-  def insert(values: ColumnValue[_]*) = {
-    val results = exec(Insert(values.toList))
-    if (results.hasNext) {
-      Some(results.next())
-    } else {
-      None
-    }
-  }
-  def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
-    case (value, column) => column.asInstanceOf[Column[Any]](value)
-  }: _*)
-  def merge(key: Column[_], values: ColumnValue[_]*) = {
-    exec(Merge(key, values.toList))
-  }
-  def update(values: ColumnValue[_]*) = Update(values.toList, values.head.column.table)
-  def delete(table: Table) = Delete(table)
-
   def dataSource: DataSource
 
   def jdbcTables = {

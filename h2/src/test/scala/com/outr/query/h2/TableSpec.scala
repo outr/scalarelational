@@ -12,6 +12,8 @@ import org.h2.jdbc.JdbcSQLException
 import com.outr.query.h2.trigger.TriggerType
 import org.scalatest.{Matchers, WordSpec}
 
+import com.outr.query.simple._
+
 import scala.language.postfixOps
 
 /**
