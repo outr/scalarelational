@@ -7,6 +7,7 @@ object ScalaRelationalBuild extends Build {
   lazy val root = Project(id = "root", base = file(".")) aggregate(core, h2)
   lazy val core = project("core").withDependencies(powerscala.property, scalaTest)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core)
+  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
