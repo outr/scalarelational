@@ -1,8 +1,9 @@
-package org.scalarelational
+package org.scalarelational.model
 
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
-import org.scalarelational.table.property.TableProperty
+import org.scalarelational.model.table.property.TableProperty
+import org.scalarelational.TableAlias
 
 import scala.collection.mutable.ListBuffer
 import scala.language.existentials

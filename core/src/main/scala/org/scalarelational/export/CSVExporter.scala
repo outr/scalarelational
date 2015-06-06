@@ -1,9 +1,8 @@
 package org.scalarelational.export
 
 import java.io.{File, FileWriter}
-
-import org.scalarelational.Table
 import org.scalarelational.dsl.select
+import org.scalarelational.model.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

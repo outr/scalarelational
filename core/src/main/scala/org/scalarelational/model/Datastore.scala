@@ -1,4 +1,4 @@
-package org.scalarelational
+package org.scalarelational.model
 
 import java.sql.ResultSet
 import javax.sql.DataSource
@@ -6,6 +6,9 @@ import javax.sql.DataSource
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
+import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
+import org.scalarelational.instruction._
+import org.scalarelational.{ColumnValue, ExpressionValue, SessionSupport}
 
 /**
  * @author Matt Hicks <matt@outr.com>

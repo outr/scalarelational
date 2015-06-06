@@ -8,9 +8,13 @@ import org.powerscala.log.Logging
 import org.powerscala.property.Property
 import org.scalarelational._
 import org.scalarelational.column.property._
+import org.scalarelational.fun.SimpleFunction
+import org.scalarelational.op._
 import org.scalarelational.datatype.DataType
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
-import org.scalarelational.table.property.Index
+import org.scalarelational.instruction._
+import org.scalarelational.model._
+import org.scalarelational.model.table.property.Index
 
 import scala.collection.mutable.ListBuffer
 

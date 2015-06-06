@@ -2,6 +2,8 @@ package org.scalarelational
 
 import java.sql.{Connection, Statement}
 
+import org.scalarelational.model.Datastore
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */

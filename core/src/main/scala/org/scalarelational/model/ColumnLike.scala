@@ -1,6 +1,9 @@
-package org.scalarelational
+package org.scalarelational.model
 
 import org.powerscala.reflect.EnhancedMethod
+import org.scalarelational._
+import org.scalarelational.fun.{SimpleFunction, FunctionType}
+import org.scalarelational.op._
 import org.scalarelational.datatype.DataType
 
 import scala.util.matching.Regex

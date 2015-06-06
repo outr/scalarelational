@@ -1,4 +1,6 @@
-package org.scalarelational
+package org.scalarelational.fun
+
+import org.scalarelational.ExpressionValue
 
 /**
  * @author Matt Hicks <matt@outr.com>

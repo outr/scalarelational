@@ -1,4 +1,4 @@
-package org.scalarelational
+package org.scalarelational.model
 
 import org.powerscala.reflect._
 import org.scalarelational.column.property.ColumnProperty

@@ -1,6 +1,8 @@
-package org.scalarelational
+package org.scalarelational.instruction
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
+import org.scalarelational.model.Table
+import org.scalarelational.op.Condition
 
 /**
  * @author Matt Hicks <matt@outr.com>

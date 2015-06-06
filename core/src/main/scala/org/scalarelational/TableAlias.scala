@@ -1,5 +1,7 @@
 package org.scalarelational
 
+import org.scalarelational.model.{Table, ColumnLike, ColumnAlias}
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */

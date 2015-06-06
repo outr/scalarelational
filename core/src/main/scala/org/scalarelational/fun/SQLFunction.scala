@@ -1,6 +1,8 @@
-package org.scalarelational
+package org.scalarelational.fun
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
+import org.scalarelational.SelectExpression
+import org.scalarelational.model.ColumnLike
 
 import scala.language.existentials
 

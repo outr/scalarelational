@@ -1,4 +1,6 @@
-package org.scalarelational
+package org.scalarelational.instruction
+
+import org.scalarelational.op.{Condition, Conditions}
 
 /**
  * @author Matt Hicks <matt@outr.com>

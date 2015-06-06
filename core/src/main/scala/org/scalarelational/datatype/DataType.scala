@@ -6,7 +6,7 @@ import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
 import org.scalarelational.column.WrappedString
 import org.scalarelational.column.property.{IgnoreCase, NumericStorage}
-import org.scalarelational.{Column, ColumnLike}
+import org.scalarelational.model.{ColumnLike, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>

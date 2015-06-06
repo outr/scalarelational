@@ -1,6 +1,6 @@
 package org.scalarelational.h2.trigger
 
-import org.scalarelational.{Column, Table}
+import org.scalarelational.model.{Table, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>

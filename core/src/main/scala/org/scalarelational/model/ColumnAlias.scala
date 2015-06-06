@@ -1,4 +1,4 @@
-package org.scalarelational
+package org.scalarelational.model
 
 /**
  * @author Matt Hicks <matt@outr.com>

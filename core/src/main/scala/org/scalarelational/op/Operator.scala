@@ -1,4 +1,4 @@
-package org.scalarelational
+package org.scalarelational.op
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 

@@ -2,7 +2,7 @@ package org.scalarelational.datatype
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
-import org.scalarelational.ColumnLike
+import org.scalarelational.model.ColumnLike
 
 /**
  * ObjectSerializationConverter stores any arbitrary serializable object as a Array[Byte].

@@ -5,7 +5,7 @@ import java.sql.Connection
 import org.h2.api.Trigger
 import org.powerscala.log.Logging
 import org.scalarelational.h2.H2Datastore
-import org.scalarelational.{Datastore, Table}
+import org.scalarelational.model.{Datastore, Table}
 
 /**
  * @author Matt Hicks <matt@outr.com>

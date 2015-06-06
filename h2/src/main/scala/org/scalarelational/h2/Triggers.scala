@@ -1,7 +1,7 @@
 package org.scalarelational.h2
 
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.table.property.TableProperty
+import org.scalarelational.model.table.property.TableProperty
 
 /**
  * Triggers property can be added to a table to specify that it will support triggers.

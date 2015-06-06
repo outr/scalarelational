@@ -2,6 +2,7 @@ package org.scalarelational
 
 import org.powerscala.reflect._
 import org.scalarelational.datatype.DataType
+import org.scalarelational.model.ColumnLike
 
 /**
  * @author Matt Hicks <matt@outr.com>

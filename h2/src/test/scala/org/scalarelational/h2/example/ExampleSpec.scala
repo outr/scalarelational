@@ -1,9 +1,9 @@
 package org.scalarelational.h2.example
 
-import org.scalarelational.Table
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey}
 import org.scalarelational.dsl._
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
 
 /**

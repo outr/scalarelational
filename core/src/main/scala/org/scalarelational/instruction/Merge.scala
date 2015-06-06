@@ -1,4 +1,7 @@
-package org.scalarelational
+package org.scalarelational.instruction
+
+import org.scalarelational.ColumnValue
+import org.scalarelational.model.Column
 
 import scala.language.existentials
 

@@ -1,7 +1,7 @@
-package org.scalarelational
+package org.scalarelational.model
 
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, NotNull, PrimaryKey}
-import org.scalarelational.table.property.{Index, Linking}
+import org.scalarelational.model.table.property.{Index, Linking}
 
 /**
  * LinkingTable provides a quick and convenience setup for creating a standard linking table.

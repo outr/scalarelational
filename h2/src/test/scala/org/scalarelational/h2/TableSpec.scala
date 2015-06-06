@@ -10,8 +10,8 @@ import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter, StringDataType}
 import org.scalarelational.dsl._
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.table.property.Index
-import org.scalarelational.{ColumnLike, Table}
+import org.scalarelational.model.{Table, ColumnLike}
+import org.scalarelational.model.table.property.Index
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.language.postfixOps
@@ -261,7 +261,7 @@ class TableSpec extends WordSpec with Matchers {
     "query coffees grouped by price" in {
       session {
         val query = select(price) from coffees groupBy price orderBy (price asc)
-        val results = exec(query).toList
+        val results = exec(query).toVector
         results.size should equal(3)
         results(0)(price) should equal(7.99)
         results(1)(price) should equal(8.99)

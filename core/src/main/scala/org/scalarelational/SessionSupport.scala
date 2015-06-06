@@ -1,6 +1,7 @@
 package org.scalarelational
 
 import org.powerscala.concurrent.Executor
+import org.scalarelational.model.Datastore
 
 /**
  * @author Matt Hicks <matt@outr.com>
