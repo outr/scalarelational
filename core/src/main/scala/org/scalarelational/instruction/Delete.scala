@@ -9,4 +9,12 @@ import org.scalarelational.model.Table
 case class Delete(table: Table,
                   whereCondition: Condition = null) extends WhereSupport[Delete] {
   def where(condition: Condition) = copy(whereCondition = condition)
+
+  def result = {
+    val datastore = table.datastore
+    datastore.exec(this)
+  }
+  def async = table.datastore.async {
+    result
+  }
 }

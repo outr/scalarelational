@@ -312,14 +312,14 @@ class TableSpec extends WordSpec with Matchers {
 
     "have no records in the table" in {
       session {
-        val results = exec(queryAll).toList
+        val results = queryAll.result.toList
         results.size should equal(0)
       }
     }
     "merge 'John Doe' for an inserted record" in {
       session {
-        merge(name, name("John Doe"), age(21))
-        val results = exec(queryAll).toList
+        merge(name, name("John Doe"), age(21)).result
+        val results = queryAll.result.toList
         results.size should equal(1)
         val result = results.head
         result(name) should equal("John Doe")
@@ -328,8 +328,8 @@ class TableSpec extends WordSpec with Matchers {
     }
     "merge 'John Doe' for an updated record" in {
       session {
-        merge(name, name("John Doe"), age(25))
-        val results = exec(queryAll).toList
+        merge(name, name("John Doe"), age(25)).result
+        val results = queryAll.result.toList
         results.size should equal(1)
         val result = results.head
         result(name) should equal("John Doe")
@@ -338,8 +338,8 @@ class TableSpec extends WordSpec with Matchers {
     }
     "merge 'Jane Doe' for an inserted record" in {
       session {
-        merge(name, name("Jane Doe"), age(22))
-        val results = exec(queryAll).toList
+        merge(name, name("Jane Doe"), age(22)).result
+        val results = queryAll.result.toList
         results.size should equal(2)
         val jane = results.head
         jane(name) should equal("Jane Doe")

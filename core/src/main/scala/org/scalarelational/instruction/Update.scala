@@ -12,5 +12,14 @@ case class Update(values: List[ColumnValue[_]],
                   whereCondition: Condition = null) extends WhereSupport[Update] {
   def where(condition: Condition) = copy(whereCondition = condition)
 
+  def result = {
+    val datastore = table.datastore
+    datastore.exec(this)
+  }
+
+  def async = table.datastore.async {
+    result
+  }
+
   override def toString = s"Update(values = ${values.mkString(", ")}, table = ${table.tableName}, where = $whereCondition)"
 }
