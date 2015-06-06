@@ -34,4 +34,9 @@ case class Query(expressions: List[SelectExpression],
 
   def groupBy(expressions: SelectExpression*) = copy(_groupBy = _groupBy ::: expressions.toList)
   def orderBy(ordering: OrderBy*) = copy(_orderBy = _orderBy ::: ordering.toList)
+
+  def result = table.datastore.exec(this)
+  def async = table.datastore.async {
+    result
+  }
 }
