@@ -5,7 +5,7 @@ import com.outr.query.column.property.{ForeignKey, AutoIncrement, PrimaryKey}
 import com.outr.query.h2.{H2Memory, H2Datastore}
 import org.scalatest.{Matchers, WordSpec}
 
-import com.outr.query.simple._
+import com.outr.query.dsl._
 
 /**
  * @author Matt Hicks <matt@outr.com>

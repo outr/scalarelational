@@ -12,7 +12,7 @@ import org.h2.jdbc.JdbcSQLException
 import com.outr.query.h2.trigger.TriggerType
 import org.scalatest.{Matchers, WordSpec}
 
-import com.outr.query.simple._
+import com.outr.query.dsl._
 
 import scala.language.postfixOps
 
@@ -53,7 +53,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "insert a record" in {
       session {
-        val id = insert(test.name("John Doe")).toList.head
+        val id = insert(test.name("John Doe")).result
         id should equal(1)
       }
     }
@@ -85,7 +85,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "insert another record" in {
       session {
-        insert(test.name("Jane Doe"))
+        insert(test.name("Jane Doe")).result
       }
     }
     "query the record back by name" in {
@@ -180,9 +180,9 @@ class TableSpec extends WordSpec with Matchers {
     import suppliers._
     "insert three suppliers" in {
       session {
-        acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).get
-        superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).get
-        highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).get
+        acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+        superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+        highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).result
         acmeId shouldNot equal(0)
         superiorId shouldNot equal(0)
         highGroundId shouldNot equal(0)
@@ -194,11 +194,11 @@ class TableSpec extends WordSpec with Matchers {
     import coffees._
     "insert five coffees" in {
       session {
-        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0))
-        insert(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0))
-        insert(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0))
-        insert(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0))
-        insert(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0))
+        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
+           add(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
+           add(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
+           add(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
+           add(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0)).result
       }
     }
     "query five coffees back out" in {
@@ -321,7 +321,7 @@ class TableSpec extends WordSpec with Matchers {
 
     "insert an Orange" in {
       session {
-        insert(color("Orange"), fruit(Fruit("Orange")))
+        insert(color("Orange"), fruit(Fruit("Orange"))).result
       }
     }
     "query the Orange back" in {
@@ -361,7 +361,7 @@ class TableSpec extends WordSpec with Matchers {
       session {
         val idOption = insert(lists.strings(List("One", "Two", "Three")))
         idOption shouldNot equal(None)
-        listId = idOption.get
+        listId = idOption.result
         listId should equal(1)
       }
     }
@@ -377,9 +377,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "insert a Blob entry" in {
       session {
-        val idOption = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8"))))
-        idOption shouldNot equal(None)
-        dataId = idOption.get
+        dataId = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
         dataId should equal(1)
       }
     }
@@ -397,18 +395,18 @@ class TableSpec extends WordSpec with Matchers {
     }
     "insert John Doe into combinedUnique" in {
       session {
-        insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")) should equal(Some(1))
+        insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result should equal(1)
       }
     }
     "insert Jane Doe into combinedUnique" in {
       session {
-        insert(combinedUnique.firstName("Jane"), combinedUnique.lastName("Doe")) should equal(Some(2))
+        insert(combinedUnique.firstName("Jane"), combinedUnique.lastName("Doe")).result should equal(2)
       }
     }
     "attempting to insert John Doe again throws a constraint violation" in {
       session {
-        val exc = intercept[JdbcSQLException] {
-          insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe"))
+        intercept[JdbcSQLException] {
+          insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result
           fail()
         }
       }
@@ -431,7 +429,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "insert a record to fire a trigger" in {
       session {
-        insert(triggerTest.name("Test1")) should equal(Some(1))
+        insert(triggerTest.name("Test1")).result should equal(1)
       }
     }
     "validate that one insert was triggered" in {

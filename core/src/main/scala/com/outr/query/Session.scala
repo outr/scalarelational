@@ -50,6 +50,20 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
+  def executeInsertMultiple(sql: String, rows: Seq[Seq[Any]]) = {
+    Datastore.current(datastore)
+    val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    rows.foreach {
+      case args => {
+        args.zipWithIndex.foreach {
+          case (value, index) => ps.setObject(index + 1, value)
+        }
+        ps.addBatch()
+      }
+    }
+    ps.executeBatch()
+  }
+
   def executeQuery(sql: String, args: Seq[Any]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)

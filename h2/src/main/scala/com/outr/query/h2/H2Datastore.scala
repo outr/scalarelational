@@ -5,7 +5,6 @@ import java.io.File
 import com.outr.query._
 import org.h2.jdbcx.JdbcConnectionPool
 import com.outr.query.Column
-import org.powerscala.event.FunctionalListener
 import org.powerscala.property.Property
 import scala.collection.mutable.ListBuffer
 import org.powerscala.log.Logging
@@ -15,7 +14,6 @@ import com.outr.query.Update
 import com.outr.query.LikeCondition
 import com.outr.query.Join
 import com.outr.query.SimpleFunction
-import scala.Some
 import com.outr.query.Delete
 import com.outr.query.DirectCondition
 import com.outr.query.RangeCondition
@@ -23,7 +21,7 @@ import com.outr.query.ColumnCondition
 import com.outr.query.Conditions
 import com.outr.query.Merge
 import com.outr.query.Query
-import com.outr.query.Insert
+import com.outr.query.InsertSingle
 import com.outr.query.table.property.Index
 import org.powerscala.event.processor.UnitProcessor
 import com.outr.query.h2.trigger.{TriggerType, TriggerEvent}
@@ -231,7 +229,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     new QueryResultsIterator(resultSet, query)
   }
 
-  def exec(insert: Insert) = {
+  def exec(insert: InsertSingle) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
@@ -239,8 +237,28 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     inserting.fire(insert)
-    val keys = session.executeInsert(insertString, columnValues)
-    new GeneratedKeysIterator(keys)
+    val resultSet = session.executeInsert(insertString, columnValues)
+    try {
+      if (resultSet.next()) {
+        resultSet.getInt(1)
+      } else {
+        -1
+      }
+    } finally {
+      resultSet.close()
+    }
+  }
+
+  def exec(insert: InsertMultiple) = {
+    if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
+//    if (insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"All rows must have the exact same length.")
+    val table = insert.rows.head.head.column.table
+    val columnNames = insert.rows.head.map(cv => cv.column.name).mkString(", ")
+    val columnValues = insert.rows.map(r => r.map(cv => cv.toSQL))
+    val placeholder = insert.rows.head.map(v => "?").mkString(", ")
+    val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
+    inserting.fire(insert)
+    session.executeInsertMultiple(insertString, columnValues).toList
   }
   
   def exec(merge: Merge) = {

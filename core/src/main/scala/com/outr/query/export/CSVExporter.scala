@@ -1,7 +1,7 @@
 package com.outr.query.export
 
 import com.outr.query.Table
-import com.outr.query.simple._
+import com.outr.query.dsl._
 import java.io.{FileWriter, File}
 
 /**

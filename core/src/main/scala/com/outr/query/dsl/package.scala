@@ -3,18 +3,10 @@ package com.outr.query
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-package object simple {
+package object dsl {
   def select(expressions: SelectExpression*) = Query(expressions.toList)
   def select(expressions: List[SelectExpression]) = Query(expressions)
-  def insert(values: ColumnValue[_]*) = {
-    val datastore = values.head.column.table.datastore
-    val results = datastore.exec(Insert(values.toList))
-    if (results.hasNext) {
-      Some(results.next())
-    } else {
-      None
-    }
-  }
+  def insert(values: ColumnValue[_]*) = InsertSingle(values)
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)
   }: _*)

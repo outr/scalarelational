@@ -79,7 +79,8 @@ trait Datastore extends Listenable with Logging with SessionSupport {
   def sqlFromQuery(query: Query): (String, List[Any])
 
   def exec(query: Query): QueryResultsIterator
-  def exec(insert: Insert): Iterator[Int]
+  def exec(insert: InsertSingle): Int
+  def exec(insert: InsertMultiple): List[Int]
   def exec(merge: Merge): Int
   def exec(update: Update): Int
   def exec(delete: Delete): Int
@@ -98,11 +99,6 @@ object Datastore {
 
   protected[query] def current(d: Datastore) = instance.set(d)
   def apply() = instance.get()
-}
-
-class GeneratedKeysIterator(rs: ResultSet) extends Iterator[Int] {
-  def hasNext = rs.next()
-  def next() = rs.getInt(1)
 }
 
 case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
