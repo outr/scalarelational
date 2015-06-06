@@ -174,6 +174,41 @@ class TableSpec extends WordSpec with Matchers {
         results.size should equal(0)
       }
     }
+    "insert several new records asynchronously" in {
+      import test._
+
+      session {
+        val future = insert(name("Adam")).
+                        add(name("Ben")).
+                        add(name("Chris")).
+                        add(name("Doug")).
+                        add(name("Evan")).
+                        add(name("Frank")).
+                        add(name("Greg")).
+                        add(name("Hank")).
+                        add(name("Ivan")).
+                        add(name("James")).
+                        add(name("Kevin")).
+                        add(name("Liam")).
+                        add(name("Matt")).
+                        add(name("Nathan")).
+                        add(name("Orville")).
+                        add(name("Phillip")).
+                        add(name("Quincy")).
+                        add(name("Rand")).
+                        add(name("Samuel")).
+                        add(name("Tom")).
+                        add(name("Uri")).
+                        add(name("Vladamir")).
+                        add(name("Walter")).
+                        add(name("Xavier")).
+                        add(name("Yasser")).
+                        add(name("Zach")).async
+        (select(*) from test).result.toList.length should equal(0)
+        future.get() should equal(List(28))     // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
+        (select(*) from test).result.toList.length should equal(26)
+      }
+    }
   }
   "suppliers" should {
     import TestDatastore._
@@ -263,7 +298,7 @@ class TableSpec extends WordSpec with Matchers {
         val query = select(price) from coffees groupBy price orderBy (price asc)
         val results = exec(query).toVector
         results.size should equal(3)
-        results(0)(price) should equal(7.99)
+        results.head(price) should equal(7.99)
         results(1)(price) should equal(8.99)
         results(2)(price) should equal(9.99)
       }

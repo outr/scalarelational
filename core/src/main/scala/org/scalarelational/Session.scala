@@ -64,6 +64,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
       }
     }
     ps.executeBatch()
+    ps.getGeneratedKeys
   }
 
   def executeQuery(sql: String, args: Seq[Any]) = {

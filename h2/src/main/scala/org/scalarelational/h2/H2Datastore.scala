@@ -15,6 +15,7 @@ import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
 import org.scalarelational.instruction._
 import org.scalarelational.model._
 import org.scalarelational.model.table.property.Index
+import org.scalarelational.result.QueryResultsIterator
 
 import scala.collection.mutable.ListBuffer
 
@@ -250,7 +251,16 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     val placeholder = insert.rows.head.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     inserting.fire(insert)
-    session.executeInsertMultiple(insertString, columnValues).toList
+    val resultSet = session.executeInsertMultiple(insertString, columnValues)
+    try {
+      val indexes = ListBuffer.empty[Int]
+      while (resultSet.next()) {
+        indexes += resultSet.getInt(1)
+      }
+      indexes.toList
+    } finally {
+      resultSet.close()
+    }
   }
   
   def exec(merge: Merge) = {

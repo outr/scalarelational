@@ -1,14 +1,13 @@
 package org.scalarelational.model
 
-import java.sql.ResultSet
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
-import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction._
-import org.scalarelational.{ColumnValue, ExpressionValue, SessionSupport}
+import org.scalarelational.result.{QueryResultsIterator, ResultSetIterator}
+import org.scalarelational.SessionSupport
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -102,42 +101,4 @@ object Datastore {
 
   protected[scalarelational] def current(d: Datastore) = instance.set(d)
   def apply() = instance.get()
-}
-
-case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
-  def apply[T](column: Column[T]) = values.collectFirst {
-    case cv: ColumnValue[_] if cv.column == column => cv.value.asInstanceOf[T]
-  }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
-
-  def apply[T](function: SQLFunction[T]) = values.collectFirst {
-    case fv: SQLFunctionValue[_] if fv.function == function => fv.value.asInstanceOf[T]
-  }.getOrElse(throw new RuntimeException(s"Unable to find function value: $function in result."))
-
-  override def toString = s"${table.tableName}: ${values.mkString(", ")}"
-}
-
-class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
-  def hasNext = rs.next()
-  def next() = {
-    val values = query.expressions.zipWithIndex.map {
-      case (expression, index) => expression match {
-        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], column.converter.fromSQLType(column, rs.getObject(index + 1)), None)
-        case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
-      }
-    }
-    QueryResult(query.table, values)
-  }
-
-  def one = if (hasNext) {
-    val n = next()
-    if (hasNext) throw new RuntimeException("More than one result for query!")
-    n
-  } else {
-    throw new RuntimeException("No results for the query!")
-  }
-}
-
-class ResultSetIterator(results: ResultSet) extends Iterator[ResultSet] {
-  def hasNext = results.next()
-  def next() = results
 }
