@@ -9,7 +9,7 @@ import org.scalarelational.ColumnValue
  */
 case class Update(values: List[ColumnValue[_]],
                   table: Table,
-                  whereCondition: Condition = null) extends WhereSupport[Update] {
+                  whereCondition: Condition = null) extends WhereSupport[Update] with Instruction[Int] {
   def where(condition: Condition) = copy(whereCondition = condition)
 
   def result = {

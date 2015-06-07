@@ -5,7 +5,7 @@ import org.scalarelational.ColumnValue
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class InsertMultiple(rows: Seq[Seq[ColumnValue[_]]]) extends Insert {
+case class InsertMultiple(rows: Seq[Seq[ColumnValue[_]]]) extends Insert with Instruction[List[Int]] {
   def result = {
     val datastore = rows.head.head.column.table.datastore
     datastore.exec(this)

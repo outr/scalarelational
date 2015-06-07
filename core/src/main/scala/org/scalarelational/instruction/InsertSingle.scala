@@ -5,7 +5,7 @@ import org.scalarelational.ColumnValue
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class InsertSingle(values: Seq[ColumnValue[_]]) extends Insert {
+case class InsertSingle(values: Seq[ColumnValue[_]]) extends Insert with Instruction[Int] {
   lazy val rows = Seq(values)
 
   def result = {

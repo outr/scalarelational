@@ -1,7 +1,8 @@
 package org.scalarelational
 
 import org.powerscala.reflect._
-import org.scalarelational.instruction.Query
+import org.scalarelational.instruction.{Instruction, Query}
+import org.scalarelational.model.{Column, Table}
 import org.scalarelational.result.QueryResult
 
 /**
@@ -17,6 +18,33 @@ package object mapper {
         clazz.create[R](r.toSimpleMap)
       }
       mapped[R](f)
+    }
+  }
+
+  implicit class MappableTable(table: Table) {
+    def persist[T <: AnyRef](value: T)(implicit manifest: Manifest[T]): Instruction[Int] = {
+      val clazz: EnhancedClass = manifest.runtimeClass
+      val values = clazz.caseValues.flatMap(cv => table.getColumn[Any](cv.name).map(c => c(cv[Any](value))))
+      val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
+      values.find(cv => cv.column == primaryColumn) match {
+        case Some(primaryKey) => {
+          val exists = primaryKey.value match {
+            case None => false
+            case null => false
+            case i: Int if i < 1 => false
+            case _ => true
+          }
+          if (exists) {
+            // Update
+            val updates = values.filterNot(cv => cv.column == primaryColumn)
+            table.datastore.update(values: _*) where (primaryColumn === primaryKey.value)
+          } else {
+            table.datastore.insert(values: _*)
+          }
+        }
+        case None => table.datastore.insert(values: _*)
+      }
+
     }
   }
 }

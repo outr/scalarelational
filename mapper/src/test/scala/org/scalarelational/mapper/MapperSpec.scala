@@ -6,8 +6,6 @@ import org.scalatest.{Matchers, WordSpec}
 
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 
-import org.scalarelational.dsl._
-
 /**
  * @author Matt Hicks <matt@outr.com>
  */
@@ -18,11 +16,11 @@ class MapperSpec extends WordSpec with Matchers {
     "doing setup" should {
       "create the database" in {
         session {
-          create(person)
+          create(people)
         }
       }
       "insert some people into the database" in {
-        import person._
+        import people._
 
         session {
           insert(name("John Doe"), age(21)).
@@ -32,18 +30,18 @@ class MapperSpec extends WordSpec with Matchers {
       }
     }
     "dealing with queries" should {
-      import person._
+      import people._
 
       "explicitly map to a case class" in {
         session {
-          val query = select(*) from person where name === "John Doe"
-          val john = query.mapped(qr => Person(qr(name), qr(age), Option(qr(id)))).head
+          val query = select(*) from people where name === "John Doe"
+          val john = query.mapped(qr => Person(qr(name), qr(age), qr(id))).head
           john should equal(Person("John Doe", 21, Some(1)))
         }
       }
       "automatically map to a case class" in {
         session {
-          val query = select(*) from person where name === "Jane Doe"
+          val query = select(*) from people where name === "Jane Doe"
           val jane = query.as[Person].head
           jane should equal(Person("Jane Doe", 19, Some(2)))
         }
@@ -51,9 +49,36 @@ class MapperSpec extends WordSpec with Matchers {
       // TODO: Test mapping to (Name, Age) tuple
     }
     "dealing with inserts" should {
-      import person._
+      "automatically convert a case class to an insert" in {
+        session {
+          people.persist(Person("Ray Doe", 30)).result
+        }
+      }
+      "query back the inserted object" in {
+        import people._
 
-      // TODO: Test inserting a Person with explicit mapping
+        session {
+          val query = select(*) from people where name === "Ray Doe"
+          val ray = query.as[Person].head
+          ray should equal(Person("Ray Doe", 30, Some(4)))
+        }
+      }
+      "automatically convert a case class to an update" in {
+        session {
+          people.persist(Person("Jay Doe", 30, Some(4))).result
+        }
+      }
+      "query back the updated object" in {
+        import people._
+
+        session {
+          val query1 = select(*) from people where name === "Ray Doe"
+          query1.as[Person].headOption should equal(None)
+          val query2 = select(*) from people where name === "Jay Doe"
+          val jay = query2.as[Person].head
+          jay should equal(Person("Jay Doe", 30, Some(4)))
+        }
+      }
       // TODO: Test inserting a Person with auto mapping
       // TODO: Test inserting a (Name, Age) tuple
     }
@@ -63,8 +88,8 @@ class MapperSpec extends WordSpec with Matchers {
 case class Person(name: String, age: Int, id: Option[Int] = None)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
-  object person extends Table("person") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+  object people extends Table("person") {
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
   }
