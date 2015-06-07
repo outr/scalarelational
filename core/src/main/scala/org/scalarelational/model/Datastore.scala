@@ -5,6 +5,7 @@ import javax.sql.DataSource
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
+import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.instruction._
 import org.scalarelational.result.{QueryResultsIterator, ResultSetIterator}
 import org.scalarelational.SessionSupport
@@ -12,7 +13,7 @@ import org.scalarelational.SessionSupport
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging with SessionSupport {
+trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport {
   implicit def thisDatastore: Datastore = this
 
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")

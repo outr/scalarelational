@@ -1,12 +1,13 @@
-package org.scalarelational
+package org.scalarelational.dsl
 
+import org.scalarelational.model.{Column, Table}
+import org.scalarelational.{ColumnValue, SelectExpression}
 import org.scalarelational.instruction._
-import org.scalarelational.model.{Table, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-package object dsl {
+trait DSLSupport {
   def select(expressions: SelectExpression*) = Query(expressions.toList)
   def select(expressions: List[SelectExpression]) = Query(expressions)
   def insert(values: ColumnValue[_]*) = InsertSingle(values)
@@ -17,3 +18,5 @@ package object dsl {
   def update(values: ColumnValue[_]*) = Update(values.toList, values.head.column.table)
   def delete(table: Table) = Delete(table)
 }
+
+object DSLSupport extends DSLSupport

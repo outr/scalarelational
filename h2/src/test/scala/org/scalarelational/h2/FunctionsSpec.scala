@@ -2,7 +2,6 @@ package org.scalarelational.h2
 
 import java.sql.Connection
 import org.scalarelational.column.property.{AutoIncrement, NotNull, PrimaryKey, Unique}
-import org.scalarelational.dsl.select
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
 

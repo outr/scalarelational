@@ -8,7 +8,6 @@ import org.powerscala.IO
 import org.scalarelational
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter, StringDataType}
-import org.scalarelational.dsl._
 import org.scalarelational.h2.trigger.TriggerType
 import org.scalarelational.model.{Table, ColumnLike}
 import org.scalarelational.model.table.property.Index
@@ -238,7 +237,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query five coffees back out" in {
       session {
-        val results = exec(scalarelational.dsl.select(*) from coffees).toList
+        val results = exec(select(*) from coffees).toList
         results.size should equal(5)
       }
     }
@@ -308,7 +307,7 @@ class TableSpec extends WordSpec with Matchers {
     import TestDatastore._
     import names._
 
-    val queryAll = scalarelational.dsl.select(*) from names orderBy(name asc)
+    val queryAll = select(*) from names orderBy(name asc)
 
     "have no records in the table" in {
       session {
@@ -361,7 +360,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query the Orange back" in {
       session {
-        val results = exec(scalarelational.dsl.select(*) from fruitColors).toList
+        val results = exec(select(*) from fruitColors).toList
         results.size should equal(1)
         val orange = results.head
         orange(color) should equal("Orange")
@@ -486,7 +485,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "select a record to fire a select trigger" in {
       session {
-        val results = exec(scalarelational.dsl.select(triggerTest.*) from triggerTest).toList
+        val results = exec(select(triggerTest.*) from triggerTest).toList
         results.size should equal(1)
       }
     }
