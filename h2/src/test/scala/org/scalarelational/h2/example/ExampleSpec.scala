@@ -64,7 +64,7 @@ class ExampleSpec extends WordSpec with Matchers {
 
 object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
   object suppliers extends Table("SUPPLIERS") {
-    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Int]("SUP_ID", PrimaryKey)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")

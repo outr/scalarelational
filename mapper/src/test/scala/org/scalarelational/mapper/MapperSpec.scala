@@ -39,6 +39,13 @@ class MapperSpec extends WordSpec with Matchers {
           john should equal(Person("John Doe", 21, Some(1)))
         }
       }
+      "explicitly map to a (Name, Age) type" in {
+        session {
+          val query = select(*) from people where name === "John Doe"
+          val john = query.mapped(qr => (Name(qr(name)), Age(qr(age)))).head
+          john should equal((Name("John Doe"), Age(21)))
+        }
+      }
       "automatically map to a case class" in {
         session {
           val query = select(*) from people where name === "Jane Doe"
@@ -46,7 +53,6 @@ class MapperSpec extends WordSpec with Matchers {
           jane should equal(Person("Jane Doe", 19, Some(2)))
         }
       }
-      // TODO: Test mapping to (Name, Age) tuple
     }
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
@@ -79,13 +85,15 @@ class MapperSpec extends WordSpec with Matchers {
           jay should equal(Person("Jay Doe", 30, Some(4)))
         }
       }
-      // TODO: Test inserting a Person with auto mapping
-      // TODO: Test inserting a (Name, Age) tuple
     }
   }
 }
 
 case class Person(name: String, age: Int, id: Option[Int] = None)
+
+case class Name(value: String)
+
+case class Age(value: Int)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {

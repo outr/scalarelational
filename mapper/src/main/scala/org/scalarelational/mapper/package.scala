@@ -22,13 +22,14 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
-    def persist[T <: AnyRef](value: T)(implicit manifest: Manifest[T]): Instruction[Int] = {
+    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[Int] = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val values = clazz.caseValues.flatMap(cv => table.getColumn[Any](cv.name).map(c => c(cv[Any](value))))
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       values.find(cv => cv.column == primaryColumn) match {
         case Some(primaryKey) => {
           val exists = primaryKey.value match {
+            case _ if forceInsert => false
             case None => false
             case null => false
             case i: Int if i < 1 => false
