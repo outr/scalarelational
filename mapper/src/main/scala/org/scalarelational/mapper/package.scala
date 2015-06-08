@@ -1,8 +1,8 @@
 package org.scalarelational
 
 import org.powerscala.reflect._
-import org.scalarelational.instruction.{Instruction, Query}
-import org.scalarelational.model.{Column, Table}
+import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
+import org.scalarelational.model.{Datastore, Column, Table}
 import org.scalarelational.result.QueryResult
 
 /**
@@ -22,7 +22,7 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
-    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[Int] = {
+    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[T] = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val values = clazz.caseValues.flatMap(cv => table.getColumn[Any](cv.name).map(c => c(cv[Any](value))))
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
@@ -38,14 +38,31 @@ package object mapper {
           if (exists) {
             // Update
             val updates = values.filterNot(cv => cv.column == primaryColumn)
-            table.datastore.update(values: _*) where (primaryColumn === primaryKey.value)
+            val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
+            new InstanceInstruction[T](update, value, table.datastore)
           } else {
-            table.datastore.insert(values: _*)
+            val primaryKeyCaseValue = clazz.caseValue(primaryColumn.name).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} in $clazz."))
+            new PersistInsertInstruction[T](table.datastore.insert(values: _*), primaryKeyCaseValue, value)
           }
         }
-        case None => table.datastore.insert(values: _*)
+        case None => new InstanceInstruction[T](table.datastore.insert(values: _*), value, table.datastore)
       }
+    }
+  }
 
+  class InstanceInstruction[T](instruction: Instruction[Int], instance: T, val thisDatastore: Datastore) extends Instruction[T] {
+    override def result = {
+      instruction.result
+      instance
+    }
+  }
+
+  class PersistInsertInstruction[T](insert: InsertSingle, caseValue: CaseValue, instance: T) extends Instruction[T] {
+    override protected def thisDatastore = insert.values.head.column.table.datastore
+
+    override def result = {
+      val id = insert.result
+      caseValue.copy[T](instance, id)
     }
   }
 }

@@ -57,7 +57,8 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          people.persist(Person("Ray Doe", 30)).result
+          val ray = people.persist(Person("Ray Doe", 30)).result
+          ray should equal(Person("Ray Doe", 30, Some(4)))
         }
       }
       "query back the inserted object" in {
@@ -71,7 +72,8 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "automatically convert a case class to an update" in {
         session {
-          people.persist(Person("Jay Doe", 30, Some(4))).result
+          val jay = people.persist(Person("Jay Doe", 30, Some(4))).result
+          jay should equal(Person("Jay Doe", 30, Some(4)))
         }
       }
       "query back the updated object" in {
