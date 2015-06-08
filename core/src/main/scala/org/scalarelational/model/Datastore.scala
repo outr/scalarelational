@@ -44,6 +44,17 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     }
   }
 
+  def doesTableExist(name: String) = {
+    val s = session
+    val meta = s.connection.getMetaData
+    val results = meta.getTables(null, "PUBLIC", name.toUpperCase, null)
+    try {
+      results.next()
+    } finally {
+      results.close()
+    }
+  }
+
   def empty() = jdbcTables.isEmpty
 
   def create(tables: Table*) = {

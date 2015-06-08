@@ -77,6 +77,8 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
     c.props(properties: _*)
   }
 
+  def exists = datastore.doesTableExist(tableName)
+
   /**
    * Adds the supplied properties to this table.
    *

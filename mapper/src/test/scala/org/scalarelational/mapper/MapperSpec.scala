@@ -1,8 +1,8 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.column.property.{NotNull, AutoIncrement, PrimaryKey}
+import org.scalarelational.column.property._
 import org.scalarelational.model.Table
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{Ignore, Matchers, WordSpec}
 
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 
@@ -16,7 +16,7 @@ class MapperSpec extends WordSpec with Matchers {
     "doing setup" should {
       "create the database" in {
         session {
-          create(people)
+          create(people, suppliers, coffees)
         }
       }
       "insert some people into the database" in {
@@ -51,6 +51,11 @@ class MapperSpec extends WordSpec with Matchers {
           val query = select(*) from people where name === "Jane Doe"
           val jane = query.as[Person].head
           jane should equal(Person("Jane Doe", 19, Some(2)))
+        }
+      }
+      "map a joined query to two case classes" in {
+        session {
+
         }
       }
     }
@@ -88,6 +93,32 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
     }
+    "more complex relationships" ignore {
+      "persist records" in {
+        session {
+          // Insert Suppliers
+          val acme = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
+          val superior = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
+          val highGround = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+
+          // Insert Coffees
+          coffees.persist(Coffee("Colombian", acme.id.get, 7.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast", superior.id.get, 8.99, 0, 0)).result
+          coffees.persist(Coffee("Espresso", highGround.id.get, 9.99, 0, 0)).result
+          coffees.persist(Coffee("Colombian Decaf", acme.id.get, 8.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast Decaf", superior.id.get, 9.99, 0, 0)).result
+          // TODO: add batch insert / update support for persist
+        }
+      }
+      "query back 'French Roast' with 'Superior Coffee'" in {
+        session {
+          val query = select(suppliers.* ::: coffees.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
+          val (frenchRoast, superior) = query.as[(Coffee, Supplier)].head
+          frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
+          superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
+        }
+      }
+    }
   }
 }
 
@@ -97,10 +128,30 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
+case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
+
+case class Coffee(name: String, supId: Int, price: Double, sales: Int, total: Int, id: Option[Int] = None)
+
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
+  }
+  object suppliers extends Table("SUPPLIERS") {
+    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val name = column[String]("SUP_NAME")
+    val street = column[String]("STREET")
+    val city = column[String]("CITY")
+    val state = column[String]("STATE")
+    val zip = column[String]("ZIP")
+  }
+  object coffees extends Table("COFFEES") {
+    val id = column[Int]("COF_ID", PrimaryKey, AutoIncrement)
+    val name = column[String]("COF_NAME", Unique)
+    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val price = column[Double]("PRICE")
+    val sales = column[Int]("SALES")
+    val total = column[Int]("TOTAL")
   }
 }

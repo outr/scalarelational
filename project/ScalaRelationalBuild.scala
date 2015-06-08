@@ -4,7 +4,7 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")) aggregate(core, h2, mapper)
+  lazy val root = Project(id = "root", base = file(".")).settings(publish := {}).aggregate(core, h2, mapper)
   lazy val core = project("core").withDependencies(powerscala.property, scalaTest)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core)
   lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test")
