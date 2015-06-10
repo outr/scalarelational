@@ -45,6 +45,8 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   }
   lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
 
+  lazy val q = datastore.select(*) from this
+
   props(tableProperties: _*)      // Add properties from constructor
 
   def properties = _properties.values
@@ -63,6 +65,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def * = columns
 
   def getColumn[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
+  def getColumnByField[T](name: String) = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T]]]
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
@@ -75,6 +78,13 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
                (implicit manifest: Manifest[T]) = {
     val c = new Column[T](name, converter, manifest, this)
     c.props(properties: _*)
+  }
+
+  protected[model] def fieldName(column: Column[_]) = {
+    getClass.getDeclaredFields.find(f => {
+      f.setAccessible(true)
+      f.get(this) == column
+    }).map(f => f.getName).getOrElse(throw new RuntimeException(s"Unable to find fieldName in ${tableName} for ${column.name}."))
   }
 
   def exists = datastore.doesTableExist(tableName)

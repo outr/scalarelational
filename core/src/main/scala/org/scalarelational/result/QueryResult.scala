@@ -22,5 +22,17 @@ case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
     }.toMap
   }
 
+  def toFieldMap = {
+    values.collect {
+      case v if v.expression.isInstanceOf[ColumnLike[_]] => {
+        val name = v.expression match {
+          case c: Column[_] => c.fieldName
+          case c: ColumnLike[_] => c.name
+        }
+        name -> v.value
+      }
+    }.toMap
+  }
+
   override def toString = s"${table.tableName}: ${values.mkString(", ")}"
 }

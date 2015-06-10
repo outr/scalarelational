@@ -7,13 +7,9 @@ import org.scalarelational.model.ColumnLike
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class ColumnValue[T](column: ColumnLike[T],
-                          value: T,
-                          converterOverride: Option[DataType[T]]) extends ExpressionValue[T] {
-  if (value.asInstanceOf[AnyRef] != null && !value.getClass.hasType(column.manifest.runtimeClass)) {
-    throw new RuntimeException(s"Unable to set column-value $value (${value.getClass.getName}) when ${column.manifest.runtimeClass.getName} is expected in ${column.longName}.")
-  }
-
+class ColumnValue[T] private(val column: ColumnLike[T],
+                             val value: T,
+                             val converterOverride: Option[DataType[T]]) extends ExpressionValue[T] {
   def expression = column
   def toSQL = converterOverride match {
     case Some(converter) => converter.toSQLType(column, value)
@@ -21,4 +17,15 @@ case class ColumnValue[T](column: ColumnLike[T],
   }
 
   override def toString = s"$column = $value"
+}
+
+object ColumnValue {
+  def apply[T](column: ColumnLike[T], value: T, converterOverride: Option[DataType[T]]) = {
+    val v = if (value.asInstanceOf[AnyRef] != null && !value.getClass.hasType(column.manifest.runtimeClass)) {
+      EnhancedMethod.convertTo(column.name, value, column.manifest.runtimeClass).asInstanceOf[T]
+    } else {
+      value
+    }
+    new ColumnValue[T](column, v, converterOverride)
+  }
 }

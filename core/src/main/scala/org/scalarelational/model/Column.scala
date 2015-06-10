@@ -20,6 +20,8 @@ class Column[T] private[scalarelational](val name: String,
 
   lazy val index = table.columns.indexOf(this)
 
+  lazy val fieldName = table.fieldName(this)
+
   table.addColumn(this)     // Add this column to the table
 
   /**

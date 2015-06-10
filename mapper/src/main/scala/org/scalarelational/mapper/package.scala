@@ -1,6 +1,7 @@
 package org.scalarelational
 
 import org.powerscala.reflect._
+import org.scalarelational.column.property.AutoIncrement
 import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
 import org.scalarelational.model.{Datastore, Column, Table}
 import org.scalarelational.result.QueryResult
@@ -15,7 +16,7 @@ package object mapper {
     def as[R](implicit manifest: Manifest[R]): Stream[R] = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val f = (r: QueryResult) => {
-        clazz.create[R](r.toSimpleMap)
+        clazz.create[R](r.toFieldMap)
       }
       mapped[R](f)
     }
@@ -24,8 +25,9 @@ package object mapper {
   implicit class MappableTable(table: Table) {
     def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[T] = {
       val clazz: EnhancedClass = manifest.runtimeClass
-      val values = clazz.caseValues.flatMap(cv => table.getColumn[Any](cv.name).map(c => c(cv[Any](value))))
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
+      val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
+      val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
       values.find(cv => cv.column == primaryColumn) match {
         case Some(primaryKey) => {
           val exists = primaryKey.value match {
@@ -37,15 +39,14 @@ package object mapper {
           }
           if (exists) {
             // Update
-            val updates = values.filterNot(cv => cv.column == primaryColumn)
             val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
             new InstanceInstruction[T](update, value, table.datastore)
           } else {
             val primaryKeyCaseValue = clazz.caseValue(primaryColumn.name).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} in $clazz."))
-            new PersistInsertInstruction[T](table.datastore.insert(values: _*), primaryKeyCaseValue, value)
+            new PersistInsertInstruction[T](table.datastore.insert(updates: _*), primaryKeyCaseValue, value)
           }
         }
-        case None => new InstanceInstruction[T](table.datastore.insert(values: _*), value, table.datastore)
+        case None => new InstanceInstruction[T](table.datastore.insert(updates: _*), value, table.datastore)
       }
     }
   }
