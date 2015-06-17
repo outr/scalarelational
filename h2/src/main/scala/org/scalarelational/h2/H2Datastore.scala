@@ -33,7 +33,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def dataSource = dataSourceProperty()
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
-  val querying = new UnitProcessor[Query]("querying")
+  val querying = new UnitProcessor[Query[_]]("querying")
   val inserting = new UnitProcessor[Insert]("inserting")
   val merging = new UnitProcessor[Merge]("merging")
   val updating = new UnitProcessor[Update]("updating")
@@ -159,10 +159,13 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
 
   private def expression2SQL(expression: SelectExpression) = expression match {
     case c: ColumnLike[_] => c.longName
-    case f: SimpleFunction[_] => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
+    case f: SimpleFunction[_] => f.alias match {
+      case Some(alias) => s"${f.functionType.name.toUpperCase}(${f.column.longName}) AS $alias"
+      case None => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
+    }
   }
 
-  def sqlFromQuery(query: Query) = {
+  def sqlFromQuery[R](query: Query[R]) = {
     val columns = query.expressions.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
@@ -214,7 +217,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     session.execute(command)
   }
 
-  def exec(query: Query) = {
+  def exec[R](query: Query[R]) = {
     val (sql, args) = sqlFromQuery(query)
 
     querying.fire(query)

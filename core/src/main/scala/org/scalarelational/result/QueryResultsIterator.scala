@@ -10,7 +10,7 @@ import org.scalarelational.model.ColumnLike
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[QueryResult] {
+class QueryResultsIterator[R](rs: ResultSet, val query: Query[R]) extends Iterator[R] {
   def hasNext = rs.next()
   def next() = {
     val values = query.expressions.zipWithIndex.map {
@@ -19,7 +19,7 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
         case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
       }
     }
-    QueryResult(query.table, values)
+    query.converter(QueryResult(query.table, values))
   }
 
   def one = if (hasNext) {
@@ -28,5 +28,15 @@ class QueryResultsIterator(rs: ResultSet, val query: Query) extends Iterator[Que
     n
   } else {
     throw new RuntimeException("No results for the query!")
+  }
+
+  def head = {
+    if (!hasNext) throw new RuntimeException(s"No items available.")
+    next()
+  }
+  def headOption = if (hasNext) {
+    Some(next())
+  } else {
+    None
   }
 }

@@ -1,6 +1,7 @@
 package org.scalarelational.dsl
 
 import org.scalarelational.model.{Column, Table}
+import org.scalarelational.result.QueryResult
 import org.scalarelational.{ColumnValue, SelectExpression}
 import org.scalarelational.instruction._
 
@@ -8,8 +9,10 @@ import org.scalarelational.instruction._
  * @author Matt Hicks <matt@outr.com>
  */
 trait DSLSupport {
-  def select(expressions: SelectExpression*) = Query(expressions.toList)
-  def select(expressions: List[SelectExpression]) = Query(expressions)
+  private val defaultConverter = (qr: QueryResult) => qr
+
+  def select(expressions: SelectExpression*) = Query(expressions.toList, converter = defaultConverter)
+  def select(expressions: List[SelectExpression]) = Query(expressions, converter = defaultConverter)
   def insert(values: ColumnValue[_]*) = InsertSingle(values)
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)

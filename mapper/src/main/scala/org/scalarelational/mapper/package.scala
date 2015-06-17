@@ -10,15 +10,13 @@ import org.scalarelational.result.QueryResult
  * @author Matt Hicks <matt@outr.com>
  */
 package object mapper {
-  implicit class MappableQuery(query: Query) {
-    def mapped[R](f: QueryResult => R): Stream[R] = query.result.toStream.map(qr => f(qr))
-
-    def as[R](implicit manifest: Manifest[R]): Stream[R] = {
+  implicit class MappableQuery[OriginalResult](query: Query[OriginalResult]) {
+    def as[R](implicit manifest: Manifest[R]) = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val f = (r: QueryResult) => {
         clazz.create[R](r.toFieldMap)
       }
-      mapped[R](f)
+      query.mapped[R](f)
     }
   }
 

@@ -10,7 +10,7 @@ import org.scalarelational.op.Condition
 case class Join(table: Table, joinType: JoinType = JoinType.Join, condition: Condition, alias: String)
 
 // Used for DSL before the actual Join instance is created
-case class PartialJoin(query: Query, table: Table, joinType: JoinType, alias: String) {
+case class PartialJoin[R](query: Query[R], table: Table, joinType: JoinType, alias: String) {
   def as(alias: String) = copy(alias = alias)
 
   def on(condition: Condition) = query.copy(joins = (Join(table, joinType, condition, alias) :: query.joins.reverse).reverse)

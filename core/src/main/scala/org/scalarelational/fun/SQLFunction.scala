@@ -2,7 +2,7 @@ package org.scalarelational.fun
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.SelectExpression
-import org.scalarelational.model.ColumnLike
+import org.scalarelational.model.{ColumnAlias, ColumnLike}
 
 import scala.language.existentials
 
@@ -11,6 +11,7 @@ import scala.language.existentials
  */
 trait SQLFunction[T] extends SelectExpression {
   def functionType: FunctionType
+  def alias: Option[String]
 }
 
 sealed abstract class FunctionType(val sql: String) extends EnumEntry
@@ -28,4 +29,6 @@ object FunctionType extends Enumerated[FunctionType] {
   val values = findValues.toVector
 }
 
-case class SimpleFunction[T](functionType: FunctionType, column: ColumnLike[_]) extends SQLFunction[T]
+case class SimpleFunction[T](functionType: FunctionType, column: ColumnLike[_], alias: Option[String] = None) extends SQLFunction[T] {
+  def as(alias: String) = copy(alias = Some(alias))
+}

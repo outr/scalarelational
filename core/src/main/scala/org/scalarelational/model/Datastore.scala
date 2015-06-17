@@ -90,9 +90,9 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     b.toString()
   }
 
-  def sqlFromQuery(query: Query): (String, List[Any])
+  def sqlFromQuery[R](query: Query[R]): (String, List[Any])
 
-  def exec(query: Query): QueryResultsIterator
+  def exec[R](query: Query[R]): QueryResultsIterator[R]
   def exec(insert: InsertSingle): Int
   def exec(insert: InsertMultiple): List[Int]
   def exec(merge: Merge): Int

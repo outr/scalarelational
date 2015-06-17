@@ -3,18 +3,20 @@ package org.scalarelational.instruction
 import org.scalarelational._
 import org.scalarelational.op.Condition
 import org.scalarelational.model.Table
+import org.scalarelational.result.QueryResult
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class Query(expressions: List[SelectExpression],
+case class Query[R](expressions: List[SelectExpression],
                  table: Table = null,
                  joins: List[Join] = Nil,
                  whereCondition: Condition = null,
                  _groupBy: List[SelectExpression] = Nil,
                  _orderBy: List[OrderBy] = Nil,
                  _limit: Int = -1,
-                 _offset: Int = -1) extends WhereSupport[Query] {
+                 _offset: Int = -1,
+                 converter: QueryResult => R) extends WhereSupport[Query[R]] {
   def fields(expressions: SelectExpression*) = copy(expressions = this.expressions ::: expressions.toList)
   def fields(expressions: List[SelectExpression]) = copy(expressions = this.expressions ::: expressions)
   def withoutField(expression: SelectExpression) = copy(expressions = expressions.filterNot(se => se == expression))
@@ -38,6 +40,8 @@ case class Query(expressions: List[SelectExpression],
 
   def groupBy(expressions: SelectExpression*) = copy(_groupBy = _groupBy ::: expressions.toList)
   def orderBy(ordering: OrderBy*) = copy(_orderBy = _orderBy ::: ordering.toList)
+
+  def mapped[Result](converter: QueryResult => Result) = copy[Result](converter = converter)
 
   def result = table.datastore.exec(this)
   def async = table.datastore.async {

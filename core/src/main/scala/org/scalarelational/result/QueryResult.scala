@@ -13,6 +13,7 @@ case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
   }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
 
   def apply[T](function: SQLFunction[T]) = values.collectFirst {
+    case fv: SQLFunctionValue[_] if function.alias.nonEmpty && fv.function.alias == function.alias => fv.value.asInstanceOf[T]
     case fv: SQLFunctionValue[_] if fv.function == function => fv.value.asInstanceOf[T]
   }.getOrElse(throw new RuntimeException(s"Unable to find function value: $function in result."))
 
@@ -24,9 +25,10 @@ case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
 
   def toFieldMap = {
     values.collect {
-      case v if v.expression.isInstanceOf[ColumnLike[_]] => {
+      case v => {
         val name = v.expression match {
           case c: Column[_] => c.fieldName
+          case f: SQLFunction[_] if f.alias.nonEmpty => f.alias.get
           case c: ColumnLike[_] => c.name
         }
         name -> v.value
