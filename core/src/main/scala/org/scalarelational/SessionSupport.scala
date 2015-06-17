@@ -3,11 +3,15 @@ package org.scalarelational
 import org.powerscala.concurrent.Executor
 import org.scalarelational.model.Datastore
 
+import scala.concurrent._
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait SessionSupport {
   this: Datastore =>
+
+  protected def executionContext = ExecutionContext.global
 
   private val _session = new ThreadLocal[Session]
   protected[scalarelational] def session = _session.get() match {
@@ -75,11 +79,9 @@ trait SessionSupport {
   /**
    * Executes the inline function asynchronously and surrounds in a session returning Future[Result].
    */
-  def async[Result](f: => Result) = {
-    Executor.invokeFuture[Result] {
-      session {
-        f
-      }
+  def async[Result](f: => Result) = Future({
+    session {
+      f
     }
-  }
+  })(executionContext)
 }

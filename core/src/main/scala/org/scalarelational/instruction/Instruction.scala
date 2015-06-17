@@ -1,6 +1,6 @@
 package org.scalarelational.instruction
 
-import java.util.concurrent.Future
+import scala.concurrent.Future
 
 import org.scalarelational.model.Datastore
 

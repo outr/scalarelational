@@ -13,6 +13,8 @@ import org.scalarelational.model.{Table, ColumnLike}
 import org.scalarelational.model.table.property.Index
 import org.scalatest.{Matchers, WordSpec}
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
@@ -204,7 +206,7 @@ class TableSpec extends WordSpec with Matchers {
                         add(name("Yasser")).
                         add(name("Zach")).async
         (select(*) from test).result.toList.length should equal(0)
-        future.get() should equal(List(28))     // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
+        Await.result(future, 10.seconds) should equal(List(28))       // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
         (select(*) from test).result.toList.length should equal(26)
       }
     }
