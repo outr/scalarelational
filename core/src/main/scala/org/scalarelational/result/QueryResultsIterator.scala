@@ -10,14 +10,35 @@ import org.scalarelational.model.ColumnLike
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[R] {
-  def hasNext = rs.next()
-  def next() = {
-    val values = query.expressionsList.zipWithIndex.map {
-      case (expression, index) => valueFromExpressions[Any](expression.asInstanceOf[SelectExpression[Any]], index)
+class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult[R]] {
+  private val NextNotCalled = 0
+  private val HasNext = 1
+  private val NothingLeft = 2
+  private var nextStatus = NextNotCalled
+
+  def hasNext = synchronized {
+    if (nextStatus == NextNotCalled) {
+      nextStatus = if (rs.next()) HasNext else NothingLeft
     }
-    query.converter(QueryResult(query.table, values))
+    nextStatus == HasNext
   }
+
+  def nextOption() = if (hasNext) {
+    try {
+      val values = query.asVector.zipWithIndex.map {
+        case (expression, index) => valueFromExpressions[Any](expression.asInstanceOf[SelectExpression[Any]], index)
+      }
+      Some(QueryResult[R](query.table, values, query.converter))
+    } finally {
+      synchronized {
+        nextStatus = NextNotCalled
+      }
+    }
+  } else {
+    None
+  }
+
+  def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
   protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int) = expression match {
     case column: ColumnLike[_] => {
@@ -38,13 +59,6 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     throw new RuntimeException("No results for the query!")
   }
 
-  def head = {
-    if (!hasNext) throw new RuntimeException(s"No items available.")
-    next()
-  }
-  def headOption = if (hasNext) {
-    Some(next())
-  } else {
-    None
-  }
+  def head = next()
+  def headOption = nextOption()
 }

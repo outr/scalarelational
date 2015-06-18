@@ -166,7 +166,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   }
 
   def sqlFromQuery[E, R](query: Query[E, R]) = {
-    val columns = query.expressionsList.map(expression2SQL).mkString(", ")
+    val columns = query.asVector.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
 

@@ -7,7 +7,8 @@ import org.scalarelational.model.{ColumnLike, Column, Table}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class QueryResult(table: Table, values: List[ExpressionValue[_]]) {
+case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]], converter: QueryResult[Result] => Result) {
+  def apply() = converter(this)
   def apply[T](column: Column[T]) = values.collectFirst {
     case cv: ColumnValue[_] if cv.column == column => cv.value.asInstanceOf[T]
   }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))

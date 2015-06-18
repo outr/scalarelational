@@ -61,7 +61,7 @@ class TableSpec extends WordSpec with Matchers {
     "create a simple query" in {
       session {
         val q = select(test.id, test.name) from test
-        q.expressions.size should equal(2)
+        q.expressions should equal((test.id, test.name))
       }
     }
     "query the record back out" in {
@@ -72,6 +72,13 @@ class TableSpec extends WordSpec with Matchers {
         val john = results.head
         john(test.id) should equal(1)
         john(test.name) should equal("John Doe")
+      }
+    }
+    "query the record back out as a Tuple2" in {
+      session {
+        val query = select(test.id, test.name) from test
+        val results = query.result
+        results.next()() should equal((1, "John Doe"))
       }
     }
     "query a record back via 'LIKE'" in {
