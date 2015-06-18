@@ -1,10 +1,10 @@
-package org.scalarelational.mapper
+package org.scalarelational.mapper.basic
 
 import org.scalarelational.column.property._
-import org.scalarelational.model.Table
-import org.scalatest.{Ignore, Matchers, WordSpec}
-
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.mapper._
+import org.scalarelational.model.Table
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -24,8 +24,8 @@ class MapperSpec extends WordSpec with Matchers {
 
         session {
           insert(name("John Doe"), age(21)).
-             add(name("Jane Doe"), age(19)).
-             add(name("Baby Doe"), age(2)).result
+             and(name("Jane Doe"), age(19)).
+             and(name("Baby Doe"), age(2)).result
         }
       }
     }
@@ -35,14 +35,14 @@ class MapperSpec extends WordSpec with Matchers {
       "explicitly map to a case class" in {
         session {
           val query = select(*) from people where name === "John Doe"
-          val john = query.map[Person](qr => Person(qr(name), qr(age), qr(id))).result.one()
+          val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(id))).result.one()
           john should equal(Person("John Doe", 21, Some(1)))
         }
       }
       "explicitly map to a (Name, Age) type" in {
         session {
           val query = select(*) from people where name === "John Doe"
-          val john = query.map[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).result.head()
+          val john = query.convert[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).result.head()
           john should equal((Name("John Doe"), Age(21)))
         }
       }
@@ -97,9 +97,9 @@ class MapperSpec extends WordSpec with Matchers {
       "persist records" in {
         session {
           // Insert Suppliers
-          val acme = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
-          val superior = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
-          val highGround = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+          val acme = suppliers.persist(gettingstarted.Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
+          val superior = suppliers.persist(gettingstarted.Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
+          val highGround = suppliers.persist(gettingstarted.Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
 
           // Insert Coffees
           coffees.persist(Coffee("Colombian", acme.id.get, 7.99, 0, 0)).result
@@ -113,9 +113,9 @@ class MapperSpec extends WordSpec with Matchers {
       "query back 'French Roast' with 'Superior Coffee'" in {
         session {
           val query = select(suppliers.* ::: coffees.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
-          val (frenchRoast, superior) = query.as[(Coffee, Supplier)].result.head()
+          val (frenchRoast, superior) = query.as[(Coffee, gettingstarted.Supplier)].result.head()
           frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
-          superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
+          superior should equal(gettingstarted.Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
         }
       }
     }

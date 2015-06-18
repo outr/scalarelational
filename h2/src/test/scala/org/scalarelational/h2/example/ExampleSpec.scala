@@ -35,10 +35,10 @@ class ExampleSpec extends WordSpec with Matchers {
       session {
         // Batch insert some coffees
         insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0)).
-           add(name("French Roast"), supID(49), price(8.99), sales(0), total(0)).
-           add(name("Espresso"), supID(150), price(9.99), sales(0), total(0)).
-           add(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0)).
-           add(name("French Roast Decaf"), supID(49), price(9.99), sales(0), total(0)).result
+           and(name("French Roast"), supID(49), price(8.99), sales(0), total(0)).
+           and(name("Espresso"), supID(150), price(9.99), sales(0), total(0)).
+           and(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0)).
+           and(name("French Roast Decaf"), supID(49), price(9.99), sales(0), total(0)).result
       }
     }
     "query all coffees back" in {

@@ -16,7 +16,7 @@ package object mapper {
       val f = (r: QueryResult[R]) => {
         clazz.create[R](r.toFieldMap)
       }
-      query.map[R](f)
+      query.convert[R](f)
     }
   }
 
@@ -40,7 +40,7 @@ package object mapper {
             val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
             new InstanceInstruction[T](update, value, table.datastore)
           } else {
-            val primaryKeyCaseValue = clazz.caseValue(primaryColumn.name).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} in $clazz."))
+            val primaryKeyCaseValue = clazz.caseValue(primaryColumn.fieldName).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} (field name: ${primaryColumn.fieldName}) in $clazz."))
             new PersistInsertInstruction[T](table.datastore.insert(updates: _*), primaryKeyCaseValue, value)
           }
         }

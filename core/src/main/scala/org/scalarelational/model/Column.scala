@@ -47,5 +47,5 @@ class Column[T] private[scalarelational](val name: String,
   def get[P <: ColumnProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
   def prop[P <: ColumnProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in column '$longName'."))
 
-  override def toString = s"Column(${table.tableName}.$name)"
+  override def toString = name
 }

@@ -40,7 +40,10 @@ case class Query[Expressions, Result](expressions: Expressions,
   def groupBy(expressions: SelectExpression[_]*) = copy[Expressions, Result](grouping = grouping ::: expressions.toList)
   def orderBy(entries: OrderBy[_]*) = copy[Expressions, Result](ordering = entries.toList ::: ordering)
 
-  def map[NewResult](converter: QueryResult[NewResult] => NewResult) = copy[Expressions, NewResult](converter = converter)
+  def convert[NewResult](converter: QueryResult[NewResult] => NewResult) = copy[Expressions, NewResult](converter = converter)
+  def map[NewResult](converter: Result => NewResult) = {
+    copy[Expressions, NewResult](converter = (qr: QueryResult[NewResult]) => converter(this.converter(qr.asInstanceOf[QueryResult[Result]])))
+  }
 
   def result = new QueryResultsIterator(table.datastore.exec(this), this)
   def async = table.datastore.async {

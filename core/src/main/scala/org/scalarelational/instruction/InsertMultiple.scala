@@ -9,7 +9,7 @@ case class InsertMultiple(rows: Seq[Seq[ColumnValue[_]]]) extends Insert with In
   override protected def thisDatastore = rows.head.head.column.table.datastore
 
   def result = thisDatastore.exec(this)
-  def add(nextRow: ColumnValue[_]*) = {
+  def and(nextRow: ColumnValue[_]*) = {
     InsertMultiple(rows ++ Seq(nextRow))
   }
 }

@@ -187,31 +187,31 @@ class TableSpec extends WordSpec with Matchers {
 
       session {
         val future = insert(name("Adam")).
-                        add(name("Ben")).
-                        add(name("Chris")).
-                        add(name("Doug")).
-                        add(name("Evan")).
-                        add(name("Frank")).
-                        add(name("Greg")).
-                        add(name("Hank")).
-                        add(name("Ivan")).
-                        add(name("James")).
-                        add(name("Kevin")).
-                        add(name("Liam")).
-                        add(name("Matt")).
-                        add(name("Nathan")).
-                        add(name("Orville")).
-                        add(name("Phillip")).
-                        add(name("Quincy")).
-                        add(name("Rand")).
-                        add(name("Samuel")).
-                        add(name("Tom")).
-                        add(name("Uri")).
-                        add(name("Vladamir")).
-                        add(name("Walter")).
-                        add(name("Xavier")).
-                        add(name("Yasser")).
-                        add(name("Zach")).async
+                        and(name("Ben")).
+                        and(name("Chris")).
+                        and(name("Doug")).
+                        and(name("Evan")).
+                        and(name("Frank")).
+                        and(name("Greg")).
+                        and(name("Hank")).
+                        and(name("Ivan")).
+                        and(name("James")).
+                        and(name("Kevin")).
+                        and(name("Liam")).
+                        and(name("Matt")).
+                        and(name("Nathan")).
+                        and(name("Orville")).
+                        and(name("Phillip")).
+                        and(name("Quincy")).
+                        and(name("Rand")).
+                        and(name("Samuel")).
+                        and(name("Tom")).
+                        and(name("Uri")).
+                        and(name("Vladamir")).
+                        and(name("Walter")).
+                        and(name("Xavier")).
+                        and(name("Yasser")).
+                        and(name("Zach")).async
         (select(*) from test).result.toList.length should equal(0)
         Await.result(future, 10.seconds) should equal(List(28))       // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
         (select(*) from test).result.toList.length should equal(26)
@@ -238,10 +238,10 @@ class TableSpec extends WordSpec with Matchers {
     "insert five coffees" in {
       session {
         insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
-           add(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
-           add(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
-           add(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
-           add(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0)).result
+           and(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
+           and(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
+           and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
+           and(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0)).result
       }
     }
     "query five coffees back out" in {

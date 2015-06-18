@@ -16,7 +16,7 @@ class ColumnValue[T] private(val column: ColumnLike[T],
     case None => column.converter.toSQLType(column, value)
   }
 
-  override def toString = s"$column = $value"
+  override def toString = s"$column: $value"
 }
 
 object ColumnValue {

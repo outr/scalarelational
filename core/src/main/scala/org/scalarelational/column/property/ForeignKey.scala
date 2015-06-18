@@ -5,7 +5,9 @@ import org.scalarelational.model.Column
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class ForeignKey(val foreignColumn: Column[_]) extends ColumnProperty {
+class ForeignKey(fc: => Column[_]) extends ColumnProperty {
+  lazy val foreignColumn = fc
+
   def name = ForeignKey.name
 
   override def addedTo(column: Column[_]) = {
