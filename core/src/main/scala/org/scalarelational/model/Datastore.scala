@@ -1,5 +1,6 @@
 package org.scalarelational.model
 
+import java.sql.ResultSet
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
@@ -90,9 +91,9 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     b.toString()
   }
 
-  def sqlFromQuery[R](query: Query[R]): (String, List[Any])
+  def sqlFromQuery[E, R](query: Query[E, R]): (String, List[Any])
 
-  def exec[R](query: Query[R]): QueryResultsIterator[R]
+  private[scalarelational] def exec[E, R](query: Query[E, R]): ResultSet
   def exec(insert: InsertSingle): Int
   def exec(insert: InsertMultiple): List[Int]
   def exec(merge: Merge): Int

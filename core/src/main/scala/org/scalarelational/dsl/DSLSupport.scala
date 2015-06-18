@@ -11,8 +11,8 @@ import org.scalarelational.instruction._
 trait DSLSupport {
   private val defaultConverter = (qr: QueryResult) => qr
 
-  def select(expressions: SelectExpression*) = Query(expressions.toList, converter = defaultConverter)
-  def select(expressions: List[SelectExpression]) = Query(expressions, converter = defaultConverter)
+  def select(expressions: SelectExpression[_]*) = new BasicQuery[QueryResult](expressions.toList, converter = defaultConverter)
+  def select(expressions: List[SelectExpression[_]]) = new BasicQuery[QueryResult](expressions, converter = defaultConverter)
   def insert(values: ColumnValue[_]*) = InsertSingle(values)
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)

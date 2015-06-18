@@ -5,7 +5,7 @@ import org.scalarelational.instruction.{OrderDirection, OrderBy}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait SelectExpression {
+trait SelectExpression[T] {
   def asc = OrderBy(this, OrderDirection.Ascending)
   def desc = OrderBy(this, OrderDirection.Descending)
 }

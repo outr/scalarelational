@@ -9,7 +9,7 @@ import scala.language.existentials
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait SQLFunction[T] extends SelectExpression {
+trait SQLFunction[T] extends SelectExpression[T] {
   def functionType: FunctionType
   def alias: Option[String]
 }

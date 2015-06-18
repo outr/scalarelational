@@ -2,7 +2,7 @@ package org.scalarelational.result
 
 import java.sql.ResultSet
 
-import org.scalarelational.ColumnValue
+import org.scalarelational.{SelectExpression, ColumnValue}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction.Query
 import org.scalarelational.model.ColumnLike
@@ -10,16 +10,24 @@ import org.scalarelational.model.ColumnLike
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class QueryResultsIterator[R](rs: ResultSet, val query: Query[R]) extends Iterator[R] {
+class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[R] {
   def hasNext = rs.next()
   def next() = {
-    val values = query.expressions.zipWithIndex.map {
-      case (expression, index) => expression match {
-        case column: ColumnLike[_] => ColumnValue[Any](column.asInstanceOf[ColumnLike[Any]], column.converter.fromSQLType(column, rs.getObject(index + 1)), None)
-        case function: SQLFunction[_] => SQLFunctionValue[Any](function.asInstanceOf[SQLFunction[Any]], rs.getObject(index + 1))
-      }
+    val values = query.expressionsList.zipWithIndex.map {
+      case (expression, index) => valueFromExpressions[Any](expression.asInstanceOf[SelectExpression[Any]], index)
     }
     query.converter(QueryResult(query.table, values))
+  }
+
+  protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int) = expression match {
+    case column: ColumnLike[_] => {
+      val c = column.asInstanceOf[ColumnLike[T]]
+      ColumnValue[T](c, c.converter.fromSQLType(c, rs.getObject(index + 1)), None)
+    }
+    case function: SQLFunction[_] => {
+      val f = function.asInstanceOf[SQLFunction[T]]
+      SQLFunctionValue[T](f, rs.getObject(index + 1).asInstanceOf[T])
+    }
   }
 
   def one = if (hasNext) {

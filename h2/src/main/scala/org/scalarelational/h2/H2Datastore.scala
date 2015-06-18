@@ -33,7 +33,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
   def dataSource = dataSourceProperty()
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
-  val querying = new UnitProcessor[Query[_]]("querying")
+  val querying = new UnitProcessor[Query[_, _]]("querying")
   val inserting = new UnitProcessor[Insert]("inserting")
   val merging = new UnitProcessor[Merge]("merging")
   val updating = new UnitProcessor[Update]("updating")
@@ -157,7 +157,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     b.toString()
   }
 
-  private def expression2SQL(expression: SelectExpression) = expression match {
+  private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_] => c.longName
     case f: SimpleFunction[_] => f.alias match {
       case Some(alias) => s"${f.functionType.name.toUpperCase}(${f.column.longName}) AS $alias"
@@ -165,8 +165,8 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     }
   }
 
-  def sqlFromQuery[R](query: Query[R]) = {
-    val columns = query.expressions.map(expression2SQL).mkString(", ")
+  def sqlFromQuery[E, R](query: Query[E, R]) = {
+    val columns = query.expressionsList.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
 
@@ -175,23 +175,23 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     args = args ::: joinArgs
     val (where, whereArgs) = where2SQL(query.whereCondition)
     args = args ::: whereArgs
-    val groupBy = if (query._groupBy.nonEmpty) {
-      s" GROUP BY ${query._groupBy.map(expression2SQL).mkString(", ")}"
+    val groupBy = if (query.grouping.nonEmpty) {
+      s" GROUP BY ${query.grouping.map(expression2SQL).mkString(", ")}"
     } else {
       ""
     }
-    val orderBy = if (query._orderBy.nonEmpty) {
-      s" ORDER BY ${query._orderBy.map(ob => s"${expression2SQL(ob.expression)} ${ob.direction.sql}").mkString(", ")}"
+    val orderBy = if (query.ordering.nonEmpty) {
+      s" ORDER BY ${query.ordering.map(ob => s"${expression2SQL(ob.expression)} ${ob.direction.sql}").mkString(", ")}"
     } else {
       ""
     }
-    val limit = if (query._limit != -1) {
-      s" LIMIT ${query._limit}"
+    val limit = if (query.resultLimit != -1) {
+      s" LIMIT ${query.resultLimit}"
     } else {
       ""
     }
-    val offset = if (query._offset != -1) {
-      s" OFFSET ${query._offset}"
+    val offset = if (query.resultOffset != -1) {
+      s" OFFSET ${query.resultOffset}"
     } else {
       ""
     }
@@ -209,7 +209,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     command.append(table.tableName)
 
 //    val command = s"SCRIPT TO '${file.getCanonicalPath}' TABLE ${table.tableName}"
-    session.execute(command.toString)
+    session.execute(command.toString())
   }
 
   def importScript(file: File) = {
@@ -217,12 +217,11 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
     session.execute(command)
   }
 
-  def exec[R](query: Query[R]) = {
+  protected[scalarelational] def exec[E, R](query: Query[E, R]) = {
     val (sql, args) = sqlFromQuery(query)
 
     querying.fire(query)
-    val resultSet = session.executeQuery(sql, args)
-    new QueryResultsIterator(resultSet, query)
+    session.executeQuery(sql, args)
   }
 
   def exec(insert: InsertSingle) = {

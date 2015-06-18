@@ -36,7 +36,7 @@ class FunctionsSpec extends WordSpec with Matchers {
     "query the created user out" in {
       session {
         val query = select(users.*) from users
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val result = results.head
         result(users.name) should equal("John Doe")

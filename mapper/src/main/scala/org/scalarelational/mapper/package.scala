@@ -10,7 +10,7 @@ import org.scalarelational.result.QueryResult
  * @author Matt Hicks <matt@outr.com>
  */
 package object mapper {
-  implicit class MappableQuery[OriginalResult](query: Query[OriginalResult]) {
+  implicit class MappableQuery[Expressions, OriginalResult](query: Query[Expressions, OriginalResult]) {
     def as[R](implicit manifest: Manifest[R]) = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val f = (r: QueryResult) => {

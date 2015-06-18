@@ -11,7 +11,7 @@ import scala.util.matching.Regex
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait ColumnLike[T] extends SelectExpression {
+trait ColumnLike[T] extends SelectExpression[T] {
   def name: String
   def longName: String
   def table: Table

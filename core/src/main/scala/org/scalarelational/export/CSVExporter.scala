@@ -26,7 +26,7 @@ object CSVExporter {
       writer.write(NewLine)
 
       val query = select(table.*) from table orderBy table.primaryKeys.head.asc
-      val results = table.datastore.exec(query)
+      val results = query.result
       results.foreach {
         case r => {
           val values = r.values.map {

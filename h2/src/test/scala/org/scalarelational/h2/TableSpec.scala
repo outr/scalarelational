@@ -67,7 +67,7 @@ class TableSpec extends WordSpec with Matchers {
     "query the record back out" in {
       session {
         val query = select(test.id, test.name) from test
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val john = results.head
         john(test.id) should equal(1)
@@ -77,7 +77,7 @@ class TableSpec extends WordSpec with Matchers {
     "query a record back via 'LIKE'" in {
       session {
         val query = select(test.id, test.name) from test where test.name % "John%"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val john = results.head
         john(test.id) should equal(1)
@@ -92,7 +92,7 @@ class TableSpec extends WordSpec with Matchers {
     "query the record back by name" in {
       session {
         val query = select(test.id, test.name) from test where test.name === "Jane Doe"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val jane = results.head
         jane(test.id) should equal(2)
@@ -102,14 +102,14 @@ class TableSpec extends WordSpec with Matchers {
     "query with multiple where clauses" in {
       session {
         val query = select(test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > 0
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(2)
       }
     }
     "query two records back via regular expression" in {
       session {
         val query = select(test.id, test.name) from test where test.name * ".*Doe".r
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(2)
         val john = results.head
         john(test.id) should equal(1)
@@ -128,21 +128,21 @@ class TableSpec extends WordSpec with Matchers {
     "verify that 'John Doe' no longer exists" in {
       session {
         val query = select(test.name) from test where test.name === "John Doe"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(0)
       }
     }
     "verify that 'Joe Doe' does exist" in {
       session {
         val query = select(test.name) from test where test.name === "Joe Doe"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
       }
     }
     "verify that 'Jane Doe' wasn't modified" in {
       session {
         val query = select(test.name) from test where test.name === "Jane Doe"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
       }
     }
@@ -155,7 +155,7 @@ class TableSpec extends WordSpec with Matchers {
     "verify there is just one record left in the database" in {
       session {
         val query = select(test.id, test.name) from test
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val jane = results.head
         jane(test.id) should equal(2)
@@ -171,7 +171,7 @@ class TableSpec extends WordSpec with Matchers {
     "verify there are no records left in the database" in {
       session {
         val query = select(test.id, test.name) from test
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(0)
       }
     }
@@ -239,14 +239,14 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query five coffees back out" in {
       session {
-        val results = exec(select(*) from coffees).toList
+        val results = (select(*) from coffees).result.toList
         results.size should equal(5)
       }
     }
     "query joining suppliers" in {
       session {
         val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(5)
         val first = results.head
         first.values.size should equal(6)
@@ -256,7 +256,7 @@ class TableSpec extends WordSpec with Matchers {
     "query the minimum price" in {
       session {
         val query = select(price.min) from coffees
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val values = results.head
         values.values.size should equal(1)
@@ -267,7 +267,7 @@ class TableSpec extends WordSpec with Matchers {
     "query the count of coffees for Superior Coffee" in {
       session {
         val query = select(name.count) from coffees innerJoin suppliers on supID === suppliers.id where suppliers.name === "Superior Coffee"
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val values = results.head
         values.values.size should equal(1)
@@ -279,14 +279,14 @@ class TableSpec extends WordSpec with Matchers {
       session {
         val s = suppliers as "s"
         val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID === s(suppliers.id)
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(5)
       }
     }
     "query coffees ordered by name and limited to the second result" in {
       session {
         val query = select(name) from coffees orderBy (name asc) limit 1 offset 1
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val values = results.head
         values.values.size should equal(1)
@@ -297,7 +297,7 @@ class TableSpec extends WordSpec with Matchers {
     "query coffees grouped by price" in {
       session {
         val query = select(price) from coffees groupBy price orderBy (price asc)
-        val results = exec(query).toVector
+        val results = query.result.toVector
         results.size should equal(3)
         results.head(price) should equal(7.99)
         results(1)(price) should equal(8.99)
@@ -362,7 +362,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query the Orange back" in {
       session {
-        val results = exec(select(*) from fruitColors).toList
+        val results = (select(*) from fruitColors).result.toList
         results.size should equal(1)
         val orange = results.head
         orange(color) should equal("Orange")
@@ -404,7 +404,7 @@ class TableSpec extends WordSpec with Matchers {
     "query a List[String] entry" in {
       session {
         val query = select(lists.id, lists.strings) from lists
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val result = results.head
         result(lists.id) should equal(listId)
@@ -420,7 +420,7 @@ class TableSpec extends WordSpec with Matchers {
     "query a Blob entry" in {
       session {
         val query = select(data.id, data.content) from data
-        val results = exec(query).toList
+        val results = query.result.toList
         results.size should equal(1)
         val result = results.head
         result(data.id) should equal(dataId)
@@ -487,7 +487,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "select a record to fire a select trigger" in {
       session {
-        val results = exec(select(triggerTest.*) from triggerTest).toList
+        val results = (select(triggerTest.*) from triggerTest).result.toList
         results.size should equal(1)
       }
     }
