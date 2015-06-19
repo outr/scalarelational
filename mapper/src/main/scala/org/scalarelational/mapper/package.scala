@@ -18,6 +18,28 @@ package object mapper {
       }
       query.convert[R](f)
     }
+    def as[R1, R2](t1: Table, t2: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
+      val c1: EnhancedClass = manifest1.runtimeClass
+      val c2: EnhancedClass = manifest2.runtimeClass
+      val f = (r: QueryResult[(R1, R2)]) => {
+        val r1 = c1.create[R1](r.toFieldMapForTable(t1))
+        val r2 = c2.create[R2](r.toFieldMapForTable(t2))
+        (r1, r2)
+      }
+      query.convert[(R1, R2)](f)
+    }
+    def as[R1, R2, R3](t1: Table, t2: Table, t3: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
+      val c1: EnhancedClass = manifest1.runtimeClass
+      val c2: EnhancedClass = manifest2.runtimeClass
+      val c3: EnhancedClass = manifest3.runtimeClass
+      val f = (r: QueryResult[(R1, R2, R3)]) => {
+        val r1 = c1.create[R1](r.toFieldMapForTable(t1))
+        val r2 = c2.create[R2](r.toFieldMapForTable(t2))
+        val r3 = c3.create[R3](r.toFieldMapForTable(t3))
+        (r1, r2, r3)
+      }
+      query.convert[(R1, R2, R3)](f)
+    }
   }
 
   implicit class MappableTable(table: Table) {

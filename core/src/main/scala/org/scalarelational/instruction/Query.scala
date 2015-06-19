@@ -1,6 +1,7 @@
 package org.scalarelational.instruction
 
 import org.scalarelational._
+import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
 import org.scalarelational.model.Table
 import org.scalarelational.result.{QueryResultsIterator, QueryResult}
@@ -9,16 +10,21 @@ import org.scalarelational.result.{QueryResultsIterator, QueryResult}
  * @author Matt Hicks <matt@outr.com>
  */
 case class Query[Expressions, Result](expressions: Expressions,
-                                           table: Table = null,
-                                           joins: List[Join] = Nil,
-                                           whereCondition: Condition = null,
-                                           grouping: List[SelectExpression[_]] = Nil,
-                                           ordering: List[OrderBy[_]] = Nil,
-                                           resultLimit: Int = -1,
-                                           resultOffset: Int = -1,
-                                           converter: QueryResult[Result] => Result)
+                                      table: Table = null,
+                                      joins: List[Join] = Nil,
+                                      whereCondition: Condition = null,
+                                      grouping: List[SelectExpression[_]] = Nil,
+                                      ordering: List[OrderBy[_]] = Nil,
+                                      resultLimit: Int = -1,
+                                      resultOffset: Int = -1,
+                                      converter: QueryResult[Result] => Result)
                                      (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] {
   lazy val asVector = vectorify(expressions)
+
+  def fields(expressions: SelectExpression[_]*) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = asVector ++ expressions, converter = DSLSupport.DefaultConverter)
+  def fields(expressions: Vector[SelectExpression[_]]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = this.expressions ++ expressions, converter = DSLSupport.DefaultConverter)
+  def withoutField(expression: SelectExpression[_]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = expressions.filterNot(se => se == expression), converter = DSLSupport.DefaultConverter)
+  def clearFields() = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = Vector.empty, converter = DSLSupport.DefaultConverter)
 
   def from(table: Table) = copy[Expressions, Result](table = table)
   def where(condition: Condition) = copy[Expressions, Result](whereCondition = condition)

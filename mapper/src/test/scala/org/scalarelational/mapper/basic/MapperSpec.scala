@@ -93,13 +93,13 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
     }
-    "more complex relationships" ignore {
+    "more complex relationships" should {
       "persist records" in {
         session {
           // Insert Suppliers
-          val acme = suppliers.persist(gettingstarted.Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
-          val superior = suppliers.persist(gettingstarted.Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
-          val highGround = suppliers.persist(gettingstarted.Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+          val acme = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
+          val superior = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
+          val highGround = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
 
           // Insert Coffees
           coffees.persist(Coffee("Colombian", acme.id.get, 7.99, 0, 0)).result
@@ -112,10 +112,10 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back 'French Roast' with 'Superior Coffee'" in {
         session {
-          val query = select(suppliers.* ::: coffees.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
-          val (frenchRoast, superior) = query.as[(Coffee, gettingstarted.Supplier)].result.head()
+          val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supId === suppliers.id) where(coffees.name === "French Roast")
+          val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
           frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
-          superior should equal(gettingstarted.Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
+          superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
         }
       }
     }
@@ -149,7 +149,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object coffees extends Table("COFFEES") {
     val id = column[Int]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
-    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val supId = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")

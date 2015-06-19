@@ -39,5 +39,23 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
     }.toMap
   }
 
+  def toFieldMapForTable(table: Table) = {
+    values.collect {
+      case v if v.expression.longName.toLowerCase.startsWith(s"${table.tableName.toLowerCase}.") => {
+        val name = v.expression match {
+          case c: Column[_] => c.fieldName
+          case f: SQLFunction[_] if f.alias.nonEmpty => f.alias.get
+          case c: ColumnLike[_] => c.name
+        }
+        val shortName = if (name.indexOf('.') != -1) {
+          name.substring(name.lastIndexOf('.') + 1)
+        } else {
+          name
+        }
+        shortName -> v.value
+      }
+    }.toMap
+  }
+
   override def toString = s"${table.tableName}(${values.mkString(", ")})"
 }

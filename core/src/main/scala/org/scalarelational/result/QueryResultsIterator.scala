@@ -16,6 +16,8 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   private val NothingLeft = 2
   private var nextStatus = NextNotCalled
 
+  def converted = new EnhancedIterator[R](this.map(qr => qr.converted))
+
   def hasNext = synchronized {
     if (nextStatus == NextNotCalled) {
       nextStatus = if (rs.next()) HasNext else NothingLeft
@@ -61,4 +63,23 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def head = next()
   def headOption = nextOption()
+}
+
+class EnhancedIterator[T](iterator: Iterator[T]) extends Iterator[T] {
+  override def hasNext = iterator.hasNext
+
+  override def next() = iterator.next()
+
+  def nextOption() = if (hasNext) Option(next()) else None
+
+  def head = next()
+  def headOption = nextOption()
+
+  def one = if (hasNext) {
+    val n = next()
+    if (hasNext) throw new RuntimeException("More than one result for query!")
+    n
+  } else {
+    throw new RuntimeException("No results for the query!")
+  }
 }

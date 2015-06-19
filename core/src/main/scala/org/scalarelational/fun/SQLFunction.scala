@@ -30,5 +30,7 @@ object FunctionType extends Enumerated[FunctionType] {
 }
 
 case class SimpleFunction[T](functionType: FunctionType, column: ColumnLike[_], alias: Option[String] = None) extends SQLFunction[T] {
+  override def longName = alias.getOrElse(column.longName)
+
   def as(alias: String) = copy(alias = Some(alias))
 }
