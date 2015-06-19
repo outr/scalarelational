@@ -15,6 +15,9 @@ Currently, only H2 database is supported, but other database dialects can be eas
 It is worth mentioning that much of the functionality of this framework was inspired by other database frameworks like
 Slick.
 
+Finally, this tutorial is based on [this spec](https://github.com/outr/scalarelational/blob/master/mapper/src/test/scala/org/scalarelational/mapper/gettingstarted/GettingStartedSpec.scala)
+and though we try to keep it updated, if you have any problems please refer to that as a working and compilable example.
+
 ## Getting Started
 
 The first thing you need to do is add the dependencies to your SBT project:
@@ -29,40 +32,44 @@ The next thing you need is the database representation in Scala. This can map to
 this to generate your database:
 
 ```scala
-object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
+object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_started")) {
   object suppliers extends Table("SUPPLIERS") {
-    val id = column[Int]("SUP_ID", PrimaryKey)
-    val name = column[String]("SUP_NAME")
+    val name = column[String]("SUP_NAME", NotNull, Unique)
     val street = column[String]("STREET")
     val city = column[String]("CITY")
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
+    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 
   object coffees extends Table("COFFEES") {
-    val name = column[String]("COF_NAME", PrimaryKey)
-    val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
+    val name = column[String]("COF_NAME", NotNull, Unique)
+    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id), NotNull)
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
+    val id = column[Int]("COF_ID", PrimaryKey, AutoIncrement)
   }
 }
 ```
 
 Our Datastore contains Tables and our Tables contain Columns. This is pretty straight-forward and easy to see how it
-maps back to our database. Every column type must have an associated DataType associated with it. You don't see it
-referenced above because all standard Scala types have pre-defined implicit conversions available in the Table class. If
-you need to use a type that doesn't already have a converter or want to replace one it is trivial to do so.
+maps back to our database. Every column type must have a DataType associated with it. You don't see it referenced above
+because all standard Scala types have pre-defined implicit conversions available in the Table class. If you need to use
+a type that doesn't already have a converter or want to replace one it is trivial to do so and the compiler will complain
+if a DataType isn't available pointing you in the right direction.
 
 You may notice the striking similarity between this code and Slick's introductory tutorial. This was done purposefully
-to allow better comparison of functionality between the two frameworks.
+to allow better comparison of functionality between the two frameworks. An AutoIncrementing id has been introduced into
+both tables to better represent the standard development scenario. Rarely do you have external IDs to supply to your
+database like [Slick represents](http://slick.typesafe.com/doc/3.0.0/gettingstarted.html#schema).
 
 ## Create your Database
 
 Now that we have our database model created in Scala, we need to create it:
 
 ```scala
-import ExampleDatastore._
+import GettingStartedDatastore._
 
 session {
     create(suppliers, coffees)
@@ -71,18 +78,21 @@ session {
 
 All database requests must be within a session. The session manages the database connection on your behalf. Sessions
 should not be confused with transactions. A session simply manages the connection whereas a transaction disables
-auto-commit and automatically rolls back if an exception is thrown while executing.
+auto-commit and automatically rolls back if an exception is thrown while executing. Don't worry too much about sessions
+within sessions. ScalaRelational will ignore inner session creation and only maintain a connection for the outermost
+session. Additionally, sessions are lazy and will only open a connection when one is needed so it is perfectly acceptable
+to wrap blocks of code that may or may not access the database without being concerned about the performance implications.
 
-You'll notice we imported ExampleDatastore._ in an effort to minimize the amount of code required here. We can explicitly
+You'll notice we imported GettingStartedDatastore._ in an effort to minimize the amount of code required here. We can explicitly
 write it more verbosely like this:
 
 ```scala
-ExampleDatastore.session {
-    ExampleDatastore.create(ExampleDatastore.suppliers, ExampleDatastore.coffees)
+GettingStartedDatastore.session {
+    GettingStartedDatastore.create(GettingStartedDatastore.suppliers, GettingStartedDatastore.coffees)
 }
 ```
 
-However, that looks much uglier so importing the datastore is generally suggested.
+However, that looks much uglier and far less SQLish so importing the datastore is generally suggested.
 
 ## Insert some Suppliers
 
@@ -91,22 +101,33 @@ Now that we've created our database we need to insert some data. We'll start wit
 ```scala
 import suppliers._
 
-session {
+var acmeId: Int = _
+var superiorCoffeeId: Int = _
+var theHighGroundId: Int = _
+
+transaction {
     // Clean and type-safe inserts
-    insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
-    insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
-    
-    // Short-hand when using values in order
-    insertInto(suppliers, 150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
+    acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+    superiorCoffeeId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+
+    // Short-hand when using values in order - we exclude the id since it will be generated by the database
+    theHighGroundId = insertInto(suppliers, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
 }
 ```
 
-Two insert styles are represented here. The first uses the column to wrap around a value to create a ColumnValue. This
+Two insert styles are represented here. The first uses the column to wrap around a value to create a 'ColumnValue'. This
 provides a very clean way of inserting the exact values you need and excluding values you want defaulted. This also
 makes the code much easier to read.
 
-The second representation uses **insertInto** and takes the Table as the first argument followed by the values to be
+The second representation uses **insertInto** and takes the 'Table' as the first argument followed by the values to be
 inserted. **Note:** the items must be added in the same order as they are defined in your Table when you use **insertInto**.
+This second method is provided mostly for people coming from Slick as it provides a very similar approach, but the first
+method is preferred as there is no ambiguity of what value maps to what column and offers greater inserting flexibility.
+
+The last thing to notice here is that instead of a **session** we are using a **transaction**. Because we are inserting
+multiple suppliers we want to make sure everything inserts properly or rolls the entire transaction back. You can use
+**transaction** instead of **session** as the first thing a **transaction** does is establish a **session** if one does
+not already exist.
 
 ## Batch Insert some Coffees
 
@@ -117,15 +138,15 @@ import coffees._
 
 session {
     // Batch insert some coffees
-    insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0)).
-       add(name("French Roast"), supID(49), price(8.99), sales(0), total(0)).
-       add(name("Espresso"), supID(150), price(9.99), sales(0), total(0)).
-       add(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0)).
-       add(name("French Roast Decaf"), supID(49), price(9.99), sales(0), total(0)).result
+    insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
+           and(name("French Roast"), supID(superiorCoffeeId), price(8.99), sales(0), total(0)).
+           and(name("Espresso"), supID(theHighGroundId), price(9.99), sales(0), total(0)).
+           and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
+           and(name("French Roast Decaf"), supID(superiorCoffeeId), price(9.99), sales(0), total(0)).result
 }
 ```
 
-This is very similar to the previous insert method, except instead of calling **result** we're calling **add**. This
+This is very similar to the previous insert method, except instead of calling **result** we're calling **and**. This
 converts the insert into a batch insert and you gain the performance of being able to insert several records with one
 insert statement.
 
@@ -139,7 +160,8 @@ import coffees._
 
 session {
     println("Coffees:")
-    (select(*) from coffees).result.foreach {
+    val query = select(*) from coffees
+    query.result.foreach {
         case r => println(s"  ${r(name)}\t${r(supID)}\t${r(price)}\t${r(sales)}\t${r(total)}")
     }
 }
@@ -147,7 +169,7 @@ session {
 
 It is worthwhile to notice that our query looks exactly like a SQL query, but it is Scala code using ScalaRelational's
 DSL to provide this. Most of the time SQL queries in ScalaRelational look exactly the same as in SQL, but there are a
-few more complex scenarios where this is not the case.
+few more complex scenarios where this is not the case or even not preferred.
 
 ## Query all Coffees filtering and joining with Suppliers
 
@@ -156,7 +178,8 @@ Now that we've see a very basic query example, let's look a more advanced scenar
 ```scala
 session {
     println("Filtered Results:")
-    (select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID === suppliers.id where coffees.price < 9.0).result.foreach {
+    val query = select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID === suppliers.id where coffees.price < 9.0
+    query.result.foreach {
         case r => println(s"  Coffee: ${r(coffees.name)}, Supplier: ${r(suppliers.name)}")
     }
 }
@@ -165,10 +188,40 @@ session {
 You can see here that though this query looks very similar to a SQL query there are some slight differences. This is the
 result of Scala's limitations for writing DSLs. For example, we must use "===" instead of "==".
 
+ScalaRelational tries to retain type information where possible, and though loading data by columns is very clean, we
+can actually extract a Tuple2[String, String] representing the coffee name and suppliers name in the following:
+
+```scala
+session {
+    println("Filtered Results:")
+    val query = select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID === suppliers.id where coffees.price < 9.0
+    query.result.foreach {
+        case r => {
+            val (coffeeName, supplierName) = r()
+            println(s"  Coffee: $coffeeName, Supplier: $supplierName")
+        }
+    }
+}
+```
+
+This is possible because the DSL supports explicit argument lists and retains type information all the way through to
+the result. This allows us to do much more advanced things as we'll see later when discussing the Mapper sub-project.
+
 ## ORM Support
 
+There has been a big shift recently away from ORMs since they tend to focus only on the most simplistic use-case for
+dealing with your database and extremely complicate matters should you have a more complex usage scenario. In addition,
+the performance penalties are pretty substantial and complicated when you must consider cascading relationship issues
+when dealing with an ORM.
+
 In previous iterations of this project we had an ORM module to allow mapping of SQL statements to case classes, but
-recently this has been entirely removed. The alternative to using an ORM is the Mapper module.
+recently this has been entirely removed. Though mapping classes to and from the database is still an extremely useful
+thing to do, we have decided that a different approach was necessary. Where most (even anti-ORM) frameworks tend to
+make the association between database and object is at that table level. However, this often isn't the most logical way
+to deal with the data. Rather, it makes more sense to directly map queries, inserts, updates, merges, and deletes with
+objects. This gives the added ability to have classes that represent many scenarios whether you're querying simple data
+from one table, querying many columns joined across many tables, or dealing with calculated reports generated by a SQL
+query. This is where the **Mapper** module comes in.
 
 ## Mapper
 
@@ -185,7 +238,7 @@ Though working directly with columns is easy in ScalaRelational, it's not nearly
 mapper gives us the benefits of an ORM without the pain. First we need a class to map:
 
 ```scala
-case class Supplier(id: Int, name: String, street: String, city: String, state: String, zip: String)
+case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
 ```
 
 Though all of these fields are in the same order as the table, this is not required to be the case. Mapping takes place
@@ -198,17 +251,16 @@ We've create a Supplier case class, but now we need to create an instance and pe
 ```scala
 import org.scalarelational.mapper._
 
-val starbucks = Supplier(200, "Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966")
-
-suppliers.persist(starbucks, forceInsert = true).result
+session {
+    val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966")
+    val updated = suppliers.persist(starbucks).result
+}
 ```
 
-We first import the mapper package so we have access to the handy implicit conversions to allow persisting. Next we create
-as simple supplier instance and finally we call **persist** on the **suppliers** table.  Unfortunately in this scenario
-we have to supply "forceInsert = true" because ids aren't being generated by the database. Under normal circumstances
-you would set your id to be **AutoIncrement** and then persist would be able to automatically determine whether this is
-insert or an update based on whether the id was supplied. In order to remain close to the Slick example we are not using
-**AutoIncrement**.
+We first import the mapper package so we have access to the handy implicit conversions to allow persisting directly to a
+table. Next we create a simple supplier instance, and finally we call **persist** on the **suppliers** table. It is worth
+noting here that **updated** is a 'Supplier', but it has been updated to include the database-generated id, so though
+'starbucks.id' will be **None**, 'updated.id' will be **Some(4)** (since it is the fourth inserted supplier).
 
 ## Query a Supplier back
 
@@ -218,9 +270,11 @@ We've successfully inserted our Supplier instance, but now how do we query it ba
 import org.scalarelational.mapper._
 import suppliers._
 
-val query = select(*) from suppliers where name === "Starbucks"
-
-val starbucks = query.as[Supplier].head
+session {
+    val query = select(*) from suppliers where name === "Starbucks"
+    val starbucks = query.as[Supplier].result.head()
+    println(s"Result: $starbucks")
+}
 ```
 
 That's all there is to it. The mapper will automatically match column names in the results to fields in the case class
