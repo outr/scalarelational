@@ -280,7 +280,25 @@ session {
 That's all there is to it. The mapper will automatically match column names in the results to fields in the case class
 provided. Every query can have its own class for convenience mapping.
 
+## Query back Coffee and Supplier with join
+
+Though what we've shown thus far for Mapper could be similarly accomplished in most other frameworks that have a concept
+of an ORM, it is this example that shows a major point where we diverge:
+
+```scala
+session {
+    val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
+    val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
+    println(s"Coffee: $frenchRoast, Supplier: $superior")
+}
+```
+
+This is a very efficient SQL query to join the **coffees** table with the **suppliers** table and get back a single result
+set. Using Mapper we are able to separate the columns relating to **coffees** from **suppliers** and map them directly
+to our case classes.
+
 ## More information
 
 Hopefully this introduction was enough to show the benefits of using ScalaRelational for query building. For more examples
-take a look at our ScalaTest specs in the source code.
+take a look at our ScalaTest specs in the source code. This was meant to be a very brief introduction to ScalaRelational,
+but in no way is an exhaustive look at the features it provides.

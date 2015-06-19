@@ -126,6 +126,14 @@ class GettingStartedSpec extends WordSpec with Matchers {
         starbucks should equal(Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966", Some(4)))
       }
     }
+    "Query 'French Roast' with 'Superior Coffee' for (Coffee, Supplier)" in {
+      session {
+        val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
+        val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
+        frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
+        superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
+      }
+    }
   }
 }
 
@@ -150,3 +158,5 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
 }
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
+
+case class Coffee(name: String, supID: Int, price: Double, sales: Int, total: Int, id: Option[Int] = None)
