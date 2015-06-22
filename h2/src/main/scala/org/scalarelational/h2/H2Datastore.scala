@@ -22,7 +22,7 @@ import scala.collection.mutable.ListBuffer
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(),
+abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
                                      val dbUser: String = "sa",
                                      val dbPassword: String = "sa") extends Datastore with Logging {
   Class.forName("org.h2.Driver")
