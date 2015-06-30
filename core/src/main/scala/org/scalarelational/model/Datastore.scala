@@ -91,7 +91,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     b.toString()
   }
 
-  def sqlFromQuery[E, R](query: Query[E, R]): (String, List[Any])
+  def describe[E, R](query: Query[E, R]): (String, List[Any])
 
   private[scalarelational] def exec[E, R](query: Query[E, R]): ResultSet
   def exec(insert: InsertSingle): Int

@@ -165,7 +165,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.power
     }
   }
 
-  def sqlFromQuery[E, R](query: Query[E, R]) = {
+  def describe[E, R](query: Query[E, R]) = {
     val columns = query.asVector.map(expression2SQL).mkString(", ")
 
     var args = List.empty[Any]
@@ -218,7 +218,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.power
   }
 
   protected[scalarelational] def exec[E, R](query: Query[E, R]) = {
-    val (sql, args) = sqlFromQuery(query)
+    val (sql, args) = describe(query)
 
     querying.fire(query)
     session.executeQuery(sql, args)
