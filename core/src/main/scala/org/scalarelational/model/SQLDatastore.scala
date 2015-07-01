@@ -5,7 +5,7 @@ import javax.sql.DataSource
 
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.property.Property
-import org.scalarelational.SelectExpression
+import org.scalarelational.{TableAlias, SelectExpression}
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.DataType
 import org.scalarelational.fun.SimpleFunction
@@ -292,9 +292,15 @@ abstract class SQLDatastore protected() extends Datastore {
           case JoinType.Outer => " OUTER JOIN "
         }
         b.append(pre)
-        b.append(join.table.tableName)
-        if (join.alias != null) {
-          b.append(s" AS ${join.alias}")
+        join.joinable match {
+          case t: Table => b.append(t.tableName)
+          case t: TableAlias => b.append(s"${t.table.tableName} AS ${t.tableAlias}")
+          case q: Query[_, _] => {
+            val (sql, queryArgs) = describe(q)
+            b.append(sql)
+            args ++= queryArgs
+          }
+          case j => throw new RuntimeException(s"Unsupported Joinable: $j")
         }
         b.append(" ON ")
         b.append(condition2String(join.condition, args))

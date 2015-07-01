@@ -7,13 +7,11 @@ import org.scalarelational.op.Condition
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class Join(table: Table, joinType: JoinType = JoinType.Join, condition: Condition, alias: String)
+case class Join(joinable: Joinable, joinType: JoinType = JoinType.Join, condition: Condition)
 
 // Used for DSL before the actual Join instance is created
-case class PartialJoin[E, R](query: Query[E, R], table: Table, joinType: JoinType, alias: String) {
-  def as(alias: String) = copy(alias = alias)
-
-  def on(condition: Condition) = query.copy[E, R](joins = (Join(table, joinType, condition, alias) :: query.joins.reverse).reverse)(query.vectorify)
+case class PartialJoin[E, R](query: Query[E, R], joinable: Joinable, joinType: JoinType) {
+  def on(condition: Condition) = query.copy[E, R](joins = (Join(joinable, joinType, condition) :: query.joins.reverse).reverse)(query.vectorify)
 }
 
 sealed abstract class JoinType extends EnumEntry

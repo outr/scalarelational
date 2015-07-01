@@ -18,7 +18,7 @@ case class Query[Expressions, Result](expressions: Expressions,
                                       resultLimit: Int = -1,
                                       resultOffset: Int = -1,
                                       converter: QueryResult[Result] => Result)
-                                     (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] {
+                                     (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] with Joinable {
   lazy val asVector = vectorify(expressions)
 
   def fields(expressions: SelectExpression[_]*) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = asVector ++ expressions, converter = DSLSupport.DefaultConverter)
@@ -29,16 +29,10 @@ case class Query[Expressions, Result](expressions: Expressions,
   def from(table: Table) = copy[Expressions, Result](table = table)
   def where(condition: Condition) = copy[Expressions, Result](whereCondition = condition)
 
-  def join(table: Table, joinType: JoinType = JoinType.Join, alias: String = null) = PartialJoin[Expressions, Result](this, table, joinType, alias)
-
-  def innerJoin(table: Table) = join(table, joinType = JoinType.Inner)
-  def innerJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Inner, alias = alias.tableAlias)
-
-  def leftJoin(table: Table) = join(table, joinType = JoinType.Left)
-  def leftJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Left, alias = alias.tableAlias)
-
-  def leftOuterJoin(table: Table) = join(table, joinType = JoinType.LeftOuter)
-  def leftOuterJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.LeftOuter, alias = alias.tableAlias)
+  def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Expressions, Result](this, joinable, joinType)
+  def innerJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Inner)
+  def leftJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Left)
+  def leftOuterJoin(joinable: Joinable) = join(joinable, joinType = JoinType.LeftOuter)
 
   def limit(value: Int) = copy[Expressions, Result](resultLimit = value)
   def offset(value: Int) = copy[Expressions, Result](resultOffset = value)
