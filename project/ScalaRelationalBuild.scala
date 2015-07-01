@@ -7,7 +7,7 @@ object ScalaRelationalBuild extends Build {
   lazy val root = Project(id = "root", base = file(".")).settings(publish := {}).aggregate(core, h2, mapper)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core)
-  lazy val mapper = project("mapper").withDependencies(stringMetric, scalaTest).dependsOn(core, h2 % "test")
+  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
@@ -60,7 +60,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.0.0"
+  val version = "1.0.1-SNAPSHOT"
   val url = "http://outr.com"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"
@@ -82,6 +82,5 @@ object Dependencies {
   }
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.8"
   val h2database = "com.h2database" % "h2" % "1.4.187"
-  val stringMetric = "com.rockymadden.stringmetric" %% "stringmetric-core" % "0.27.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }
