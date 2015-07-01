@@ -39,18 +39,21 @@ class ModelSpec extends WordSpec with Matchers {
         val q = select(t1.name as "test1") from t1
         val (sql, args) = describe(q)
         sql should equal("SELECT t1.name AS [test1] FROM t1")
+        args should equal(Nil)
       }
-      /*"handle a simple alias table query" in {
+      "handle a simple alias table query" in {
         val q = select(t1.name) from t1 as "table1"
         val (sql, args) = describe(q)
-        sql.text should equal("(SELECT(t1.name) FROM t1 AS [table1])")
+        sql should equal("SELECT t1.name FROM t1")
+        args should equal(Nil)
       }
       "handle a simple sub-select query" in {
         val q1 = select(t1.id, t1.name, t1.age) from t1 as "table1"
-        val q2 = select(q1(t1.name), q1(t1.age), t2.name) from t2 innerJoin q1 on q1(t1.id) === t2.t1Id
-        val sql = q2.toSQL
-        sql.text should equal("SELECT(table1.name, table1.age, t2.name) FROM t2 INNER JOIN (SELECT(t1.id, t1.name, t1.age) FROM t1 AS [table1]) ON table1.id = t2.t1Id")
-      }*/
+        val q2 = select(q1(t1.name), q1(t1.age), t2.name) from t2 innerJoin q1 on q1(t1.id) === t2.t1Fk
+        val (sql, args) = describe(q2)
+        sql should equal("SELECT table1.name, table1.age, t2.name FROM t2 INNER JOIN (SELECT t1.id, t1.name, t1.age FROM t1) AS table1 ON table1.id = t2.t1Fk")
+        args should equal(Nil)
+      }
     }
   }
 }

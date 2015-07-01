@@ -95,7 +95,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
         import suppliers._
 
         val query = select(*) from suppliers where name === "Starbucks"
-        val starbucks = query.as[Supplier].result.head()
+        val starbucks = query.to[Supplier].result.head()
         starbucks should equal(Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966", Some(4)))
       }
     }
@@ -129,7 +129,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Query 'French Roast' with 'Superior Coffee' for (Coffee, Supplier)" in {
       session {
         val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
-        val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
+        val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
         frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
         superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
       }

@@ -272,7 +272,7 @@ import suppliers._
 
 session {
     val query = select(*) from suppliers where name === "Starbucks"
-    val starbucks = query.as[Supplier].result.head()
+    val starbucks = query.to[Supplier].result.head()
     println(s"Result: $starbucks")
 }
 ```
@@ -288,7 +288,7 @@ of an ORM, it is this example that shows a major point where we diverge:
 ```scala
 session {
     val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
-    val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
+    val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
     println(s"Coffee: $frenchRoast, Supplier: $superior")
 }
 ```

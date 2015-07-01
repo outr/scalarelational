@@ -3,7 +3,7 @@ package org.scalarelational.instruction
 import org.scalarelational._
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
-import org.scalarelational.model.Table
+import org.scalarelational.model.{ColumnAlias, ColumnLike, Table}
 import org.scalarelational.result.{QueryResultsIterator, QueryResult}
 
 /**
@@ -21,6 +21,8 @@ case class Query[Expressions, Result](expressions: Expressions,
                                       alias: Option[String] = None)
                                      (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] with Joinable {
   lazy val asVector = vectorify(expressions)
+
+  def apply[T](column: ColumnLike[T]) = ColumnAlias[T](column, alias, None, None)
 
   def fields(expressions: SelectExpression[_]*) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = asVector ++ expressions, converter = DSLSupport.DefaultConverter)
   def fields(expressions: Vector[SelectExpression[_]]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = this.expressions ++ expressions, converter = DSLSupport.DefaultConverter)
@@ -41,7 +43,7 @@ case class Query[Expressions, Result](expressions: Expressions,
   def groupBy(expressions: SelectExpression[_]*) = copy[Expressions, Result](grouping = grouping ::: expressions.toList)
   def orderBy(entries: OrderBy[_]*) = copy[Expressions, Result](ordering = entries.toList ::: ordering)
 
-//  def as(alias: String) = copy(alias = Option(alias))
+  def as(alias: String) = copy(alias = Option(alias))
 
   def convert[NewResult](converter: QueryResult[NewResult] => NewResult) = copy[Expressions, NewResult](converter = converter)
   def map[NewResult](converter: Result => NewResult) = {
