@@ -40,7 +40,7 @@ class Column[T] private[scalarelational](val name: String,
     this
   }
 
-  def as(alias: String) = ColumnAlias[T](this, table.tableName, alias)
+  def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
 
   def has(property: ColumnProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = _properties.contains(propertyName)
