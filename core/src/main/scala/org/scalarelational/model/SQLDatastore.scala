@@ -297,7 +297,13 @@ abstract class SQLDatastore protected() extends Datastore {
           case t: TableAlias => b.append(s"${t.table.tableName} AS ${t.tableAlias}")
           case q: Query[_, _] => {
             val (sql, queryArgs) = describe(q)
+            b.append("(")
             b.append(sql)
+            b.append(")")
+            q.alias match {
+              case Some(alias) => b.append(s" AS $alias")
+              case None => // No alias assigned to the Query
+            }
             args ++= queryArgs
           }
           case j => throw new RuntimeException(s"Unsupported Joinable: $j")

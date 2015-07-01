@@ -17,7 +17,8 @@ case class Query[Expressions, Result](expressions: Expressions,
                                       ordering: List[OrderBy[_]] = Nil,
                                       resultLimit: Int = -1,
                                       resultOffset: Int = -1,
-                                      converter: QueryResult[Result] => Result)
+                                      converter: QueryResult[Result] => Result,
+                                      alias: Option[String] = None)
                                      (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] with Joinable {
   lazy val asVector = vectorify(expressions)
 
@@ -39,6 +40,8 @@ case class Query[Expressions, Result](expressions: Expressions,
 
   def groupBy(expressions: SelectExpression[_]*) = copy[Expressions, Result](grouping = grouping ::: expressions.toList)
   def orderBy(entries: OrderBy[_]*) = copy[Expressions, Result](ordering = entries.toList ::: ordering)
+
+//  def as(alias: String) = copy(alias = Option(alias))
 
   def convert[NewResult](converter: QueryResult[NewResult] => NewResult) = copy[Expressions, NewResult](converter = converter)
   def map[NewResult](converter: Result => NewResult) = {
