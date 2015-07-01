@@ -18,8 +18,8 @@ import scala.collection.mutable.ListBuffer
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class SQLDatastore extends Datastore {
-  def this(dataSource: DataSource) = {
+abstract class SQLDatastore protected() extends Datastore {
+  protected def this(dataSource: DataSource) = {
     this()
     dataSourceProperty := dataSource
   }

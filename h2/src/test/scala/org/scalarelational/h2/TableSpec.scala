@@ -9,7 +9,7 @@ import org.scalarelational
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter, StringDataType}
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.model.{Table, ColumnLike}
+import org.scalarelational.model.{HikariSupport, Table, ColumnLike}
 import org.scalarelational.model.table.property.Index
 import org.scalatest.{Matchers, WordSpec}
 
@@ -518,7 +518,7 @@ class TableSpec extends WordSpec with Matchers {
   }
 }
 
-object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) {
+object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with HikariSupport {
   object test extends Table("test_table") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique)

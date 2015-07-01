@@ -1,5 +1,7 @@
 package org.scalarelational.h2
 
+import javax.sql.DataSource
+
 import org.h2.jdbcx.JdbcConnectionPool
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.log.Logging
@@ -10,12 +12,26 @@ import org.scalarelational.model._
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
-                                     val dbUser: String = "sa",
-                                     val dbPassword: String = "sa") extends SQLDatastore with Logging {
+abstract class H2Datastore protected() extends SQLDatastore with Logging {
+  protected def this(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
+                     dbUser: String = "sa",
+                     dbPassword: String = "sa") = {
+    this()
+    username := dbUser
+    password := dbPassword
+    modeProperty := mode
+  }
+
+  protected def this(dataSource: DataSource) = {
+    this()
+    dataSourceProperty := dataSource
+  }
+
   Class.forName("org.h2.Driver")
 
-  val modeProperty = Property[H2ConnectionMode](default = Some(mode))
+  val modeProperty = Property[H2ConnectionMode]()
+  val username = Property[String](default = Some("sa"))
+  val password = Property[String](default = Some("sa"))
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
   private var functions = Set.empty[H2Function]
@@ -23,7 +39,6 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.power
   init()
 
   protected def init() = {
-    updateDataSource()
     modeProperty.change.on {
       case evt => updateDataSource()      // Update the data source if the mode changes
     }
@@ -31,7 +46,7 @@ abstract class H2Datastore protected(mode: H2ConnectionMode = H2Memory(org.power
 
   def updateDataSource() = {
     dispose()     // Make sure to shut down the previous DataSource if possible
-    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, dbUser, dbPassword)
+    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, username(), password())
   }
 
   def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {
