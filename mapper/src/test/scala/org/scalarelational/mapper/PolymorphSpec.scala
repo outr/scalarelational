@@ -25,7 +25,10 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "insert users" in {
       session {
-        insertUsers.foreach(users.persist(_).result)
+        insertUsers.foreach { usr =>
+          val result = users.persist(usr).result
+          (result != usr && result.withoutId == usr) should equal (true)
+        }
       }
     }
     "query users" in {
