@@ -43,8 +43,8 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
-    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[T] = {
-      val clazz: EnhancedClass = manifest.runtimeClass
+    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false): Instruction[T] = {
+      val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
       val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
