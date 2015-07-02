@@ -2,6 +2,7 @@ package org.scalarelational.model
 
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
+import org.scalarelational.instruction.Joinable
 import org.scalarelational.model.table.property.TableProperty
 import org.scalarelational.TableAlias
 
@@ -11,7 +12,7 @@ import scala.language.existentials
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(name: String, tableProperties: TableProperty*)(implicit val datastore: Datastore) {
+abstract class Table(name: String, tableProperties: TableProperty*)(implicit val datastore: Datastore) extends Joinable {
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
   datastore.add(this)   // Make sure the Datastore knows about this table

@@ -10,10 +10,14 @@ making working with your database easier, but this comes at the cost of ineffici
 confusing code mapping. The goal of ScalaRelational is to provide a one-to-one representation of the SQL language in
 Scala and provide performance improvements to working with the database.
 
-Currently, only H2 database is supported, but other database dialects can be easily added as needed.
+Currently, only H2 database is tested, but other databases technically are supported though certain functionality may require
+some slight alterations to work properly. One of the goals of ScalaRelational is to be a straight-forward, type-safe framework
+to write SQL queries in Scala with no magic or guesswork of what the resulting SQL will be.
 
 It is worth mentioning that much of the functionality of this framework was inspired by other database frameworks like
-Slick.
+Slick but there is a great deal of innovation and distinction in ScalaRelational from any other existing framework. This
+framework was created as the resulting frustration from using all the existing Scala database frameworks and being left
+wanting more.
 
 Finally, this tutorial is based on [this spec](https://github.com/outr/scalarelational/blob/master/mapper/src/test/scala/org/scalarelational/mapper/gettingstarted/GettingStartedSpec.scala)
 and though we try to keep it updated, if you have any problems please refer to that as a working and compilable example.
@@ -272,7 +276,7 @@ import suppliers._
 
 session {
     val query = select(*) from suppliers where name === "Starbucks"
-    val starbucks = query.as[Supplier].result.head()
+    val starbucks = query.to[Supplier].result.head()
     println(s"Result: $starbucks")
 }
 ```
@@ -288,7 +292,7 @@ of an ORM, it is this example that shows a major point where we diverge:
 ```scala
 session {
     val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.id) where(coffees.name === "French Roast")
-    val (frenchRoast, superior) = query.as[Coffee, Supplier](coffees, suppliers).result.head()
+    val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
     println(s"Coffee: $frenchRoast, Supplier: $superior")
 }
 ```

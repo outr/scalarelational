@@ -3,7 +3,7 @@ package org.scalarelational.instruction
 import org.scalarelational._
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
-import org.scalarelational.model.Table
+import org.scalarelational.model.{ColumnAlias, ColumnLike, Table}
 import org.scalarelational.result.{QueryResultsIterator, QueryResult}
 
 /**
@@ -17,9 +17,12 @@ case class Query[Expressions, Result](expressions: Expressions,
                                       ordering: List[OrderBy[_]] = Nil,
                                       resultLimit: Int = -1,
                                       resultOffset: Int = -1,
-                                      converter: QueryResult[Result] => Result)
-                                     (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] {
+                                      converter: QueryResult[Result] => Result,
+                                      alias: Option[String] = None)
+                                     (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] with Joinable {
   lazy val asVector = vectorify(expressions)
+
+  def apply[T](column: ColumnLike[T]) = ColumnAlias[T](column, alias, None, None)
 
   def fields(expressions: SelectExpression[_]*) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = asVector ++ expressions, converter = DSLSupport.DefaultConverter)
   def fields(expressions: Vector[SelectExpression[_]]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = this.expressions ++ expressions, converter = DSLSupport.DefaultConverter)
@@ -29,22 +32,18 @@ case class Query[Expressions, Result](expressions: Expressions,
   def from(table: Table) = copy[Expressions, Result](table = table)
   def where(condition: Condition) = copy[Expressions, Result](whereCondition = condition)
 
-  def join(table: Table, joinType: JoinType = JoinType.Join, alias: String = null) = PartialJoin[Expressions, Result](this, table, joinType, alias)
-
-  def innerJoin(table: Table) = join(table, joinType = JoinType.Inner)
-  def innerJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Inner, alias = alias.tableAlias)
-
-  def leftJoin(table: Table) = join(table, joinType = JoinType.Left)
-  def leftJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.Left, alias = alias.tableAlias)
-
-  def leftOuterJoin(table: Table) = join(table, joinType = JoinType.LeftOuter)
-  def leftOuterJoin(alias: TableAlias) = join(alias.table, joinType = JoinType.LeftOuter, alias = alias.tableAlias)
+  def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Expressions, Result](this, joinable, joinType)
+  def innerJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Inner)
+  def leftJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Left)
+  def leftOuterJoin(joinable: Joinable) = join(joinable, joinType = JoinType.LeftOuter)
 
   def limit(value: Int) = copy[Expressions, Result](resultLimit = value)
   def offset(value: Int) = copy[Expressions, Result](resultOffset = value)
 
   def groupBy(expressions: SelectExpression[_]*) = copy[Expressions, Result](grouping = grouping ::: expressions.toList)
   def orderBy(entries: OrderBy[_]*) = copy[Expressions, Result](ordering = entries.toList ::: ordering)
+
+  def as(alias: String) = copy(alias = Option(alias))
 
   def convert[NewResult](converter: QueryResult[NewResult] => NewResult) = copy[Expressions, NewResult](converter = converter)
   def map[NewResult](converter: Result => NewResult) = {

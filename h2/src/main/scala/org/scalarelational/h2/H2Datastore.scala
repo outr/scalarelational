@@ -12,7 +12,7 @@ import org.scalarelational.model._
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class H2Datastore protected() extends SQLDatastore with Logging {
+abstract class H2Datastore private() extends SQLDatastore with Logging {
   protected def this(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
                      dbUser: String = "sa",
                      dbPassword: String = "sa") = {

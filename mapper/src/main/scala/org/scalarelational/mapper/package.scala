@@ -11,14 +11,14 @@ import org.scalarelational.result.QueryResult
  */
 package object mapper {
   implicit class MappableQuery[Expressions, OriginalResult](query: Query[Expressions, OriginalResult]) {
-    def as[R](implicit manifest: Manifest[R]) = {
+    def to[R](implicit manifest: Manifest[R]) = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val f = (r: QueryResult[R]) => {
         clazz.create[R](r.toFieldMap)
       }
       query.convert[R](f)
     }
-    def as[R1, R2](t1: Table, t2: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
+    def to[R1, R2](t1: Table, t2: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
       val c1: EnhancedClass = manifest1.runtimeClass
       val c2: EnhancedClass = manifest2.runtimeClass
       val f = (r: QueryResult[(R1, R2)]) => {
@@ -28,7 +28,7 @@ package object mapper {
       }
       query.convert[(R1, R2)](f)
     }
-    def as[R1, R2, R3](t1: Table, t2: Table, t3: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
+    def to[R1, R2, R3](t1: Table, t2: Table, t3: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
       val c1: EnhancedClass = manifest1.runtimeClass
       val c2: EnhancedClass = manifest2.runtimeClass
       val c3: EnhancedClass = manifest3.runtimeClass
@@ -49,8 +49,8 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
-    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false)(implicit manifest: Manifest[T]): Instruction[T] = {
-      val clazz: EnhancedClass = manifest.runtimeClass
+    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false): Instruction[T] = {
+      val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
       val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
