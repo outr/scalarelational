@@ -46,7 +46,8 @@ package object mapper {
     def persist[T <: AnyRef](value: T, forceInsert: Boolean = false): Instruction[T] = {
       val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
-      val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
+//      val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
+      val values = clazz.fields.flatMap(f => table.getColumnByField[Any](f.name).map(c => c(f[Any](value))))
       val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
       values.find(cv => cv.column == primaryColumn) match {
         case Some(primaryKey) => {
