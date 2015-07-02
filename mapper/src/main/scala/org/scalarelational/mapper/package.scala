@@ -40,6 +40,12 @@ package object mapper {
       }
       query.convert[(R1, R2, R3)](f)
     }
+    def asCase[R](classForRow: QueryResult[R] => Class[_ <: R])(implicit manifest: Manifest[R]) = {
+      query.convert[R] { r =>
+        val clazz = classForRow(r)
+        clazz.create(r.toFieldMap)
+      }
+    }
   }
 
   implicit class MappableTable(table: Table) {

@@ -11,8 +11,7 @@ case class InsertSingle(values: Seq[ColumnValue[_]]) extends Insert with Instruc
   override protected def thisDatastore = values.head.column.table.datastore
 
   def result = {
-    val datastore = values.head.column.table.datastore
-    datastore.exec(this)
+    thisDatastore.exec(this)
   }
   def and(nextRow: ColumnValue[_]*) = {
     InsertMultiple(Seq(values, nextRow))
