@@ -301,6 +301,55 @@ This is a very efficient SQL query to join the **coffees** table with the **supp
 set. Using Mapper we are able to separate the columns relating to **coffees** from **suppliers** and map them directly
 to our case classes.
 
+## Polymorphic querying
+It may be desired to represent a type hierarchy in a single table for better performance:
+
+```scala
+trait User {
+  def name: String
+  def id: Option[Int]
+}
+
+case class UserGuest(name: String, id: Option[Int] = None) extends User {
+  val isGuest = true
+}
+
+case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None) extends User {
+  val isGuest = false
+}
+
+object users extends Table("users") {
+  val id = column[Int]("id", PrimaryKey, AutoIncrement)
+  val name = column[String]("name", NotNull)
+  val canDelete = column[Boolean]("canDelete")
+  val isGuest = column[Boolean]("isGuest", NotNull)
+}
+```
+
+Runtime reflection is used, which allows to insert a heterogeneous list of objects:
+
+```scala
+val insertUsers = Seq(
+  UserGuest("guest"),
+  UserAdmin("admin", true)
+)
+
+insertUsers.foreach(users.persist(_).result)
+```
+
+To query the table, you will need to evaluate the column which encodes the original type of the object, namely ``isGuest`` in this case. For more complex type hierarchies you may want to use an enumeration instead.
+
+```scala
+val query = select (*) from users
+
+val x = query.asCase[User] { row =>
+  if (row(users.isGuest)) classOf[UserGuest]
+  else classOf[UserAdmin]
+}
+
+x.result.converted.toList // : List[User]
+```
+
 ## More information
 
 Hopefully this introduction was enough to show the benefits of using ScalaRelational for query building. For more examples
