@@ -3,7 +3,6 @@ package org.scalarelational.mapper
 import org.scalarelational.column.property.{AutoIncrement, NotNull, PrimaryKey}
 import org.scalarelational.h2.{H2Memory, H2Datastore}
 import org.scalarelational.model.Table
-import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -13,9 +12,10 @@ import org.scalatest.{Matchers, WordSpec}
 class PolymorphSpec extends WordSpec with Matchers {
   import PolymorphDatastore._
 
-  val usr1 = UserGuest("guest")
-  val usr2 = UserAdmin("admin", true)
-  val insertUsers = Seq(usr1, usr2)
+  val insertUsers = Seq(
+    UserGuest("guest"),
+    UserAdmin("admin", true)
+  )
 
   "Async" should {
     "create tables" in {
@@ -33,14 +33,11 @@ class PolymorphSpec extends WordSpec with Matchers {
 
       session {
         val query = select (*) from users
-        println(query.result.toList)
-        val x = query.asCase { (res: QueryResult[User]) =>
-          val cls =
-            if (res(users.isGuest)) classOf[UserGuest]
-            else classOf[UserAdmin]
-          cls.asInstanceOf[Class[User]]
+        val x = query.asCase[User] { row =>
+          if (row(users.isGuest)) classOf[UserGuest]
+          else classOf[UserAdmin]
         }
-        insertUsers should equal (x.result.toList)
+        insertUsers should equal (x.result.converted.toList.map(_.withoutId))
       }
     }
   }
@@ -49,12 +46,15 @@ class PolymorphSpec extends WordSpec with Matchers {
 trait User {
   def name: String
   def id: Option[Int]
+  def withoutId: User
 }
 case class UserGuest(name: String, id: Option[Int] = None) extends User {
   val isGuest = true
+  def withoutId = copy(id = None)
 }
 case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None) extends User {
   val isGuest = false
+  def withoutId = copy(id = None)
 }
 
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {

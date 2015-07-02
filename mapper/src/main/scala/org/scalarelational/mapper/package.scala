@@ -40,10 +40,10 @@ package object mapper {
       }
       query.convert[(R1, R2, R3)](f)
     }
-    def asCase[R](classForRow: QueryResult[R] => Class[_ <: R])(implicit manifest: Manifest[R]) = {
+    def asCase[R](classForRow: QueryResult[R] => Class[_])(implicit manifest: Manifest[R]): Query[Expressions, R] = {
       query.convert[R] { r =>
         val clazz = classForRow(r)
-        clazz.create(r.toFieldMap)
+        clazz.create[R](r.toFieldMap)
       }
     }
   }
