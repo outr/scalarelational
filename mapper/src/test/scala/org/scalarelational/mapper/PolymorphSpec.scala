@@ -25,9 +25,7 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "insert users" in {
       session {
-        // insertUsers.foreach(users.persist(_).result)
-        users.persist(usr1).result
-        users.persist(usr2).result
+        insertUsers.foreach(users.persist(_).result)
       }
     }
     "query users" in {
