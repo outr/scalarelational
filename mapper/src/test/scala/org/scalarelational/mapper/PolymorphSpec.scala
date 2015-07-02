@@ -13,10 +13,9 @@ import org.scalatest.{Matchers, WordSpec}
 class PolymorphSpec extends WordSpec with Matchers {
   import PolymorphDatastore._
 
-  val insertUsers = Seq(
-    UserGuest("guest"),
-    UserAdmin("admin", true)
-  )
+  val usr1 = UserGuest("guest")
+  val usr2 = UserAdmin("admin", true)
+  val insertUsers = Seq(usr1, usr2)
 
   "Async" should {
     "create tables" in {
@@ -26,7 +25,9 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "insert users" in {
       session {
-        insertUsers.foreach(users.persist(_).result)
+        // insertUsers.foreach(users.persist(_).result)
+        users.persist(usr1).result
+        users.persist(usr2).result
       }
     }
     "query users" in {
@@ -62,7 +63,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
   object users extends Table("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
-    val canDelete = column[Boolean]("canDelete", NotNull)
+    val canDelete = column[Boolean]("canDelete")
     val isGuest = column[Boolean]("isGuest", NotNull)
   }
 }
