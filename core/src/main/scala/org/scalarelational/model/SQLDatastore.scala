@@ -162,14 +162,14 @@ abstract class SQLDatastore protected() extends Datastore {
     session.execute(command)
   }
 
-  protected[scalarelational] def exec[E, R](query: Query[E, R]) = {
+  protected def invoke[E, R](query: Query[E, R]) = {
     val (sql, args) = describe(query)
 
     querying.fire(query)
     session.executeQuery(sql, args)
   }
 
-  def exec(insert: InsertSingle) = {
+  protected def invoke(insert: InsertSingle) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.values.head.column.table
     val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
@@ -189,7 +189,17 @@ abstract class SQLDatastore protected() extends Datastore {
     }
   }
 
-  def exec(insert: InsertMultiple) = {
+  protected def invoke(merge: Merge) = {
+    val table = merge.key.table
+    val columnNames = merge.values.map(cv => cv.column.name).mkString(", ")
+    val columnValues = merge.values.map(cv => cv.toSQL)
+    val placeholder = columnValues.map(v => "?").mkString(", ")
+    val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
+    merging.fire(merge)
+    session.executeUpdate(mergeString, columnValues)
+  }
+
+  protected def invoke(insert: InsertMultiple) = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
     if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
     val table = insert.rows.head.head.column.table
@@ -210,17 +220,7 @@ abstract class SQLDatastore protected() extends Datastore {
     }
   }
 
-  def exec(merge: Merge) = {
-    val table = merge.key.table
-    val columnNames = merge.values.map(cv => cv.column.name).mkString(", ")
-    val columnValues = merge.values.map(cv => cv.toSQL)
-    val placeholder = columnValues.map(v => "?").mkString(", ")
-    val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
-    merging.fire(merge)
-    session.executeUpdate(mergeString, columnValues)
-  }
-
-  def exec(update: Update) = {
+  protected def invoke(update: Update) = {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
     val setArgs = update.values.map(cv => cv.toSQL)
@@ -233,7 +233,7 @@ abstract class SQLDatastore protected() extends Datastore {
     session.executeUpdate(sql, args)
   }
 
-  def exec(delete: Delete) = {
+  protected def invoke(delete: Delete) = {
     var args = List.empty[Any]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)

@@ -4,7 +4,7 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
-import org.powerscala.event.processor.OptionProcessor
+import org.powerscala.event.processor.{ModifiableProcessor, OptionProcessor}
 import org.powerscala.log.Logging
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.instruction._
@@ -93,12 +93,90 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
 
   def describe[E, R](query: Query[E, R]): (String, List[Any])
 
-  private[scalarelational] def exec[E, R](query: Query[E, R]): ResultSet
-  def exec(insert: InsertSingle): Int
-  def exec(insert: InsertMultiple): List[Int]
-  def exec(merge: Merge): Int
-  def exec(update: Update): Int
-  def exec(delete: Delete): Int
+  protected[scalarelational] final def exec[E, R](query: Query[E, R]): ResultSet = {
+    val table = query.table
+    val q = modularModify[Query[_, _]](table, query)(_.querying).asInstanceOf[Query[E, R]]
+    try {
+      invoke[E, R](q)
+    } finally {
+      modularAfter(table)(_.queried.fire(q))
+    }
+  }
+  protected[scalarelational] final def exec(insert: InsertSingle): Int = {
+    val table = insert.values.head.column.table
+    val i = modularModify[Insert](table, insert)(_.inserting).asInstanceOf[InsertSingle]
+    try {
+      invoke(i)
+    } finally {
+      modularAfter(table)(_.inserted.fire(i))
+    }
+  }
+  protected[scalarelational] final def exec(insert: InsertMultiple): List[Int] = {
+    val table = insert.rows.head.head.column.table
+    val i = modularModify[Insert](table, insert)(_.inserting).asInstanceOf[InsertMultiple]
+    try {
+      invoke(i)
+    } finally {
+      modularAfter(table)(_.inserted.fire(i))
+    }
+  }
+  protected[scalarelational] final def exec(merge: Merge): Int = {
+    val table = merge.values.head.column.table
+    val m = modularModify(table, merge)(_.merging)
+    try {
+      invoke(m)
+    } finally {
+      modularAfter(table)(_.merged.fire(m))
+    }
+  }
+  protected[scalarelational] final def exec(update: Update): Int = {
+    val table = update.table
+    val u = modularModify(table, update)(_.updating)
+    try {
+      invoke(u)
+    } finally {
+      modularAfter(table)(_.updated.fire(u))
+    }
+  }
+  protected[scalarelational] final def exec(delete: Delete): Int = {
+    val table = delete.table
+    val d = modularModify(table, delete)(_.deleting)
+    try {
+      invoke(d)
+    } finally {
+      modularAfter(table)(_.deleted.fire(d))
+    }
+  }
+
+  protected def invoke[E, R](query: Query[E, R]): ResultSet
+  protected def invoke(insert: InsertSingle): Int
+  protected def invoke(insert: InsertMultiple): List[Int]
+  protected def invoke(merge: Merge): Int
+  protected def invoke(update: Update): Int
+  protected def invoke(delete: Delete): Int
+
+  private def modularModify[T](table: Table, value: T)(f: ModularSupport => ModifiableProcessor[T]) = {
+    var t = value
+    this match {
+      case m: ModularSupport => t = f(m).fire(t)
+      case _ => // Datastore doesn't have ModularSupport
+    }
+    table match {
+      case m: ModularSupport => t = f(m).fire(t)
+      case _ => // Table doesn't have ModularSupport
+    }
+    t
+  }
+  private def modularAfter(table: Table)(f: ModularSupport => Unit) = {
+    this match {
+      case m: ModularSupport => f(m)
+      case _ => // Datastore doesn't have ModularSupport
+    }
+    table match {
+      case m: ModularSupport => f(m)
+      case _ => // Table doesn't have ModularSupport
+    }
+  }
 
   def createTableSQL(table: Table): String
 
