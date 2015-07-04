@@ -3,7 +3,6 @@ package org.scalarelational
 import org.powerscala.reflect._
 import org.scalarelational.column.property.AutoIncrement
 import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
-import org.scalarelational.model.table.property.NonStrictMapping
 import org.scalarelational.model.{Datastore, Column, Table}
 import org.scalarelational.result.QueryResult
 
@@ -52,10 +51,12 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
-    private def fieldValues[T <: AnyRef](value: T, clazz: EnhancedClass) = {
+    private def fieldValues[T <: AnyRef](value: T,
+                                         clazz: EnhancedClass,
+                                         strictMapping: Boolean) = {
       clazz.fields.flatMap { f =>
         val column = table.getColumnByField[Any](f.name)
-        if (column.isEmpty && !table.properties.toSeq.contains(NonStrictMapping))
+        if (column.isEmpty && strictMapping)
           throw new RuntimeException(s"Field $f has no corresponding column")
         else
           Try(column.map(c => c(f[Any](value)))).getOrElse {
@@ -64,10 +65,12 @@ package object mapper {
       }
     }
 
-    def persist[T <: AnyRef](value: T, forceInsert: Boolean = false): Instruction[T] = {
+    def persist[T <: AnyRef](value: T,
+                             forceInsert: Boolean = false,
+                             strictMapping: Boolean = true): Instruction[T] = {
       val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
-      val values = fieldValues(value, clazz)
+      val values = fieldValues(value, clazz, strictMapping)
       val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
       values.find(cv => cv.column == primaryColumn) match {
         case Some(primaryKey) => {
