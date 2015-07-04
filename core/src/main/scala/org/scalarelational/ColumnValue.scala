@@ -11,10 +11,12 @@ class ColumnValue[T] private(val column: ColumnLike[T],
                              val value: T,
                              val converterOverride: Option[DataType[T]]) extends ExpressionValue[T] {
   def expression = column
-  def toSQL = converterOverride match {
-    case Some(converter) => converter.toSQLType(column, value)
-    case None => column.converter.toSQLType(column, value)
-  }
+  def toSQL =
+    if (value == null) null
+    else converterOverride match {
+      case Some(converter) => converter.toSQLType(column, value)
+      case None => column.converter.toSQLType(column, value)
+    }
 
   override def toString = s"$column: $value"
 }

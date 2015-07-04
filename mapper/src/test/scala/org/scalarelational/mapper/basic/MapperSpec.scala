@@ -128,7 +128,7 @@ class MapperSpec extends WordSpec with Matchers {
           import coffees._
           val query = select(*) from coffees where name === "Caffè American"
           val caffe = query.to[Coffee].result.head()
-          caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0))
+          caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0, Some(6)))
         }
       }
     }
