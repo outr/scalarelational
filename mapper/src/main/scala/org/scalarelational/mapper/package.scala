@@ -3,6 +3,7 @@ package org.scalarelational
 import org.powerscala.reflect._
 import org.scalarelational.column.property.AutoIncrement
 import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
+import org.scalarelational.model.table.property.NonStrictMapping
 import org.scalarelational.model.{Datastore, Column, Table}
 import org.scalarelational.result.QueryResult
 
@@ -54,7 +55,7 @@ package object mapper {
     private def fieldValues[T <: AnyRef](value: T, clazz: EnhancedClass) = {
       clazz.fields.flatMap { f =>
         val column = table.getColumnByField[Any](f.name)
-        if (column.isEmpty)
+        if (column.isEmpty && !table.properties.toSeq.contains(NonStrictMapping))
           throw new RuntimeException(s"Field $f has no corresponding column")
         else
           Try(column.map(c => c(f[Any](value)))).getOrElse {
