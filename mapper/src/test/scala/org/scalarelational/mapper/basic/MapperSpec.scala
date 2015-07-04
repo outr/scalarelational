@@ -106,11 +106,12 @@ class MapperSpec extends WordSpec with Matchers {
           val highGround = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
 
           // Insert Coffees
-          coffees.persist(Coffee("Colombian", acme.id.get, 7.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast", superior.id.get, 8.99, 0, 0)).result
-          coffees.persist(Coffee("Espresso", highGround.id.get, 9.99, 0, 0)).result
-          coffees.persist(Coffee("Colombian Decaf", acme.id.get, 8.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast Decaf", superior.id.get, 9.99, 0, 0)).result
+          coffees.persist(Coffee("Colombian", Some(acme.id.get), 7.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast", Some(superior.id.get), 8.99, 0, 0)).result
+          coffees.persist(Coffee("Espresso", Some(highGround.id.get), 9.99, 0, 0)).result
+          coffees.persist(Coffee("Colombian Decaf", Some(acme.id.get), 8.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast Decaf", Some(superior.id.get), 9.99, 0, 0)).result
+          coffees.persist(Coffee("Caffè American", None, 12.99, 0, 0)).result
           // TODO: add batch insert / update support for persist
         }
       }
@@ -118,8 +119,16 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supId === suppliers.id) where(coffees.name === "French Roast")
           val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
-          frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
+          frenchRoast should equal(Coffee("French Roast", Some(superior.id.get), 8.99, 0, 0, Some(2)))
           superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
+        }
+      }
+      "query back 'Caffè American'" in {
+        session {
+          import coffees._
+          val query = select(*) from coffees where name === "Caffè American"
+          val caffe = query.to[Coffee].result.head()
+          caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0))
         }
       }
     }
@@ -134,7 +143,7 @@ case class Age(value: Int)
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
 
-case class Coffee(name: String, supId: Int, price: Double, sales: Int, total: Int, id: Option[Int] = None)
+case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {
