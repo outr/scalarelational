@@ -31,18 +31,6 @@ object IntDataType extends DataType[Int] {
   def fromSQLType(column: ColumnLike[Int], value: Any) = value.asInstanceOf[Int]
 }
 
-object OptionIntDataType extends DataType[Option[Int]] {
-  override def sqlType(column: ColumnLike[Option[Int]]) = "INTEGER"
-  override def toSQLType(column: ColumnLike[Option[Int]], value: Option[Int]) = value match {
-    case Some(i) => new Integer(i)
-    case None => null
-  }
-  override def fromSQLType(column: ColumnLike[Option[Int]], value: Any) = value match {
-    case null => None
-    case i: Int => Some(i)
-  }
-}
-
 object JavaIntDataType extends DataType[java.lang.Integer] {
   def sqlType(column: ColumnLike[java.lang.Integer]) = "INTEGER"
   def toSQLType(column: ColumnLike[java.lang.Integer], value: java.lang.Integer) = value
