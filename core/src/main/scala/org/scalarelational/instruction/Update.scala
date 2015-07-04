@@ -10,8 +10,6 @@ import org.scalarelational.ColumnValue
 case class Update(values: List[ColumnValue[_]],
                   table: Table,
                   whereCondition: Condition = null) extends WhereSupport[Update] with Instruction[Int] {
-  override protected def thisDatastore = table.datastore
-
   def where(condition: Condition) = copy(whereCondition = condition)
 
   def result = {

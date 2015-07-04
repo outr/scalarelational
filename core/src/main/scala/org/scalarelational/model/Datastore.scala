@@ -14,7 +14,7 @@ import org.scalarelational.SessionSupport
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport {
+trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer {
   implicit def thisDatastore: Datastore = this
 
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
@@ -93,58 +93,58 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
 
   def describe[E, R](query: Query[E, R]): (String, List[Any])
 
-  protected[scalarelational] final def exec[E, R](query: Query[E, R]): ResultSet = {
+  private[scalarelational] final def exec[E, R](query: Query[E, R]): ResultSet = {
     val table = query.table
-    val q = modularModify[Query[_, _]](table, query)(_.querying).asInstanceOf[Query[E, R]]
+    val q = SQLContainer.beforeInvoke(table, query)
     try {
       invoke[E, R](q)
     } finally {
-      modularAfter(table)(_.queried.fire(q))
+      SQLContainer.afterInvoke(table, q)
     }
   }
-  protected[scalarelational] final def exec(insert: InsertSingle): Int = {
-    val table = insert.values.head.column.table
-    val i = modularModify[Insert](table, insert)(_.inserting).asInstanceOf[InsertSingle]
+  private[scalarelational] final def exec(insert: InsertSingle): Int = {
+    val table = insert.table
+    val i = SQLContainer.beforeInvoke(table, insert)
     try {
       invoke(i)
     } finally {
-      modularAfter(table)(_.inserted.fire(i))
+      SQLContainer.afterInvoke(table, i)
     }
   }
-  protected[scalarelational] final def exec(insert: InsertMultiple): List[Int] = {
-    val table = insert.rows.head.head.column.table
-    val i = modularModify[Insert](table, insert)(_.inserting).asInstanceOf[InsertMultiple]
+  private[scalarelational] final def exec(insert: InsertMultiple): List[Int] = {
+    val table = insert.table
+    val i = SQLContainer.beforeInvoke(table, insert)
     try {
       invoke(i)
     } finally {
-      modularAfter(table)(_.inserted.fire(i))
+      SQLContainer.afterInvoke(table, i)
     }
   }
-  protected[scalarelational] final def exec(merge: Merge): Int = {
-    val table = merge.values.head.column.table
-    val m = modularModify(table, merge)(_.merging)
+  private[scalarelational] final def exec(merge: Merge): Int = {
+    val table = merge.table
+    val m = SQLContainer.beforeInvoke(table, merge)
     try {
       invoke(m)
     } finally {
-      modularAfter(table)(_.merged.fire(m))
+      SQLContainer.afterInvoke(table, m)
     }
   }
-  protected[scalarelational] final def exec(update: Update): Int = {
+  private[scalarelational] final def exec(update: Update): Int = {
     val table = update.table
-    val u = modularModify(table, update)(_.updating)
+    val u = SQLContainer.beforeInvoke(table, update)
     try {
       invoke(u)
     } finally {
-      modularAfter(table)(_.updated.fire(u))
+      SQLContainer.afterInvoke(table, u)
     }
   }
-  protected[scalarelational] final def exec(delete: Delete): Int = {
+  private[scalarelational] final def exec(delete: Delete): Int = {
     val table = delete.table
-    val d = modularModify(table, delete)(_.deleting)
+    val d = SQLContainer.beforeInvoke(table, delete)
     try {
       invoke(d)
     } finally {
-      modularAfter(table)(_.deleted.fire(d))
+      SQLContainer.afterInvoke(table, d)
     }
   }
 
@@ -154,29 +154,6 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   protected def invoke(merge: Merge): Int
   protected def invoke(update: Update): Int
   protected def invoke(delete: Delete): Int
-
-  private def modularModify[T](table: Table, value: T)(f: ModularSupport => ModifiableProcessor[T]) = {
-    var t = value
-    this match {
-      case m: ModularSupport => t = f(m).fire(t)
-      case _ => // Datastore doesn't have ModularSupport
-    }
-    table match {
-      case m: ModularSupport => t = f(m).fire(t)
-      case _ => // Table doesn't have ModularSupport
-    }
-    t
-  }
-  private def modularAfter(table: Table)(f: ModularSupport => Unit) = {
-    this match {
-      case m: ModularSupport => f(m)
-      case _ => // Datastore doesn't have ModularSupport
-    }
-    table match {
-      case m: ModularSupport => f(m)
-      case _ => // Table doesn't have ModularSupport
-    }
-  }
 
   def createTableSQL(table: Table): String
 

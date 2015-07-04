@@ -84,18 +84,18 @@ package object mapper {
           if (exists) {
             // Update
             val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
-            new InstanceInstruction[T](update, value, table.datastore)
+            new InstanceInstruction[T](update, value, table)
           } else {
             val primaryKeyCaseValue = clazz.caseValue(primaryColumn.fieldName).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} (field name: ${primaryColumn.fieldName}) in $clazz."))
             new PersistInsertInstruction[T](table.datastore.insert(updates: _*), primaryKeyCaseValue, value)
           }
         }
-        case None => new InstanceInstruction[T](table.datastore.insert(updates: _*), value, table.datastore)
+        case None => new InstanceInstruction[T](table.datastore.insert(updates: _*), value, table)
       }
     }
   }
 
-  class InstanceInstruction[T](instruction: Instruction[Int], instance: T, val thisDatastore: Datastore) extends Instruction[T] {
+  class InstanceInstruction[T](instruction: Instruction[Int], instance: T, val table: Table) extends Instruction[T] {
     override def result = {
       instruction.result
       instance
@@ -103,7 +103,7 @@ package object mapper {
   }
 
   class PersistInsertInstruction[T](insert: InsertSingle, caseValue: CaseValue, instance: T) extends Instruction[T] {
-    override protected def thisDatastore = insert.values.head.column.table.datastore
+    override def table = insert.values.head.column.table
 
     override def result = {
       val id = insert.result

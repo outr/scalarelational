@@ -8,7 +8,7 @@ import org.scalarelational.ColumnValue
 case class InsertSingle(values: Seq[ColumnValue[_]]) extends Insert with Instruction[Int] {
   lazy val rows = Seq(values)
 
-  override protected def thisDatastore = values.head.column.table.datastore
+  def table = values.head.column.table
 
   def result = {
     thisDatastore.exec(this)
