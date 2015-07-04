@@ -75,7 +75,7 @@ object Details {
 }
 
 object Dependencies {
-  private val powerscalaVersion = "1.6.9"
+  private val powerscalaVersion = "1.6.10-SNAPSHOT"
 
   object powerscala {
     val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion

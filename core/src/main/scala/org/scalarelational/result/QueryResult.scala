@@ -26,16 +26,19 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
     }.toMap
   }
 
-  def toFieldMap = {
-    values.collect {
-      case v => {
-        val name = v.expression match {
-          case c: Column[_] => c.fieldName
-          case f: SQLFunction[_] if f.alias.nonEmpty => f.alias.get
-          case c: ColumnLike[_] => c.name
-        }
-        name -> v.value
+  def toFieldMap: Map[String, Any] = {
+    values.map { v =>
+      val name = v.expression match {
+        case c: Column[_] => c.fieldName
+        case f: SQLFunction[_] if f.alias.nonEmpty => f.alias.get
+        case c: ColumnLike[_] => c.name
       }
+
+      val value =
+        if (v.value == null) None
+        else v.value
+
+      name -> value
     }.toMap
   }
 

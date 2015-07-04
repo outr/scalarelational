@@ -23,9 +23,9 @@ class MapperSpec extends WordSpec with Matchers {
         import people._
 
         session {
-          insert(name("John Doe"), age(21)).
-             and(name("Jane Doe"), age(19)).
-             and(name("Baby Doe"), age(2)).result
+          insert(name("John"), age(21), surname("Doe")).
+             and(name("Jane"), age(19), surname("Doe")).result
+          insert(name("Baby"), age(21)).result
         }
       }
     }
@@ -34,23 +34,27 @@ class MapperSpec extends WordSpec with Matchers {
 
       "explicitly map to a case class" in {
         session {
-          val query = select(*) from people where name === "John Doe"
+          val query = select(*) from people where name === "John"
           val john = query.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), qr(id))).result.one()
-          john should equal(Person("John Doe", 21, None, Some(1)))
+          john should equal(Person("John", 21, Some("Doe"), Some(1)))
+
+          val query2 = select(*) from people where name === "Baby"
+          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), qr(id))).result.one()
+          baby should equal(Person("Baby", 21, None, Some(3)))
         }
       }
       "explicitly map to a (Name, Age) type" in {
         session {
-          val query = select(*) from people where name === "John Doe"
+          val query = select(*) from people where name === "John"
           val john = query.convert[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).result.head()
-          john should equal((Name("John Doe"), Age(21)))
+          john should equal((Name("John"), Age(21)))
         }
       }
       "automatically map to a case class" in {
         session {
-          val query = select(*) from people where name === "Jane Doe"
+          val query = select(*) from people where name === "Jane"
           val jane = query.to[Person].result.head()
-          jane should equal(Person("Jane Doe", 19, None, Some(2)))
+          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "map a joined query to two case classes" in {
@@ -62,34 +66,34 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          val ray = people.persist(Person("Ray Doe", 30)).result
-          ray should equal(Person("Ray Doe", 30, None, Some(4)))
+          val ray = people.persist(Person("Ray", 30)).result
+          ray should equal(Person("Ray", 30, None, Some(4)))
         }
       }
       "query back the inserted object" in {
         import people._
 
         session {
-          val query = select(*) from people where name === "Ray Doe"
+          val query = select(*) from people where name === "Ray"
           val ray = query.to[Person].result.head()
-          ray should equal(Person("Ray Doe", 30, None, Some(4)))
+          ray should equal(Person("Ray", 30, None, Some(4)))
         }
       }
       "automatically convert a case class to an update" in {
         session {
-          val jay = people.persist(Person("Jay Doe", 30, None, Some(4))).result
-          jay should equal(Person("Jay Doe", 30, None, Some(4)))
+          val jay = people.persist(Person("Jay", 30, None, Some(4))).result
+          jay should equal(Person("Jay", 30, None, Some(4)))
         }
       }
       "query back the updated object" in {
         import people._
 
         session {
-          val query1 = select(*) from people where name === "Ray Doe"
+          val query1 = select(*) from people where name === "Ray"
           query1.to[Person].result.headOption should equal(None)
-          val query2 = select(*) from people where name === "Jay Doe"
+          val query2 = select(*) from people where name === "Jay"
           val jay = query2.to[Person].result.head()
-          jay should equal(Person("Jay Doe", 30, None, Some(4)))
+          jay should equal(Person("Jay", 30, None, Some(4)))
         }
       }
     }

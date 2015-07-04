@@ -191,7 +191,7 @@ abstract class SQLDatastore protected() extends Datastore {
 
   def exec(insert: InsertMultiple) = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
-    if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"All rows must have the exact same length.")
+    if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
     val table = insert.rows.head.head.column.table
     val columnNames = insert.rows.head.map(cv => cv.column.name).mkString(", ")
     val columnValues = insert.rows.map(r => r.map(cv => cv.toSQL))
