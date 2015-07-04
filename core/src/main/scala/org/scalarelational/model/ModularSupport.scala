@@ -11,17 +11,21 @@ import org.scalarelational.instruction._
  * @author Matt Hicks <matt@outr.com>
  */
 trait ModularSupport extends SQLContainer with Listenable {
-  val inserting = new ModifiableProcessor[Insert]("inserting")
-  val merging = new ModifiableProcessor[Merge]("merging")
-  val updating = new ModifiableProcessor[Update]("updating")
-  val deleting = new ModifiableProcessor[Delete]("deleting")
-  val querying = new ModifiableProcessor[Query[_, _]]("querying")
+  object handlers {
+    val inserting = new ModifiableProcessor[Insert]("inserting")
+    val merging = new ModifiableProcessor[Merge]("merging")
+    val updating = new ModifiableProcessor[Update]("updating")
+    val deleting = new ModifiableProcessor[Delete]("deleting")
+    val querying = new ModifiableProcessor[Query[_, _]]("querying")
 
-  val inserted = new UnitProcessor[Insert]("inserted")
-  val merged = new UnitProcessor[Merge]("merged")
-  val updated = new UnitProcessor[Update]("updated")
-  val deleted = new UnitProcessor[Delete]("deleted")
-  val queried = new UnitProcessor[Query[_, _]]("queried")
+    val inserted = new UnitProcessor[Insert]("inserted")
+    val merged = new UnitProcessor[Merge]("merged")
+    val updated = new UnitProcessor[Update]("updated")
+    val deleted = new UnitProcessor[Delete]("deleted")
+    val queried = new UnitProcessor[Query[_, _]]("queried")
+  }
+
+  import handlers._
 
   override protected def beforeInvoke[E, R](query: Query[E, R]): Query[E, R] = querying.fire(super.beforeInvoke(query)).asInstanceOf[Query[E, R]]
 

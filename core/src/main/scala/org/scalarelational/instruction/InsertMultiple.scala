@@ -12,4 +12,8 @@ case class InsertMultiple(rows: Seq[Seq[ColumnValue[_]]]) extends Insert with In
   def and(nextRow: ColumnValue[_]*) = {
     InsertMultiple(rows ++ Seq(nextRow))
   }
+  override def add(value: ColumnValue[_]): InsertMultiple = {
+    val filtered = rows.map(row => row.filterNot(cv => cv.column == value.column))
+    copy(filtered.map(row => value :: row.toList))
+  }
 }
