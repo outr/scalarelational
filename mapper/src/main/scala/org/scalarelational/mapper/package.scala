@@ -6,6 +6,8 @@ import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
 import org.scalarelational.model.{Datastore, Column, Table}
 import org.scalarelational.result.QueryResult
 
+import scala.util.Try
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
@@ -49,11 +51,22 @@ package object mapper {
   }
 
   implicit class MappableTable(table: Table) {
+    private def fieldValues[T <: AnyRef](value: T, clazz: EnhancedClass) = {
+      clazz.fields.flatMap { f =>
+        val column = table.getColumnByField[Any](f.name)
+        if (column.isEmpty)
+          throw new RuntimeException(s"Field $f has no corresponding column")
+        else
+          Try(column.map(c => c(f[Any](value)))).getOrElse {
+            throw new RuntimeException(s"Field $f incompatible to table column type ${column.get.classType}")
+          }
+      }
+    }
+
     def persist[T <: AnyRef](value: T, forceInsert: Boolean = false): Instruction[T] = {
       val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
-//      val values = clazz.caseValues.flatMap(cv => table.getColumnByField[Any](cv.name).map(c => c(cv[Any](value))))
-      val values = clazz.fields.flatMap(f => table.getColumnByField[Any](f.name).map(c => c(f[Any](value))))
+      val values = fieldValues(value, clazz)
       val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
       values.find(cv => cv.column == primaryColumn) match {
         case Some(primaryKey) => {
