@@ -32,7 +32,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   implicit def javaIntConverter = JavaIntDataType
   implicit def javaLongConverter = JavaLongDataType
   implicit def javaDoubleConverter = JavaDoubleDataType
-  implicit def optionIntConverter = OptionIntDataType
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]

@@ -35,11 +35,11 @@ class MapperSpec extends WordSpec with Matchers {
       "explicitly map to a case class" in {
         session {
           val query = select(*) from people where name === "John"
-          val john = query.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), qr(id))).result.one()
+          val john = query.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), Some(qr(id)))).result.one()
           john should equal(Person("John", 21, Some("Doe"), Some(1)))
 
           val query2 = select(*) from people where name === "Baby"
-          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), qr(id))).result.one()
+          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), Some(qr(id)))).result.one()
           baby should equal(Person("Baby", 21, None, Some(3)))
         }
       }
@@ -147,7 +147,7 @@ case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, t
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
     val surname = column[String]("surname")
