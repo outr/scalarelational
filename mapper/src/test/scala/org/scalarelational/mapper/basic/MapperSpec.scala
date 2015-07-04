@@ -35,8 +35,8 @@ class MapperSpec extends WordSpec with Matchers {
       "explicitly map to a case class" in {
         session {
           val query = select(*) from people where name === "John Doe"
-          val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(id))).result.one()
-          john should equal(Person("John Doe", 21, Some(1)))
+          val john = query.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), qr(id))).result.one()
+          john should equal(Person("John Doe", 21, None, Some(1)))
         }
       }
       "explicitly map to a (Name, Age) type" in {
@@ -50,7 +50,7 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val query = select(*) from people where name === "Jane Doe"
           val jane = query.to[Person].result.head()
-          jane should equal(Person("Jane Doe", 19, Some(2)))
+          jane should equal(Person("Jane Doe", 19, None, Some(2)))
         }
       }
       "map a joined query to two case classes" in {
@@ -63,7 +63,7 @@ class MapperSpec extends WordSpec with Matchers {
       "automatically convert a case class to an insert" in {
         session {
           val ray = people.persist(Person("Ray Doe", 30)).result
-          ray should equal(Person("Ray Doe", 30, Some(4)))
+          ray should equal(Person("Ray Doe", 30, None, Some(4)))
         }
       }
       "query back the inserted object" in {
@@ -72,13 +72,13 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val query = select(*) from people where name === "Ray Doe"
           val ray = query.to[Person].result.head()
-          ray should equal(Person("Ray Doe", 30, Some(4)))
+          ray should equal(Person("Ray Doe", 30, None, Some(4)))
         }
       }
       "automatically convert a case class to an update" in {
         session {
-          val jay = people.persist(Person("Jay Doe", 30, Some(4))).result
-          jay should equal(Person("Jay Doe", 30, Some(4)))
+          val jay = people.persist(Person("Jay Doe", 30, None, Some(4))).result
+          jay should equal(Person("Jay Doe", 30, None, Some(4)))
         }
       }
       "query back the updated object" in {
@@ -89,7 +89,7 @@ class MapperSpec extends WordSpec with Matchers {
           query1.to[Person].result.headOption should equal(None)
           val query2 = select(*) from people where name === "Jay Doe"
           val jay = query2.to[Person].result.head()
-          jay should equal(Person("Jay Doe", 30, Some(4)))
+          jay should equal(Person("Jay Doe", 30, None, Some(4)))
         }
       }
     }
@@ -122,7 +122,7 @@ class MapperSpec extends WordSpec with Matchers {
   }
 }
 
-case class Person(name: String, age: Int, id: Option[Int] = None)
+case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None)
 
 case class Name(value: String)
 
@@ -137,6 +137,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
+    val surname = column[String]("surname")
   }
   object suppliers extends Table("SUPPLIERS") {
     val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
