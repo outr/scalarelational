@@ -6,7 +6,7 @@ import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
 import org.scalarelational.column.WrappedString
 import org.scalarelational.column.property.{IgnoreCase, NumericStorage}
-import org.scalarelational.model.{ColumnLike, Column}
+import org.scalarelational.model.ColumnLike
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -80,11 +80,9 @@ object JavaDoubleDataType extends DataType[java.lang.Double] {
 
 object BigDecimalDataType extends DataType[BigDecimal] {
   def sqlType(column: ColumnLike[_]) = {
-    val numericStorage = column match {
-      case c: Column[_] => c.get[NumericStorage](NumericStorage.Name)
+    val numericStorage =
+      column.get[NumericStorage](NumericStorage.Name)
         .getOrElse(NumericStorage.DefaultBigDecimal)
-      case _ => NumericStorage.DefaultBigDecimal
-    }
     s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
   }
   def toSQLType(column: ColumnLike[_], value: BigDecimal) = value.underlying()
@@ -95,19 +93,17 @@ object StringDataType extends DataType[String] {
   val VarcharType = s"VARCHAR(${Int.MaxValue})"
   val VarcharIngoreCaseType = s"VARCHAR_IGNORECASE(${Int.MaxValue})"
 
-  def sqlType(column: ColumnLike[_]) = column match {
-    case c: Column[_] if c.has(IgnoreCase) => VarcharIngoreCaseType
-    case _ => VarcharType
-  }
+  def sqlType(column: ColumnLike[_]) =
+    if (column.has(IgnoreCase)) VarcharIngoreCaseType
+    else VarcharType
   def toSQLType(column: ColumnLike[_], value: String) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[String]
 }
 
 object WrappedStringDataType extends DataType[WrappedString] {
-  def sqlType(column: ColumnLike[_]) = column match {
-    case c: Column[_] if c.has(IgnoreCase) => StringDataType.VarcharIngoreCaseType
-    case _ => StringDataType.VarcharType
-  }
+  def sqlType(column: ColumnLike[_]) =
+    if (column.has(IgnoreCase)) StringDataType.VarcharIngoreCaseType
+    else StringDataType.VarcharType
   def toSQLType(column: ColumnLike[_], value: WrappedString) = value.value
   def fromSQLType(column: ColumnLike[_], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
 }

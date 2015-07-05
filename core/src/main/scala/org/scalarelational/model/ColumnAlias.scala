@@ -1,9 +1,15 @@
 package org.scalarelational.model
 
+import org.scalarelational.column.property.ColumnProperty
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class ColumnAlias[T](column: ColumnLike[T], tableAlias: Option[String], alias: Option[String], as: Option[String]) extends ColumnLike[T] {
+case class ColumnAlias[T](column: ColumnLike[T],
+                          tableAlias: Option[String],
+                          alias: Option[String],
+                          as: Option[String]
+                         ) extends ColumnLike[T] {
   val name = columnName
   val longName = as match {
     case Some(s) => s"$tableName.$columnName AS [$s]"
@@ -15,4 +21,7 @@ case class ColumnAlias[T](column: ColumnLike[T], tableAlias: Option[String], ali
 
   def tableName = tableAlias.getOrElse(table.tableName)
   def columnName = alias.getOrElse(column.name)
+
+  def has(property: ColumnProperty): Boolean = column.has(property)
+  def get[P <: ColumnProperty](propertyName: String): Option[P] = column.get(propertyName)
 }

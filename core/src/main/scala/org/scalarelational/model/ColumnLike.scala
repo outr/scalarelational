@@ -1,6 +1,7 @@
 package org.scalarelational.model
 
 import org.scalarelational._
+import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.fun.{SimpleFunction, FunctionType}
 import org.scalarelational.op._
 import org.scalarelational.datatype.DataType
@@ -16,6 +17,8 @@ trait ColumnLike[T] extends SelectExpression[T] {
   def table: Table
   def converter: DataType[T]
   def manifest: Manifest[T]
+  def has(property: ColumnProperty): Boolean
+  def get[P <: ColumnProperty](propertyName: String): Option[P]
 
   def sqlType = converter.sqlType(this)
 
