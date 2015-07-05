@@ -127,17 +127,12 @@ object TimestampDataType extends DataType[Timestamp] {
 }
 
 class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataType[T] {
-  val enumerated = manifest.runtimeClass.instance.getOrElse(throw new RuntimeException("Unable to find companion for ${manifest.runtimeClass}")).asInstanceOf[Enumerated[T]]
+  val enumerated = manifest.runtimeClass.instance
+    .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
+    .asInstanceOf[Enumerated[T]]
 
   def sqlType(column: ColumnLike[_]) = s"VARCHAR(${Int.MaxValue})"
-
-  def toSQLType(column: ColumnLike[_], value: T) = value match {
-    case null => null
-    case _ => value.name
-  }
-
-  def fromSQLType(column: ColumnLike[_], value: Any) = value match {
-    case null => null.asInstanceOf[T]
-    case s: String => enumerated(s)
-  }
+  def toSQLType(column: ColumnLike[_], value: T) = value.name
+  def fromSQLType(column: ColumnLike[_], value: Any) =
+    enumerated(value.asInstanceOf[String])
 }
