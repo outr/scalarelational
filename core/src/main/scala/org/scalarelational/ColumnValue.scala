@@ -1,6 +1,5 @@
 package org.scalarelational
 
-import org.powerscala.reflect._
 import org.scalarelational.datatype.DataType
 import org.scalarelational.model.ColumnLike
 
@@ -10,24 +9,16 @@ import org.scalarelational.model.ColumnLike
 class ColumnValue[T] private(val column: ColumnLike[T],
                              val value: T,
                              val converterOverride: Option[DataType[T]]) extends ExpressionValue[T] {
-  def expression = column
-  def toSQL =
-    if (value == null) null
-    else converterOverride match {
-      case Some(converter) => converter.toSQLType(column, value)
-      case None => column.converter.toSQLType(column, value)
-    }
+  def expression: ColumnLike[T] = column
+  def toSQL: Any = converterOverride match {
+    case Some(converter) => converter.toSQLType(column, value)
+    case None => column.converter.toSQLType(column, value)
+  }
 
   override def toString = s"$column: $value"
 }
 
 object ColumnValue {
-  def apply[T](column: ColumnLike[T], value: T, converterOverride: Option[DataType[T]]) = {
-    val v = if (value.asInstanceOf[AnyRef] != null && !value.getClass.hasType(column.manifest.runtimeClass)) {
-      EnhancedMethod.convertTo(column.name, value, column.manifest.runtimeClass).asInstanceOf[T]
-    } else {
-      value
-    }
-    new ColumnValue[T](column, v, converterOverride)
-  }
+  def apply[T](column: ColumnLike[T], value: T, converterOverride: Option[DataType[T]]): ColumnValue[T] =
+    new ColumnValue[T](column, value, converterOverride)
 }

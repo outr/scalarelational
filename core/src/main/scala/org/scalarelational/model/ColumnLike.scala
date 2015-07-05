@@ -1,6 +1,5 @@
 package org.scalarelational.model
 
-import org.powerscala.reflect.EnhancedMethod
 import org.scalarelational._
 import org.scalarelational.fun.{SimpleFunction, FunctionType}
 import org.scalarelational.op._
@@ -20,19 +19,22 @@ trait ColumnLike[T] extends SelectExpression[T] {
 
   def sqlType = converter.sqlType(this)
 
-  def apply(value: T, converterOverride: Option[DataType[T]] = None) = ColumnValue[T](this, value, converterOverride)
-  def value(v: Any) = {
+  def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
+    ColumnValue[T](this, value, converterOverride)
+
+  def value(v: Any): T = {
     val toConvert = v match {
       case cv: ColumnValue[_] => cv.toSQL
       case _ => v
     }
+
     try {
-      val value = EnhancedMethod.convertTo(name, toConvert, manifest.runtimeClass).asInstanceOf[T]
-      apply(value)
+      toConvert.asInstanceOf[T]
     } catch {
-      case t: Throwable => {
-        throw new RuntimeException(s"Name: $name, Value: $v, toConvert: $toConvert, Class: ${manifest.runtimeClass}", t)
-      }
+      case t: Throwable =>
+        val sourceClass = manifest.runtimeClass
+        val targetClass = v.getClass
+        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (column = $this, value = $toConvert)")
     }
   }
 

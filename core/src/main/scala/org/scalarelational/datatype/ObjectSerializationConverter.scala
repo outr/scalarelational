@@ -10,9 +10,9 @@ import org.scalarelational.model.ColumnLike
  * @author Matt Hicks <matt@outr.com>
  */
 class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
-  def sqlType(column: ColumnLike[T]) = s"BINARY(${Int.MaxValue})"
+  def sqlType(column: ColumnLike[_]) = s"BINARY(${Int.MaxValue})"
 
-  def toSQLType(column: ColumnLike[T], value: T) = if (value != null) {
+  def toSQLType(column: ColumnLike[_], value: T) = if (value != null) {
     val baos = new ByteArrayOutputStream()
     try {
       val oos = new ObjectOutputStream(baos)
@@ -30,7 +30,7 @@ class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
     null
   }
 
-  def fromSQLType(column: ColumnLike[T], value: Any) = value match {
+  def fromSQLType(column: ColumnLike[_], value: Any) = value match {
     case null => null.asInstanceOf[T]
     case array: Array[Byte] => {
       val bais = new ByteArrayInputStream(array)

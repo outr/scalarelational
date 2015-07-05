@@ -63,7 +63,7 @@ case class AsyncUser(name: String, age: Int, id: Option[Int] = None)
 
 object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
   object users extends Table("users") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
   }

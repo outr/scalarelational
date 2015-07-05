@@ -23,8 +23,8 @@ class MapperSpec extends WordSpec with Matchers {
         import people._
 
         session {
-          insert(name("John"), age(21), surname("Doe")).
-             and(name("Jane"), age(19), surname("Doe")).result
+          insert(name("John"), age(21), surname(Some("Doe"))).
+             and(name("Jane"), age(19), surname(Some("Doe"))).result
           insert(name("Baby"), age(21)).result
         }
       }
@@ -35,11 +35,11 @@ class MapperSpec extends WordSpec with Matchers {
       "explicitly map to a case class" in {
         session {
           val query = select(*) from people where name === "John"
-          val john = query.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), Some(qr(id)))).result.one()
+          val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).result.one()
           john should equal(Person("John", 21, Some("Doe"), Some(1)))
 
           val query2 = select(*) from people where name === "Baby"
-          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), Option(qr(surname)), Some(qr(id)))).result.one()
+          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).result.one()
           baby should equal(Person("Baby", 21, None, Some(3)))
         }
       }
@@ -147,13 +147,13 @@ case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, t
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val age = column[Int]("age", NotNull)
-    val surname = column[String]("surname")
+    val surname = column[Option[String]]("surname")
   }
   object suppliers extends Table("SUPPLIERS") {
-    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -161,9 +161,9 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val zip = column[String]("ZIP")
   }
   object coffees extends Table("COFFEES") {
-    val id = column[Int]("COF_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
-    val supId = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val supId = column[Option[Int]]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")

@@ -172,8 +172,8 @@ abstract class SQLDatastore protected() extends Datastore {
   protected def invoke(insert: InsertSingle) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.values.head.column.table
-    val columnNames = insert.values.map(cv => cv.column.name).mkString(", ")
-    val columnValues = insert.values.map(cv => cv.toSQL)
+    val columnNames = insert.values.map(_.column.name).mkString(", ")
+    val columnValues = insert.values.map(_.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     inserting.fire(insert)

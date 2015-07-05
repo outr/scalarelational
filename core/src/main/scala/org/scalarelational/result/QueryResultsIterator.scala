@@ -46,9 +46,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     case column: ColumnLike[_] => {
       val c = column.asInstanceOf[ColumnLike[T]]
       val value = rs.getObject(index + 1)
-      val converted =
-        if (value == null) null.asInstanceOf[T]
-        else c.converter.fromSQLType(c, value)
+      val converted = c.converter.fromSQLType(c, value)
       ColumnValue[T](c, converted, None)
     }
     case function: SQLFunction[_] => {

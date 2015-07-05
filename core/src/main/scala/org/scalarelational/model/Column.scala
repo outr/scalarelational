@@ -40,6 +40,8 @@ class Column[T] private[scalarelational](val name: String,
     this
   }
 
+  def opt: ColumnLike[Option[T]] = ColumnOption(this)
+
   def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
 
   def has(property: ColumnProperty): Boolean = has(property.name)

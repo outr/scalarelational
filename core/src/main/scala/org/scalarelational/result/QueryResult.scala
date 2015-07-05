@@ -34,11 +34,7 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
         case c: ColumnLike[_] => c.name
       }
 
-      val value =
-        if (v.value == null) None
-        else v.value
-
-      name -> value
+      name -> v.value
     }.toMap
   }
 

@@ -12,115 +12,135 @@ import org.scalarelational.model.{ColumnLike, Column}
  * @author Matt Hicks <matt@outr.com>
  */
 trait DataType[T] {
-  def sqlType(column: ColumnLike[T]): String
+  def sqlType(column: ColumnLike[_]): String
+  def toSQLType(column: ColumnLike[_], value: T): Any
+  def fromSQLType(column: ColumnLike[_], value: Any): T
+}
 
-  def toSQLType(column: ColumnLike[T], value: T): Any
+object DataTypeGenerators {
+  def option[T](implicit dt: DataType[T]): DataType[Option[T]] = new DataType[Option[T]] {
+    def sqlType(column: ColumnLike[_]) = dt.sqlType(column)
 
-  def fromSQLType(column: ColumnLike[T], value: Any): T
+    def toSQLType(column: ColumnLike[_], value: Option[T]): Any = {
+      value match {
+        case None => null
+        case Some(t) => dt.toSQLType(column, t)
+      }
+    }
+
+    def fromSQLType(column: ColumnLike[_], value: Any): Option[T] =
+      value match {
+        case null => None
+        case t => Some(dt.fromSQLType(column, t))
+      }
+  }
 }
 
 object BooleanDataType extends DataType[Boolean] {
-  def sqlType(column: ColumnLike[Boolean]) = "BOOLEAN"
-  def toSQLType(column: ColumnLike[Boolean], value: Boolean) = value
-  def fromSQLType(column: ColumnLike[Boolean], value: Any) = value.asInstanceOf[Boolean]
+  def sqlType(column: ColumnLike[_]) = "BOOLEAN"
+  def toSQLType(column: ColumnLike[_], value: Boolean) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Boolean]
 }
 
 object IntDataType extends DataType[Int] {
-  def sqlType(column: ColumnLike[Int]) = "INTEGER"
-  def toSQLType(column: ColumnLike[Int], value: Int) = value
-  def fromSQLType(column: ColumnLike[Int], value: Any) = value.asInstanceOf[Int]
+  def sqlType(column: ColumnLike[_]) = "INTEGER"
+  def toSQLType(column: ColumnLike[_], value: Int) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Int]
 }
 
 object JavaIntDataType extends DataType[java.lang.Integer] {
-  def sqlType(column: ColumnLike[java.lang.Integer]) = "INTEGER"
-  def toSQLType(column: ColumnLike[java.lang.Integer], value: java.lang.Integer) = value
-  def fromSQLType(column: ColumnLike[java.lang.Integer], value: Any) = value.asInstanceOf[java.lang.Integer]
+  def sqlType(column: ColumnLike[_]) = "INTEGER"
+  def toSQLType(column: ColumnLike[_], value: java.lang.Integer) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Integer]
 }
 
 object LongDataType extends DataType[Long] {
-  def sqlType(column: ColumnLike[Long]) = "BIGINT"
-  def toSQLType(column: ColumnLike[Long], value: Long) = value
-  def fromSQLType(column: ColumnLike[Long], value: Any) = value.asInstanceOf[Long]
+  def sqlType(column: ColumnLike[_]) = "BIGINT"
+  def toSQLType(column: ColumnLike[_], value: Long) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Long]
 }
 
 object JavaLongDataType extends DataType[java.lang.Long] {
-  def sqlType(column: ColumnLike[java.lang.Long]) = "BIGINT"
-  def toSQLType(column: ColumnLike[java.lang.Long], value: java.lang.Long) = value
-  def fromSQLType(column: ColumnLike[java.lang.Long], value: Any) = value.asInstanceOf[java.lang.Long]
+  def sqlType(column: ColumnLike[_]) = "BIGINT"
+  def toSQLType(column: ColumnLike[_], value: java.lang.Long) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Long]
 }
 
 object DoubleDataType extends DataType[Double] {
-  def sqlType(column: ColumnLike[Double]) = "DOUBLE"
-  def toSQLType(column: ColumnLike[Double], value: Double) = value
-  def fromSQLType(column: ColumnLike[Double], value: Any) = value.asInstanceOf[Double]
+  def sqlType(column: ColumnLike[_]) = "DOUBLE"
+  def toSQLType(column: ColumnLike[_], value: Double) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Double]
 }
 
 object JavaDoubleDataType extends DataType[java.lang.Double] {
-  def sqlType(column: ColumnLike[java.lang.Double]) = "DOUBLE"
-  def toSQLType(column: ColumnLike[java.lang.Double], value: java.lang.Double) = value
-  def fromSQLType(column: ColumnLike[java.lang.Double], value: Any) = value.asInstanceOf[java.lang.Double]
+  def sqlType(column: ColumnLike[_]) = "DOUBLE"
+  def toSQLType(column: ColumnLike[_], value: java.lang.Double) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Double]
 }
 
 object BigDecimalDataType extends DataType[BigDecimal] {
-  def sqlType(column: ColumnLike[BigDecimal]) = {
+  def sqlType(column: ColumnLike[_]) = {
     val numericStorage = column match {
-      case c: Column[BigDecimal] => c.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
+      case c: Column[_] => c.get[NumericStorage](NumericStorage.Name)
+        .getOrElse(NumericStorage.DefaultBigDecimal)
       case _ => NumericStorage.DefaultBigDecimal
     }
     s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
   }
-  def toSQLType(column: ColumnLike[BigDecimal], value: BigDecimal) = value.underlying()
-  def fromSQLType(column: ColumnLike[BigDecimal], value: Any) = BigDecimal(value.asInstanceOf[java.math.BigDecimal])
+  def toSQLType(column: ColumnLike[_], value: BigDecimal) = value.underlying()
+  def fromSQLType(column: ColumnLike[_], value: Any) = BigDecimal(value.asInstanceOf[java.math.BigDecimal])
 }
 
 object StringDataType extends DataType[String] {
   val VarcharType = s"VARCHAR(${Int.MaxValue})"
   val VarcharIngoreCaseType = s"VARCHAR_IGNORECASE(${Int.MaxValue})"
 
-  def sqlType(column: ColumnLike[String]) = column match {
+  def sqlType(column: ColumnLike[_]) = column match {
     case c: Column[_] if c.has(IgnoreCase) => VarcharIngoreCaseType
     case _ => VarcharType
   }
-  def toSQLType(column: ColumnLike[String], value: String) = value
-  def fromSQLType(column: ColumnLike[String], value: Any) = value.asInstanceOf[String]
+  def toSQLType(column: ColumnLike[_], value: String) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[String]
 }
 
 object WrappedStringDataType extends DataType[WrappedString] {
-  def sqlType(column: ColumnLike[WrappedString]) = column match {
+  def sqlType(column: ColumnLike[_]) = column match {
     case c: Column[_] if c.has(IgnoreCase) => StringDataType.VarcharIngoreCaseType
     case _ => StringDataType.VarcharType
   }
-  def toSQLType(column: ColumnLike[WrappedString], value: WrappedString) = value.value
-  def fromSQLType(column: ColumnLike[WrappedString], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
+  def toSQLType(column: ColumnLike[_], value: WrappedString) = value.value
+  def fromSQLType(column: ColumnLike[_], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
 }
 
 object ByteArrayDataType extends DataType[Array[Byte]] {
-  def sqlType(column: ColumnLike[Array[Byte]]) = "BINARY(1000)"
-  def toSQLType(column: ColumnLike[Array[Byte]], value: Array[Byte]) = value
-  def fromSQLType(column: ColumnLike[Array[Byte]], value: Any) = value.asInstanceOf[Array[Byte]]
+  def sqlType(column: ColumnLike[_]) = "BINARY(1000)"
+  def toSQLType(column: ColumnLike[_], value: Array[Byte]) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Array[Byte]]
 }
 
 object BlobDataType extends DataType[Blob] {
-  def sqlType(column: ColumnLike[Blob]) = "BLOB"
-  def toSQLType(column: ColumnLike[Blob], value: Blob) = value
-  def fromSQLType(column: ColumnLike[Blob], value: Any) = value.asInstanceOf[Blob]
+  def sqlType(column: ColumnLike[_]) = "BLOB"
+  def toSQLType(column: ColumnLike[_], value: Blob) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Blob]
 }
 
 object TimestampDataType extends DataType[Timestamp] {
-  def sqlType(column: ColumnLike[Timestamp]) = "TIMESTAMP"
-  def toSQLType(column: ColumnLike[Timestamp], value: Timestamp) = value
-  def fromSQLType(column: ColumnLike[Timestamp], value: Any) = value.asInstanceOf[Timestamp]
+  def sqlType(column: ColumnLike[_]) = "TIMESTAMP"
+  def toSQLType(column: ColumnLike[_], value: Timestamp) = value
+  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Timestamp]
 }
 
 class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataType[T] {
   val enumerated = manifest.runtimeClass.instance.getOrElse(throw new RuntimeException("Unable to find companion for ${manifest.runtimeClass}")).asInstanceOf[Enumerated[T]]
 
-  def sqlType(column: ColumnLike[T]) = s"VARCHAR(${Int.MaxValue})"
-  def toSQLType(column: ColumnLike[T], value: T) = value match {
+  def sqlType(column: ColumnLike[_]) = s"VARCHAR(${Int.MaxValue})"
+
+  def toSQLType(column: ColumnLike[_], value: T) = value match {
     case null => null
     case _ => value.name
   }
-  def fromSQLType(column: ColumnLike[T], value: Any) = value match {
+
+  def fromSQLType(column: ColumnLike[_], value: Any) = value match {
     case null => null.asInstanceOf[T]
     case s: String => enumerated(s)
   }

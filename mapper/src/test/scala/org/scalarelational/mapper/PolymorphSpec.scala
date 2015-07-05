@@ -62,7 +62,7 @@ case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None) e
 
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
   object users extends Table("users") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", NotNull)
     val canDelete = column[Boolean]("canDelete")
     val isGuest = column[Boolean]("isGuest", NotNull)
