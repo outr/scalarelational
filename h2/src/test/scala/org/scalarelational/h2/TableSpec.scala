@@ -568,10 +568,8 @@ object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types"
     implicit val listStringConverter = new DataType[List[String]] {
       def sqlType(column: ColumnLike[_]) = StringDataType.VarcharType
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
-      def fromSQLType(column: ColumnLike[_], value: Any) = value match {
-        case null => Nil
-        case s: String => s.split('|').toList
-      }
+      def fromSQLType(column: ColumnLike[_], value: Any) =
+        value.asInstanceOf[String].split('|').toList
     }
 
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
