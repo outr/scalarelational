@@ -18,7 +18,7 @@ class ColumnValue[T] private(val column: ColumnLike[T],
       }
     } catch {
       case t: Throwable =>
-        val sourceClass = manifest.runtimeClass
+        val sourceClass = column.manifest.runtimeClass
         val targetClass = value.getClass
         throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (column = $column, value = $value)")
     }
