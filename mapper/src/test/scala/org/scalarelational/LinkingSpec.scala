@@ -41,7 +41,7 @@ class LinkingSpec extends WordSpec with Matchers {
         val result =
           (Tag.q
             from Tag
-            innerJoin ContentTagLinking on ContentTagLinking.tagId === Tag.id
+            innerJoin ContentTagLinking on ContentTagLinking.tagId.opt === Tag.id
             where ContentTagLinking.contentId === 1
           ).result.toList
 
@@ -54,12 +54,12 @@ class LinkingSpec extends WordSpec with Matchers {
 
 object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) {
   object Content extends Table("Content") {
-    val id = column[Int]("id", AutoIncrement, PrimaryKey)
+    val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
     val title = column[String]("title", NotNull)
   }
 
   object Tag extends Table("Tag") {
-    val id = column[Int]("id", AutoIncrement, PrimaryKey)
+    val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
     val name = column[String]("name", Unique, NotNull, IgnoreCase)
   }
 
