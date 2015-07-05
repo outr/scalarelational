@@ -247,9 +247,6 @@ abstract class SQLDatastore protected() extends Datastore {
     case c: ColumnCondition[_] => {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
-    case c: NullCondition[_] => {
-      s"${c.column.longName} ${c.operator.symbol} NULL"
-    }
     case c: DirectCondition[_] => {
       args += c.column.converter.asInstanceOf[DataType[Any]].toSQLType(c.column, c.value)
       s"${c.column.longName} ${c.operator.symbol} ?"
