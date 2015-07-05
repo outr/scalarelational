@@ -70,22 +70,18 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: DataType[T], manifest: Manifest[T]) = {
-    val c = new Column[T](name, converter, manifest, this)
-    c.props(properties: _*)
-  }
+               (implicit converter: DataType[T], manifest: Manifest[T]) =
+    new Column[T](name, converter, manifest, this, properties)
 
   def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]) = {
-    val c = new Column[T](name, converter, manifest, this)
-    c.props(properties: _*)
-  }
+               (implicit manifest: Manifest[T]) =
+    new Column[T](name, converter, manifest, this, properties)
 
   protected[model] def fieldName(column: Column[_]) = {
     getClass.getDeclaredFields.find(f => {
       f.setAccessible(true)
       f.get(this) == column
-    }).map(f => f.getName).getOrElse(throw new RuntimeException(s"Unable to find fieldName in ${tableName} for ${column.name}."))
+    }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in $tableName for ${column.name}."))
   }
 
   def exists = datastore.doesTableExist(tableName)

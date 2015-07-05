@@ -1,53 +1,35 @@
 package org.scalarelational.model
 
-import org.powerscala.reflect._
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.DataType
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class Column[T] private[scalarelational](val name: String,
-                        val converter: DataType[T],
-                        val manifest: Manifest[T],
-                        val table: Table) extends ColumnLike[T] {
-  private var _properties = Map.empty[String, ColumnProperty]
-  def properties = _properties.values
+private[scalarelational] class Column[T](val name: String,
+                                         val converter: DataType[T],
+                                         val manifest: Manifest[T],
+                                         val table: Table,
+                                         val props: Seq[ColumnProperty]
+                                        ) extends ColumnLike[T] {
+  table.addColumn(this)     // Add this column to the table
+  props.foreach(_.addedTo(this))
 
-  lazy val classType: EnhancedClass = manifest.runtimeClass
+  val properties = props.map(p => p.name -> p).toMap
 
+  lazy val classType = manifest.runtimeClass
   lazy val longName = s"${table.tableName}.$name"
-
   lazy val index = table.columns.indexOf(this)
-
   lazy val fieldName = table.fieldName(this)
 
-  table.addColumn(this)     // Add this column to the table
-
-  /**
-   * Adds the supplied properties to this column.
-   *
-   * @param properties the properties to add
-   * @return this
-   */
-  def props(properties: ColumnProperty*) = synchronized {
-    properties.foreach {
-      case p => {
-        _properties += p.name -> p
-        p.addedTo(this)
-      }
-    }
-    this
-  }
-
   def opt: ColumnLike[Option[T]] = ColumnOption(this)
-
   def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
 
   def has(property: ColumnProperty): Boolean = has(property.name)
-  def has(propertyName: String): Boolean = _properties.contains(propertyName)
-  def get[P <: ColumnProperty](propertyName: String): Option[P] = _properties.get(propertyName).asInstanceOf[Option[P]]
-  def prop[P <: ColumnProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in column '$longName'."))
+  def has(propertyName: String): Boolean = properties.contains(propertyName)
+  def get[P <: ColumnProperty](propertyName: String): Option[P] = properties.get(propertyName).asInstanceOf[Option[P]]
+  def prop[P <: ColumnProperty](propertyName: String) = get[P](propertyName)
+    .getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in column '$longName'."))
 
   override def toString = name
 }

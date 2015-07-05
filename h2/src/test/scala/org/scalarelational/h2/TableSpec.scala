@@ -553,7 +553,7 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
   object first extends Table("first") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
-    val secondId = column[Int]("secondId")
+    val secondId = column[Int]("secondId", new ForeignKey(second.id))
   }
 
   object second extends Table("second") {
@@ -561,8 +561,6 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
     val value = column[Int]("value")
     val firstId = column[Int]("firstId", new ForeignKey(first.id))
   }
-
-  first.secondId.props(new ForeignKey(second.id))
 }
 
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
