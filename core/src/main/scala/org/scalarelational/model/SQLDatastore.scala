@@ -90,7 +90,7 @@ abstract class SQLDatastore protected() extends Datastore {
     b.append(column.name)
     b.append(' ')
     b.append(column.sqlType)
-    if (column.has(NotNull)) {
+    if (!column.isOptional && !column.has(Polymorphic)) {
       b.append(" NOT NULL")
     }
     if (column.has(AutoIncrement)) {

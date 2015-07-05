@@ -24,4 +24,6 @@ case class ColumnAlias[T](column: ColumnLike[T],
 
   def has(property: ColumnProperty): Boolean = column.has(property)
   def get[P <: ColumnProperty](propertyName: String): Option[P] = column.get(propertyName)
+
+  def isOptional: Boolean = column.isOptional
 }

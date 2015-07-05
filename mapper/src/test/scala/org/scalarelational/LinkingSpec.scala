@@ -55,12 +55,12 @@ class LinkingSpec extends WordSpec with Matchers {
 object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) {
   object Content extends Table("Content") {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
-    val title = column[String]("title", NotNull)
+    val title = column[String]("title")
   }
 
   object Tag extends Table("Tag") {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
-    val name = column[String]("name", Unique, NotNull, IgnoreCase)
+    val name = column[String]("name", Unique, IgnoreCase)
   }
 
   object ContentTagLinking extends LinkingTable("ContentTagLinking", Content.id, Tag.id) {

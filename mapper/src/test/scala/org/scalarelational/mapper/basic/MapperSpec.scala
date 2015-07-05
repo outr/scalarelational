@@ -148,8 +148,8 @@ case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, t
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends Table("person") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", NotNull)
-    val age = column[Int]("age", NotNull)
+    val name = column[String]("name")
+    val age = column[Int]("age")
     val surname = column[Option[String]]("surname")
   }
   object suppliers extends Table("SUPPLIERS") {

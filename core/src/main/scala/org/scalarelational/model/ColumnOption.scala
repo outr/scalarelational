@@ -11,4 +11,5 @@ case class ColumnOption[T](column: ColumnLike[T]) extends ColumnLike[Option[T]] 
   def manifest: Manifest[Option[T]] = column.manifest.asInstanceOf[Manifest[Option[T]]]
   def has(property: ColumnProperty): Boolean = column.has(property)
   def get[P <: ColumnProperty](propertyName: String): Option[P] = column.get(propertyName)
+  def isOptional: Boolean = true
 }

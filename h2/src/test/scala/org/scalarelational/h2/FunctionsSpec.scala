@@ -1,7 +1,7 @@
 package org.scalarelational.h2
 
 import java.sql.Connection
-import org.scalarelational.column.property.{AutoIncrement, NotNull, PrimaryKey, Unique}
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
 
@@ -49,8 +49,8 @@ class FunctionsSpec extends WordSpec with Matchers {
 object FunctionsDatastore extends H2Datastore(mode = H2Memory("functions")) {
   object users extends Table("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", NotNull, Unique)
-    val age = column[Int]("age", NotNull)
+    val name = column[String]("name", Unique)
+    val age = column[Int]("age")
   }
 
   val createUser = function(Functions, "createUser") {

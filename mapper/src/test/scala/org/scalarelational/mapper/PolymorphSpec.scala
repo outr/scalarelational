@@ -1,6 +1,6 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.column.property.{AutoIncrement, NotNull, PrimaryKey}
+import org.scalarelational.column.property.{Polymorphic, AutoIncrement, PrimaryKey}
 import org.scalarelational.h2.{H2Memory, H2Datastore}
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
@@ -63,8 +63,8 @@ case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None) e
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
   object users extends Table("users") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", NotNull)
-    val canDelete = column[Boolean]("canDelete")
-    val isGuest = column[Boolean]("isGuest", NotNull)
+    val name = column[String]("name")
+    val canDelete = column[Boolean]("canDelete", Polymorphic)
+    val isGuest = column[Boolean]("isGuest")
   }
 }
