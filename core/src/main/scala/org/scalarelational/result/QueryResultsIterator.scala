@@ -2,6 +2,7 @@ package org.scalarelational.result
 
 import java.sql.ResultSet
 
+import org.scalarelational.column.property.Polymorphic
 import org.scalarelational.{SelectExpression, ColumnValue}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction.Query
@@ -16,7 +17,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   private val NothingLeft = 2
   private var nextStatus = NextNotCalled
 
-  def converted = new EnhancedIterator[R](this.map(qr => qr.converted))
+  def converted = new EnhancedIterator[R](map(_.converted))
 
   def hasNext = synchronized {
     if (nextStatus == NextNotCalled) {
@@ -46,7 +47,9 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     case column: ColumnLike[_] => {
       val c = column.asInstanceOf[ColumnLike[T]]
       val value = rs.getObject(index + 1)
-      val converted = c.converter.fromSQLType(c, value)
+      val converted =
+        if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
+        else c.converter.fromSQLType(c, value)
       ColumnValue[T](c, converted, None)
     }
     case function: SQLFunction[_] => {
