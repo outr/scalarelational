@@ -37,7 +37,7 @@ trait ColumnLike[T] extends SelectExpression[T] {
       case t: Throwable =>
         val sourceClass = manifest.runtimeClass
         val targetClass = v.getClass
-        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (column = $this, value = $toConvert)")
+        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (table = $table, column = $this, value = $toConvert)")
     }
   }
 

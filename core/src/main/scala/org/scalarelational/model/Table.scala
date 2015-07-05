@@ -111,7 +111,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def get[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
   def prop[P <: TableProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in table '$tableName'."))
 
-  override def toString = s"Table($tableName)"
+  override def toString = tableName
 }
 
 object Table {

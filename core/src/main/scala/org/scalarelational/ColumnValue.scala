@@ -20,7 +20,7 @@ class ColumnValue[T] private(val column: ColumnLike[T],
       case t: Throwable =>
         val sourceClass = column.manifest.runtimeClass
         val targetClass = value.getClass
-        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (column = $column, value = $value)")
+        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (table = ${column.table}, column = $column, value = $value)")
     }
 
   override def toString = s"$column: $value"
