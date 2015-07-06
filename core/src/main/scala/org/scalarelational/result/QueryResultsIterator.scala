@@ -3,7 +3,8 @@ package org.scalarelational.result
 import java.sql.ResultSet
 
 import org.scalarelational.column.property.Polymorphic
-import org.scalarelational.{SelectExpression, ColumnValue}
+import org.scalarelational.datatype.DataType
+import org.scalarelational.{ExpressionValue, SelectExpression, ColumnValue}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction.Query
 import org.scalarelational.model.ColumnLike
@@ -29,7 +30,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   def nextOption() = if (hasNext) {
     try {
       val values = query.asVector.zipWithIndex.map {
-        case (expression, index) => valueFromExpressions[Any](expression.asInstanceOf[SelectExpression[Any]], index)
+        case (expression, index) => valueFromExpressions(expression, index)
       }
       Some(QueryResult[R](query.table, values, query.converter))
     } finally {
@@ -43,20 +44,24 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
-  protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int) = expression match {
-    case column: ColumnLike[_] => {
-      val c = column.asInstanceOf[ColumnLike[T]]
-      val value = rs.getObject(index + 1)
-      val converted =
-        if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
-        else c.converter.fromSQLType(c, value)
-      ColumnValue[T](c, converted, None)
-    }
-    case function: SQLFunction[_] => {
-      val f = function.asInstanceOf[SQLFunction[T]]
-      SQLFunctionValue[T](f, rs.getObject(index + 1).asInstanceOf[T])
-    }
+  protected def columnValue[T](rs: ResultSet, index: Int, c: ColumnLike[_], converter: DataType[T]): T = {
+    val value = rs.getObject(index + 1)
+    if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
+    else converter.fromSQLType(c, value)
   }
+
+  protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int): ExpressionValue[T] =
+    expression match {
+      case column: ColumnLike[T] => {
+        val value = columnValue(rs, index, column, column.converter)
+        ColumnValue(column, value, None)
+      }
+
+      case function: SQLFunction[T] => {
+        val value = columnValue(rs, index, function.column, function.converter)
+        SQLFunctionValue(function, value)
+      }
+    }
 
   def one = if (hasNext) {
     val n = next()

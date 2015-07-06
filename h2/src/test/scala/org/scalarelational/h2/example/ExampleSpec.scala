@@ -34,11 +34,11 @@ class ExampleSpec extends WordSpec with Matchers {
 
       session {
         // Batch insert some coffees
-        insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0)).
-           and(name("French Roast"), supID(49), price(8.99), sales(0), total(0)).
-           and(name("Espresso"), supID(150), price(9.99), sales(0), total(0)).
-           and(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0)).
-           and(name("French Roast Decaf"), supID(49), price(9.99), sales(0), total(0)).result
+        insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
+           and(name("French Roast"), supID(49), price(8.99), sales(0), total(0), rating(Some(0.3))).
+           and(name("Espresso"), supID(150), price(9.99), sales(0), total(0), rating(None)).
+           and(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0), rating(Some(0.2))).
+           and(name("French Roast Decaf"), supID(49), price(9.99), sales(0), total(0), rating(None)).result
       }
     }
     "query all coffees back" in {
@@ -59,6 +59,23 @@ class ExampleSpec extends WordSpec with Matchers {
         }
       }
     }
+    "query rating.avg" in {
+      import coffees._
+      session {
+        (select (rating.avg)
+          from coffees
+        ).result.one(rating.avg).get should be > 0.0
+      }
+    }
+    "query rating.avg without None" in {
+      import coffees._
+      session {
+        (select (rating.avg)
+          from coffees
+          where rating != None
+        ).result.one(rating.avg).get should be > 0.0
+      }
+    }
   }
 }
 
@@ -77,6 +94,7 @@ object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
     val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
+    val rating = column[Option[Double]]("RATING")
     val total = column[Int]("TOTAL")
   }
 }

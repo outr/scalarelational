@@ -2,9 +2,9 @@ package org.scalarelational.model
 
 import org.scalarelational._
 import org.scalarelational.column.property.ColumnProperty
-import org.scalarelational.fun.{SimpleFunction, FunctionType}
+import org.scalarelational.fun.{SQLFunction, FunctionType}
 import org.scalarelational.op._
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{LongDataType, DataType}
 
 import scala.util.matching.Regex
 
@@ -62,9 +62,9 @@ trait ColumnLike[T] extends SelectExpression[T] {
 
   def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
 
-  def avg = SimpleFunction[T](FunctionType.Avg, this)
-  def count = SimpleFunction[Long](FunctionType.Count, this)
-  def min = SimpleFunction[T](FunctionType.Min, this)
-  def max = SimpleFunction[T](FunctionType.Max, this)
-  def sum = SimpleFunction[T](FunctionType.Sum, this)
+  def avg = SQLFunction[T](FunctionType.Avg, this, converter)
+  def count = SQLFunction[Long](FunctionType.Count, this, LongDataType)
+  def min = SQLFunction[T](FunctionType.Min, this, converter)
+  def max = SQLFunction[T](FunctionType.Max, this, converter)
+  def sum = SQLFunction[T](FunctionType.Sum, this, converter)
 }

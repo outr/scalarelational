@@ -5,10 +5,10 @@ import javax.sql.DataSource
 
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.property.Property
+import org.scalarelational.fun.SQLFunction
 import org.scalarelational.{TableAlias, SelectExpression}
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.DataType
-import org.scalarelational.fun.SimpleFunction
 import org.scalarelational.instruction._
 import org.scalarelational.model.table.property.Index
 import org.scalarelational.op._
@@ -104,7 +104,7 @@ abstract class SQLDatastore protected() extends Datastore {
 
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_] => c.longName
-    case f: SimpleFunction[_] => f.alias match {
+    case f: SQLFunction[_] => f.alias match {
       case Some(alias) => s"${f.functionType.name.toUpperCase}(${f.column.longName}) AS $alias"
       case None => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
     }
