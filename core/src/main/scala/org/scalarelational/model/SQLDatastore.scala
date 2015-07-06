@@ -248,8 +248,10 @@ abstract class SQLDatastore protected() extends Datastore {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
     case c: DirectCondition[_] => {
-      args += c.column.converter.asInstanceOf[DataType[Any]].toSQLType(c.column, c.value)
-      s"${c.column.longName} ${c.operator.symbol} ?"
+      val conv = c.column.converter.asInstanceOf[DataType[Any]]
+      val op = conv.sqlOperator(c.column, c.value, c.operator)
+      args += conv.toSQLType(c.column, c.value)
+      s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_] => {
       args += c.pattern

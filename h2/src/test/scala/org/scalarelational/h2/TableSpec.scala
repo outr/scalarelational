@@ -113,6 +113,21 @@ class TableSpec extends WordSpec with Matchers {
         results.size should equal (2)
       }
     }
+    "query with valid None comparison" in {
+      session {
+        val query = select (test.id) from test where test.id != None
+        val results = query.result.toList
+        results.size should equal (2)
+      }
+    }
+    "query with invalid None comparison" in {
+      session {
+        intercept[RuntimeException] {
+          val query = select (test.id) from test where test.id > None
+          query.result
+        }
+      }
+    }
     "query two records back via regular expression" in {
       session {
         val query = select(test.id, test.name) from test where test.name * ".*Doe".r

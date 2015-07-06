@@ -7,12 +7,14 @@ import org.powerscala.reflect._
 import org.scalarelational.column.WrappedString
 import org.scalarelational.column.property.{IgnoreCase, NumericStorage}
 import org.scalarelational.model.ColumnLike
+import org.scalarelational.op.Operator
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait DataType[T] {
   def sqlType(column: ColumnLike[_]): String
+  def sqlOperator(column: ColumnLike[_], value: T, op: Operator): Operator = op
   def toSQLType(column: ColumnLike[_], value: T): Any
   def fromSQLType(column: ColumnLike[_], value: Any): T
 }
@@ -21,12 +23,19 @@ object DataTypeGenerators {
   def option[T](implicit dt: DataType[T]): DataType[Option[T]] = new DataType[Option[T]] {
     def sqlType(column: ColumnLike[_]) = dt.sqlType(column)
 
-    def toSQLType(column: ColumnLike[_], value: Option[T]): Any = {
+    override def sqlOperator(column: ColumnLike[_], value: Option[T], op: Operator): Operator =
+      (value, op) match {
+        case (None, Operator.Equal) => Operator.Is
+        case (None, Operator.NotEqual) => Operator.IsNot
+        case (None, _) => throw new RuntimeException(s"Operator $op cannot take None (column = $column)")
+        case (Some(t), _) => op
+      }
+
+    def toSQLType(column: ColumnLike[_], value: Option[T]): Any =
       value match {
         case None => null
         case Some(t) => dt.toSQLType(column, t)
       }
-    }
 
     def fromSQLType(column: ColumnLike[_], value: Any): Option[T] =
       value match {
