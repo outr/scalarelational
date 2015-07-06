@@ -4,6 +4,7 @@ import org.scalarelational.column.property._
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
+import org.scalarelational.mapper._
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>
@@ -34,6 +35,13 @@ class InheritanceSpec extends WordSpec with Matchers {
           .result.hasNext should equal (true)
       }
     }
+
+    "query content with mapper" in {
+      session {
+        val query = Content.q from Content where Content.id === Some(2)
+        query.to[Content].result.converted.head should equal (Content("content2", Some(2)))
+      }
+    }
   }
 }
 
@@ -45,4 +53,10 @@ object InheritanceDatastore extends H2Datastore(mode = H2Memory("inheritance_tes
   object Content extends BaseTable("Content") {
     val title = column[String]("title")
   }
+
+  trait Base {
+    def id: Option[Int]
+  }
+
+  case class Content(title: String, id: Option[Int] = None) extends Base
 }

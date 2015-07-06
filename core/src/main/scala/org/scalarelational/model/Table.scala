@@ -1,5 +1,7 @@
 package org.scalarelational.model
 
+import java.lang.reflect.Field
+
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.Joinable
@@ -77,8 +79,15 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
                (implicit manifest: Manifest[T]) =
     new Column[T](name, converter, manifest, this, properties)
 
+  protected[model] def allFields(tpe: Class[_]): Seq[Field] = {
+    tpe.getSuperclass match {
+      case null => tpe.getDeclaredFields
+      case s => tpe.getDeclaredFields ++ allFields(s)
+    }
+  }
+
   protected[model] def fieldName(column: Column[_]) = {
-    getClass.getDeclaredFields.find(f => {
+    allFields(getClass).find(f => {
       f.setAccessible(true)
       f.get(this) == column
     }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
