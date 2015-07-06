@@ -81,7 +81,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
     getClass.getDeclaredFields.find(f => {
       f.setAccessible(true)
       f.get(this) == column
-    }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in $tableName for ${column.name}."))
+    }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
   }
 
   def exists = datastore.doesTableExist(tableName)
