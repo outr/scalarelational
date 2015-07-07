@@ -159,23 +159,9 @@ class ModularSpec extends WordSpec with Matchers {
        */
       val DummyValue = 1
 
-      def updateModified(values: List[ColumnValue[_]]): List[ColumnValue[_]] =
-        values.map {
-          case v: ColumnValue[Option[Timestamp]] if v.column.name == "modified" =>
-            ColumnValue(
-              v.column,
-              Some(new Timestamp(System.currentTimeMillis() + DummyValue)),
-              v.converterOverride
-            )
-
-          case v => v
-        }
-
       users.handlers.updating.on {
         case update =>
-          update.copy(
-            values = updateModified(update.values)
-          )
+          update.add(users.modified(Some(new Timestamp(System.currentTimeMillis() + DummyValue))))
       }
     }
     "updating second record" in {

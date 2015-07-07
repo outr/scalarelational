@@ -17,5 +17,14 @@ case class Update(values: List[ColumnValue[_]],
     datastore.exec(this)
   }
 
+  /**
+   * Returns a new copy of this Update with an additional column value. Will
+   * replace if the column is already represented.
+   */
+  def add(value: ColumnValue[_]): Update = {
+    val filtered = values.filterNot(_.column == value.column)
+    copy(values = value :: filtered.toList)
+  }
+
   override def toString = s"Update(values = ${values.mkString(", ")}, table = ${table.tableName}, where = $whereCondition)"
 }

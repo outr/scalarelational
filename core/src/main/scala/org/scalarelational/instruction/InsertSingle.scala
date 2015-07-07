@@ -18,7 +18,7 @@ case class InsertSingle(values: Seq[ColumnValue[_]]) extends Insert with Instruc
   }
 
   override def add(value: ColumnValue[_]): InsertSingle = {
-    val filtered = values.filterNot(cv => cv.column == value.column)
-    copy(value :: filtered.toList)
+    val filtered = values.filterNot(_.column == value.column)
+    copy(values = value :: filtered.toList)
   }
 }

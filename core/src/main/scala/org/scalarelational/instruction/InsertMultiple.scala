@@ -9,11 +9,13 @@ case class InsertMultiple(rows: Seq[Seq[ColumnValue[_]]]) extends Insert with In
   override def table = rows.head.head.column.table
 
   def result = thisDatastore.exec(this)
+
   def and(nextRow: ColumnValue[_]*) = {
     InsertMultiple(rows ++ Seq(nextRow))
   }
+
   override def add(value: ColumnValue[_]): InsertMultiple = {
-    val filtered = rows.map(row => row.filterNot(cv => cv.column == value.column))
-    copy(filtered.map(row => value :: row.toList))
+    val filtered = rows.map(_.filterNot(_.column == value.column))
+    copy(rows = filtered.map(row => value :: row.toList))
   }
 }

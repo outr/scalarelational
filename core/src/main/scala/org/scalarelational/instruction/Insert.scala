@@ -9,8 +9,8 @@ trait Insert {
   def rows: Seq[Seq[ColumnValue[_]]]
 
   /**
-   * Returns a new copy of this Insert with an additional column value added to each row. Will replace if the column is
-   * already represented.
+   * Returns a new copy of this Insert with an additional column value added to
+   * each row. Will replace if the column is already represented.
    */
   def add(value: ColumnValue[_]): Insert
 }
