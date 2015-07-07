@@ -40,6 +40,7 @@ trait ColumnLike[T] extends SelectExpression[T] {
   def isNotNull = NullCondition(this, Operator.IsNot)
   def ===(value: T) = DirectCondition(this, Operator.Equal, value)
   def !==(value: T) = DirectCondition(this, Operator.NotEqual, value)
+  def <>(value: T) = DirectCondition(this, Operator.NotEqual, value)
   def >(value: T) = DirectCondition(this, Operator.GreaterThan, value)
   def <(value: T) = DirectCondition(this, Operator.LessThan, value)
   def >=(value: T) = DirectCondition(this, Operator.GreaterThanOrEqual, value)
