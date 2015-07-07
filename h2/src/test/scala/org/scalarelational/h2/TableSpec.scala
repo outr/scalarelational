@@ -116,6 +116,9 @@ class TableSpec extends WordSpec with Matchers {
     "query with valid None comparison" in {
       session {
         val query = select (test.id) from test where test.id != None
+        describe(query) should equal (
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(null))
+        )
         val results = query.result.toList
         results.size should equal (2)
       }
