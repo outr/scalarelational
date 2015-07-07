@@ -33,7 +33,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(test)
-      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
+      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(1024) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
     "verify that there are no tables currently created" in {
       session {
@@ -539,7 +539,7 @@ class TableSpec extends WordSpec with Matchers {
 object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with HikariSupport {
   object test extends Table("test_table") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", Unique)
+    val name = column[String]("name", Unique, ColumnLength(1024))
     val date = column[Option[Timestamp]]("date")
   }
   object suppliers extends Table("SUPPLIER") {
@@ -584,7 +584,7 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(column: ColumnLike[_]) = StringDataType.VarcharType
+      def sqlType(column: ColumnLike[_]) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =
         value.asInstanceOf[String].split('|').toList

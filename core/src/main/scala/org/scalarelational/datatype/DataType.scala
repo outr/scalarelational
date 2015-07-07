@@ -5,7 +5,7 @@ import java.sql.{Blob, Timestamp}
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
 import org.scalarelational.column.WrappedString
-import org.scalarelational.column.property.{IgnoreCase, NumericStorage}
+import org.scalarelational.column.property.{ColumnLength, IgnoreCase, NumericStorage}
 import org.scalarelational.model.ColumnLike
 import org.scalarelational.op.Operator
 
@@ -99,26 +99,32 @@ object BigDecimalDataType extends DataType[BigDecimal] {
 }
 
 object StringDataType extends DataType[String] {
-  val VarcharType = s"VARCHAR(${Int.MaxValue})"
-  val VarcharIngoreCaseType = s"VARCHAR_IGNORECASE(${Int.MaxValue})"
-
-  def sqlType(column: ColumnLike[_]) =
-    if (column.has(IgnoreCase)) VarcharIngoreCaseType
-    else VarcharType
+  def sqlType(column: ColumnLike[_]) = {
+    val length =
+      column.get[ColumnLength](ColumnLength.Name)
+        .map(_.length)
+        .getOrElse(ColumnLength.DefaultVarChar)
+    if (column.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
+    else s"VARCHAR($length)"
+  }
   def toSQLType(column: ColumnLike[_], value: String) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[String]
 }
 
 object WrappedStringDataType extends DataType[WrappedString] {
-  def sqlType(column: ColumnLike[_]) =
-    if (column.has(IgnoreCase)) StringDataType.VarcharIngoreCaseType
-    else StringDataType.VarcharType
+  def sqlType(column: ColumnLike[_]) = StringDataType.sqlType(column)
   def toSQLType(column: ColumnLike[_], value: WrappedString) = value.value
   def fromSQLType(column: ColumnLike[_], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
 }
 
 object ByteArrayDataType extends DataType[Array[Byte]] {
-  def sqlType(column: ColumnLike[_]) = "BINARY(1000)"
+  def sqlType(column: ColumnLike[_]) = {
+    val length =
+      column.get[ColumnLength](ColumnLength.Name)
+        .map(_.length)
+        .getOrElse(ColumnLength.DefaultBinary)
+    s"BINARY($length)"
+  }
   def toSQLType(column: ColumnLike[_], value: Array[Byte]) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Array[Byte]]
 }
@@ -140,7 +146,7 @@ class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataT
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
     .asInstanceOf[Enumerated[T]]
 
-  def sqlType(column: ColumnLike[_]) = s"VARCHAR(${Int.MaxValue})"
+  def sqlType(column: ColumnLike[_]) = s"VARCHAR(${enumerated.values.size})"
   def toSQLType(column: ColumnLike[_], value: T) = value.name
   def fromSQLType(column: ColumnLike[_], value: Any) =
     enumerated(value.asInstanceOf[String])
