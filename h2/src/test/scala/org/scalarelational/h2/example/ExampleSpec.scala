@@ -1,7 +1,6 @@
 package org.scalarelational.h2.example
 
-import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey}
-import org.scalarelational.dsl._
+import org.scalarelational.column.property.{ForeignKey, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
@@ -72,7 +71,7 @@ class ExampleSpec extends WordSpec with Matchers {
       session {
         (select (rating.avg)
           from coffees
-          where rating != None
+          where rating.!==(None) // !== conflicts with ScalaTest
         ).result.one(rating.avg).get should be > 0.0
       }
     }

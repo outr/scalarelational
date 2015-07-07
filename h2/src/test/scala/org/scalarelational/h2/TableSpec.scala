@@ -115,7 +115,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query with valid None comparison" in {
       session {
-        val query = select (test.id) from test where test.id != None
+        val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
           ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(null))
         )
