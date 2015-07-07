@@ -154,12 +154,17 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "add a special 'modified' handler" in {
+      /* We will compare `modified` in the next test to `created`. Ensure that
+       * `modified` cannot have the same timestamp.
+       */
+      val DummyValue = 1
+
       def updateModified(values: List[ColumnValue[_]]): List[ColumnValue[_]] =
         values.map {
           case v: ColumnValue[Option[Timestamp]] if v.column.name == "modified" =>
             ColumnValue(
               v.column,
-              Some(new Timestamp(System.currentTimeMillis())),
+              Some(new Timestamp(System.currentTimeMillis() + DummyValue)),
               v.converterOverride
             )
 
