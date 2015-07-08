@@ -1,6 +1,5 @@
 package org.scalarelational
 
-import org.powerscala.concurrent.Executor
 import org.scalarelational.model.Datastore
 
 import scala.concurrent._
@@ -13,21 +12,22 @@ trait SessionSupport {
 
   protected def executionContext = ExecutionContext.global
 
-  private val _session = new ThreadLocal[Session]
-  protected[scalarelational] def session = _session.get() match {
+  protected val _session = new ThreadLocal[Session]
+  def session = _session.get() match {
     case null => throw new RuntimeException(s"No session defined in the current thread. SQL calls must be executed in a session or transaction block.")
     case c => c
   }
-
-  protected[scalarelational] def connection = session.connection
-  protected[scalarelational] def hasSession = _session.get() != null
+  def connection = session.connection
+  def hasSession = _session.get() != null
 
   protected def createSession() = if (hasSession) {
     false
   } else {
-    _session.set(Session(this))
+    _session.set(instantiateSession())
     true
   }
+
+  protected def instantiateSession(): Session = Session(this)
 
   protected def disposeSession() = {
     if (!hasSession) throw new RuntimeException(s"No context currently exists in current thread...cannot dispose.")

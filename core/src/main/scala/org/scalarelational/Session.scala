@@ -8,9 +8,12 @@ import org.scalarelational.model.Datastore
  * @author Matt Hicks <matt@outr.com>
  */
 case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
+  private var _disposed = false
   private var _connection: Option[Connection] = None
 
+  def hasConnection = _connection.nonEmpty
   def connection = _connection match {
+    case _ if disposed => throw new RuntimeException("Session is disposed.")
     case Some(c) => c
     case None => {
       val c = datastore.dataSource.getConnection
@@ -85,10 +88,13 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   def commit() = connection.commit()
   def rollback() = connection.rollback()
 
-  protected[scalarelational] def dispose() = {
+  def disposed = _disposed
+
+  protected[scalarelational] def dispose() = if (!disposed) {
     _connection match {
       case Some(c) => c.close()
       case None => // No connection ever created
     }
+    _disposed = true
   }
 }
