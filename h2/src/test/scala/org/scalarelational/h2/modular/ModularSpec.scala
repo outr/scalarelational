@@ -205,8 +205,8 @@ object ModularDatastore extends H2Datastore {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
   }
 
-  // If multiple classes should be equipped with `created` and `modified` fields,
-  // then this mixin can be used.
+  // If more than one table should be equipped with `created` and `modified`
+  // fields that get updated automatically, then this mixin can be used.
   trait Timestamps extends ModularSupport {
     // TODO How can we get rid of this method?
     def column[T](name : String, properties : ColumnProperty*)
