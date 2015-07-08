@@ -1,10 +1,10 @@
 package org.scalarelational.model
 
-import org.powerscala.reflect.EnhancedMethod
 import org.scalarelational._
-import org.scalarelational.fun.{SimpleFunction, FunctionType}
+import org.scalarelational.column.property.ColumnProperty
+import org.scalarelational.fun.{SQLFunction, FunctionType}
 import org.scalarelational.op._
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{LongDataType, DataType}
 
 import scala.util.matching.Regex
 
@@ -17,27 +17,31 @@ trait ColumnLike[T] extends SelectExpression[T] {
   def table: Table
   def converter: DataType[T]
   def manifest: Manifest[T]
+  def has(property: ColumnProperty): Boolean
+  def get[P <: ColumnProperty](propertyName: String): Option[P]
+  def isOptional: Boolean
 
   def sqlType = converter.sqlType(this)
 
-  def apply(value: T, converterOverride: Option[DataType[T]] = None) = ColumnValue[T](this, value, converterOverride)
-  def value(v: Any) = {
+  def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
+    ColumnValue[T](this, value, converterOverride)
+
+  def value(v: Any): T = {
     val toConvert = v match {
       case cv: ColumnValue[_] => cv.toSQL
       case _ => v
     }
+
     try {
-      val value = EnhancedMethod.convertTo(name, toConvert, manifest.runtimeClass).asInstanceOf[T]
-      apply(value)
+      toConvert.asInstanceOf[T]
     } catch {
-      case t: Throwable => {
-        throw new RuntimeException(s"Name: $name, Value: $v, toConvert: $toConvert, Class: ${manifest.runtimeClass}", t)
-      }
+      case t: Throwable =>
+        val sourceClass = manifest.runtimeClass
+        val targetClass = v.getClass
+        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (table = $table, column = $this, value = $toConvert)")
     }
   }
 
-  def isNull = NullCondition(this, Operator.Is)
-  def isNotNull = NullCondition(this, Operator.IsNot)
   def ===(value: T) = DirectCondition(this, Operator.Equal, value)
   def !==(value: T) = DirectCondition(this, Operator.NotEqual, value)
   def <>(value: T) = DirectCondition(this, Operator.NotEqual, value)
@@ -58,9 +62,9 @@ trait ColumnLike[T] extends SelectExpression[T] {
 
   def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
 
-  def avg = SimpleFunction[T](FunctionType.Avg, this)
-  def count = SimpleFunction[Long](FunctionType.Count, this)
-  def min = SimpleFunction[T](FunctionType.Min, this)
-  def max = SimpleFunction[T](FunctionType.Max, this)
-  def sum = SimpleFunction[T](FunctionType.Sum, this)
+  def avg = SQLFunction[T](FunctionType.Avg, this, converter)
+  def count = SQLFunction[Long](FunctionType.Count, this, LongDataType)
+  def min = SQLFunction[T](FunctionType.Min, this, converter)
+  def max = SQLFunction[T](FunctionType.Max, this, converter)
+  def sum = SQLFunction[T](FunctionType.Sum, this, converter)
 }

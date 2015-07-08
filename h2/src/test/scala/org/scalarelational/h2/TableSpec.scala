@@ -33,7 +33,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "verify the create table String is correct" in {
       val sql = TestDatastore.createTableSQL(test)
-      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
+      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(2147483647) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
     "verify that there are no tables currently created" in {
       session {
@@ -61,34 +61,34 @@ class TableSpec extends WordSpec with Matchers {
     "create a simple query" in {
       session {
         val q = select(test.id, test.name) from test
-        q.expressions should equal((test.id, test.name))
+        q.expressions should equal ((test.id, test.name))
       }
     }
     "query the record back out" in {
       session {
         val query = select(test.id, test.name) from test
         val results = query.result.toList
-        results.size should equal(1)
+        results.size should equal (1)
         val john = results.head
-        john(test.id) should equal(1)
-        john(test.name) should equal("John Doe")
+        john(test.id) should equal (Some(1))
+        john(test.name) should equal ("John Doe")
       }
     }
     "query the record back out as a Tuple2" in {
       session {
         val query = select(test.id, test.name) from test
         val results = query.result
-        results.next()() should equal((1, "John Doe"))
+        results.next()() should equal ((Some(1), "John Doe"))
       }
     }
     "query a record back via 'LIKE'" in {
       session {
         val query = select(test.id, test.name) from test where test.name % "John%"
         val results = query.result.toList
-        results.size should equal(1)
+        results.size should equal (1)
         val john = results.head
-        john(test.id) should equal(1)
-        john(test.name) should equal("John Doe")
+        john(test.id) should equal (Some(1))
+        john(test.name) should equal ("John Doe")
       }
     }
     "insert another record" in {
@@ -102,28 +102,46 @@ class TableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val jane = results.head
-        jane(test.id) should equal(2)
-        jane(test.name) should equal("Jane Doe")
+        jane(test.id) should equal (Some(2))
+        jane(test.name) should equal ("Jane Doe")
       }
     }
     "query with multiple where clauses" in {
       session {
-        val query = select(test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > 0
+        val query = select(test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > Some(0)
         val results = query.result.toList
-        results.size should equal(2)
+        results.size should equal (2)
+      }
+    }
+    "query with valid None comparison" in {
+      session {
+        val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
+        describe(query) should equal (
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(null))
+        )
+        val results = query.result.toList
+        results.size should equal (2)
+      }
+    }
+    "query with invalid None comparison" in {
+      session {
+        intercept[RuntimeException] {
+          val query = select (test.id) from test where test.id > None
+          query.result
+        }
       }
     }
     "query two records back via regular expression" in {
       session {
         val query = select(test.id, test.name) from test where test.name * ".*Doe".r
         val results = query.result.toList
-        results.size should equal(2)
+        results.size should equal (2)
         val john = results.head
-        john(test.id) should equal(1)
-        john(test.name) should equal("John Doe")
+        john(test.id) should equal (Some(1))
+        john(test.name) should equal ("John Doe")
         val jane = results.tail.head
-        jane(test.id) should equal(2)
-        jane(test.name) should equal("Jane Doe")
+        jane(test.id) should equal (Some(2))
+        jane(test.name) should equal ("Jane Doe")
       }
     }
     "update 'John Doe' to 'Joe Doe'" in {
@@ -165,7 +183,7 @@ class TableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val jane = results.head
-        jane(test.id) should equal(2)
+        jane(test.id) should equal (Some(2))
         jane(test.name) should equal("Jane Doe")
       }
     }
@@ -252,7 +270,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query joining suppliers" in {
       session {
-        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID
+        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID.opt
         val results = query.result.toList
         results.size should equal(5)
         val first = results.head
@@ -273,7 +291,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "query the count of coffees for Superior Coffee" in {
       session {
-        val query = select(name.count) from coffees innerJoin suppliers on supID === suppliers.id where suppliers.name === "Superior Coffee"
+        val query = select(name.count) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
         val results = query.result.toList
         results.size should equal(1)
         val values = results.head
@@ -285,7 +303,7 @@ class TableSpec extends WordSpec with Matchers {
     "query with an inner join aliased" in {
       session {
         val s = suppliers as "s"
-        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID === s(suppliers.id)
+        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID.opt === s(suppliers.id)
         val results = query.result.toList
         results.size should equal(5)
       }
@@ -414,7 +432,7 @@ class TableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val result = results.head
-        result(lists.id) should equal(listId)
+        result(lists.id) should equal (Some(listId))
         result(lists.strings) should equal(List("One", "Two", "Three"))
       }
     }
@@ -430,7 +448,7 @@ class TableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val result = results.head
-        result(data.id) should equal(dataId)
+        result(data.id) should equal (Some(dataId))
         val content = result(data.content)
         val s = IO.copy(content.getBinaryStream)
         s should equal("test using blob")
@@ -483,7 +501,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "update a record to fire a trigger" in {
       session {
-        exec(update(triggerTest.name("Test2")) where triggerTest.id === 1) should equal(1)
+        exec(update(triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
       }
     }
     "validate that one update was triggered" in {
@@ -506,7 +524,7 @@ class TableSpec extends WordSpec with Matchers {
     }
     "delete a record to fire a trigger" in {
       session {
-        exec(delete(triggerTest) where triggerTest.id === 1) should equal(1)
+        exec(delete(triggerTest) where triggerTest.id === Some(1)) should equal(1)
       }
     }
     "validate that one delete was triggered" in {
@@ -520,12 +538,12 @@ class TableSpec extends WordSpec with Matchers {
 
 object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with HikariSupport {
   object test extends Table("test_table") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique)
-    val date = column[Timestamp]("date")
+    val date = column[Option[Timestamp]]("date")
   }
   object suppliers extends Table("SUPPLIER") {
-    val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -540,64 +558,58 @@ object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with Hika
     val total = column[Int]("TOTAL")
   }
   object names extends Table("names") {
-    val name = column[String]("name", PrimaryKey, Unique, NotNull)
-    val age = column[Int]("age", NotNull, Indexed("idxage"))
+    val name = column[String]("name", PrimaryKey, Unique)
+    val age = column[Int]("age", Indexed("idxage"))
   }
   object fruitColors extends Table("fruit_colors") {
-    val color = column[String]("color", NotNull)
-    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit], NotNull)
+    val color = column[String]("color")
+    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit])
   }
 }
 
 object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) {
   object first extends Table("first") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
-    val secondId = column[Int]("secondId")
+    val secondId = column[Int]("secondId", new ForeignKey(second.id))
   }
 
   object second extends Table("second") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val value = column[Int]("value")
     val firstId = column[Int]("firstId", new ForeignKey(first.id))
   }
-
-  first.secondId.props(new ForeignKey(second.id))
 }
 
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(column: ColumnLike[List[String]]) = StringDataType.VarcharType
-
-      def toSQLType(column: ColumnLike[List[String]], value: List[String]) = value.mkString("|")
-
-      def fromSQLType(column: ColumnLike[List[String]], value: Any) = value match {
-        case null => Nil
-        case s: String => s.split('|').toList
-      }
+      def sqlType(column: ColumnLike[_]) = StringDataType.VarcharType
+      def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
+      def fromSQLType(column: ColumnLike[_], value: Any) =
+        value.asInstanceOf[String].split('|').toList
     }
 
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val strings = column[List[String]]("strings")
   }
 
   object data extends Table("data") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val content = column[Blob]("content")
   }
 
   object combinedUnique extends Table("combined_unique") {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val firstName = column[String]("firstName", NotNull)
-    val lastName = column[String]("lastName", NotNull)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val firstName = column[String]("firstName")
+    val lastName = column[String]("lastName")
 
     props(Index.unique("IDXNAME", firstName, lastName))
   }
 
   object triggerTest extends Table("trigger_test", Triggers.All) {
-    val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", NotNull)
+    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val name = column[String]("name")
   }
 }
 

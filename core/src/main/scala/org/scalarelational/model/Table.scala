@@ -1,5 +1,7 @@
 package org.scalarelational.model
 
+import java.lang.reflect.Field
+
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.Joinable
@@ -32,6 +34,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   implicit def javaIntConverter = JavaIntDataType
   implicit def javaLongConverter = JavaLongDataType
   implicit def javaDoubleConverter = JavaDoubleDataType
+  implicit def option[T: DataType] = DataTypeGenerators.option[T]
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
@@ -69,22 +72,25 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: DataType[T], manifest: Manifest[T]) = {
-    val c = new Column[T](name, converter, manifest, this)
-    c.props(properties: _*)
-  }
+               (implicit converter: DataType[T], manifest: Manifest[T]) =
+    new Column[T](name, converter, manifest, this, properties)
 
   def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]) = {
-    val c = new Column[T](name, converter, manifest, this)
-    c.props(properties: _*)
+               (implicit manifest: Manifest[T]) =
+    new Column[T](name, converter, manifest, this, properties)
+
+  protected[model] def allFields(tpe: Class[_]): Seq[Field] = {
+    tpe.getSuperclass match {
+      case null => tpe.getDeclaredFields
+      case s => tpe.getDeclaredFields ++ allFields(s)
+    }
   }
 
   protected[model] def fieldName(column: Column[_]) = {
-    getClass.getDeclaredFields.find(f => {
+    allFields(getClass).find(f => {
       f.setAccessible(true)
       f.get(this) == column
-    }).map(f => f.getName).getOrElse(throw new RuntimeException(s"Unable to find fieldName in ${tableName} for ${column.name}."))
+    }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
   }
 
   def exists = datastore.doesTableExist(tableName)
@@ -110,7 +116,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def get[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
   def prop[P <: TableProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in table '$tableName'."))
 
-  override def toString = s"Table($tableName)"
+  override def toString = tableName
 }
 
 object Table {

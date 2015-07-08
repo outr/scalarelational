@@ -2,7 +2,7 @@ package org.scalarelational.h2.modular
 
 import java.sql.Timestamp
 
-import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique, NotNull}
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.model.{ModularSupport, Table}
 import org.scalatest.{Matchers, WordSpec}
@@ -103,7 +103,7 @@ class ModularSpec extends WordSpec with Matchers {
         querying should equal(0)
         queried should equal(0)
         val q = select(id, name, age, modified) from users
-        q.result.converted.one should equal((1, "John Doe", 21, null))
+        q.result.converted.one should equal((1, "John Doe", 21, None))
         querying should equal(1)
         queried should equal(1)
       }
@@ -120,7 +120,8 @@ class ModularSpec extends WordSpec with Matchers {
     }
     "add a special 'modified' handler" in {
       users.handlers.inserting.on {
-        case insert => insert.add(users.modified(new Timestamp(System.currentTimeMillis())))
+        case insert =>
+          insert.add(users.modified(Some(new Timestamp(System.currentTimeMillis()))))
       }
     }
     "insert a second record" in {
@@ -144,8 +145,8 @@ class ModularSpec extends WordSpec with Matchers {
         result._2 should equal("Jane Doe")
         result._3 should equal(20)
         result._4 should not equal null
-        result._4.getTime should be > (System.currentTimeMillis() - 1000L)
-        result._4.getTime should be <= System.currentTimeMillis()
+        result._4.get.getTime should be > (System.currentTimeMillis() - 1000L)
+        result._4.get.getTime should be <= System.currentTimeMillis()
         querying should equal(2)
         queried should equal(2)
       }
@@ -155,9 +156,9 @@ class ModularSpec extends WordSpec with Matchers {
 
 object ModularDatastore extends H2Datastore {
   object users extends Table("users") with ModularSupport {
-    val name = column[String]("name", NotNull, Unique)
-    val age = column[Int]("age", NotNull)
-    val modified = column[Timestamp]("modified")
+    val name = column[String]("name", Unique)
+    val age = column[Int]("age")
+    val modified = column[Option[Timestamp]]("modified")
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
   }
 }

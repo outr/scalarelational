@@ -71,8 +71,8 @@ package object mapper {
       val clazz: EnhancedClass = value.getClass
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       val values = fieldValues(value, clazz, strictMapping)
-      val updates = values.filterNot(cv => cv.column == primaryColumn && primaryColumn.has(AutoIncrement))
-      values.find(cv => cv.column == primaryColumn) match {
+      val updates = values.filterNot(_.column == primaryColumn && primaryColumn.has(AutoIncrement))
+      values.find(_.column == primaryColumn) match {
         case Some(primaryKey) => {
           val exists = primaryKey.value match {
             case _ if forceInsert => false
