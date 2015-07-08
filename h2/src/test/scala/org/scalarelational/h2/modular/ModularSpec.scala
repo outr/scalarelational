@@ -185,7 +185,6 @@ class ModularSpec extends WordSpec with Matchers {
 
         val q = select (created, modified) from users2 where id === 1
         val result = q.result.converted.one
-        result._2.after(result._1) should be (false)
 
         (update(name("updated")) where id === 1).result
         val q2 = select (created, modified) from users2 where id === 1
