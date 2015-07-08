@@ -2,8 +2,7 @@ package org.scalarelational.h2.modular
 
 import java.sql.Timestamp
 
-import org.scalarelational.ColumnValue
-import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
+import org.scalarelational.column.property.{ColumnProperty, AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.datatype.DataType
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.model.{ColumnLike, ModularSupport, Table}
@@ -29,7 +28,7 @@ class ModularSpec extends WordSpec with Matchers {
   "ModularSpec" should {
     "create the database" in {
       session {
-        create(users)
+        create(users, users2)
       }
     }
     "connect handlers" in {
@@ -176,7 +175,23 @@ class ModularSpec extends WordSpec with Matchers {
         val q = select (id, name, created, modified) from users where id === 2
         val result = q.result.converted.one
         result._2 should equal("updated")
-        result._4.get.getTime should be > result._3.get.getTime
+        result._4.get.after(result._3.get) should be (true)
+      }
+    }
+    "insert and update record using mixin" in {
+      session {
+        import users2._
+        insert(name("Jane Doe"), age(20)).result
+
+        val q = select (created, modified) from users2 where id === 1
+        val result = q.result.converted.one
+        result._2.after(result._1) should be (false)
+
+        (update(name("updated")) where id === 1).result
+        val q2 = select (created, modified) from users2 where id === 1
+        val result2 = q2.result.converted.one
+        result2._2.after(result2._1) should be (true)
+        result2._2.after(result._1) should be (true)
       }
     }
   }
@@ -188,6 +203,34 @@ object ModularDatastore extends H2Datastore {
     val age = column[Int]("age")
     val created = column[Option[Timestamp]]("created")
     val modified = column[Option[Timestamp]]("modified")
+    val id = column[Int]("id", PrimaryKey, AutoIncrement)
+  }
+
+  // If multiple classes should be equipped with `created` and `modified` fields,
+  // then this mixin can be used.
+  trait Timestamps extends ModularSupport {
+    // TODO How can we get rid of this method?
+    def column[T](name : String, properties : ColumnProperty*)
+                 (implicit converter : DataType[T], manifest : Manifest[T]): ColumnLike[T]
+
+    val created  = column[Timestamp]("created")
+    val modified = column[Timestamp]("modified")
+    val DummyValue = 1
+
+    handlers.inserting.on { insert =>
+      insert
+        .add(created(new Timestamp(System.currentTimeMillis())))
+        .add(modified(new Timestamp(System.currentTimeMillis())))
+    }
+
+    handlers.updating.on { update =>
+      update.add(modified(new Timestamp(System.currentTimeMillis() + DummyValue)))
+    }
+  }
+
+  object users2 extends Table("users2") with Timestamps {
+    val name = column[String]("name", Unique)
+    val age = column[Int]("age")
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
   }
 }

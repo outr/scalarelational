@@ -14,27 +14,15 @@ import scala.language.existentials
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(name: String, tableProperties: TableProperty*)(implicit val datastore: Datastore) extends Joinable with SQLContainer {
+abstract class Table(name: String, tableProperties: TableProperty*)
+                    (implicit val datastore: Datastore)
+  extends Joinable with SQLContainer with DataTypes {
+
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
   datastore.add(this)   // Make sure the Datastore knows about this table
 
   implicit def thisTable = this
-
-  implicit def booleanConverter = BooleanDataType
-  implicit def intConverter = IntDataType
-  implicit def longConverter = LongDataType
-  implicit def doubleConverter = DoubleDataType
-  implicit def bigDecimalConverter = BigDecimalDataType
-  implicit def stringConverter = StringDataType
-  implicit def wrappedStringConverter = WrappedStringDataType
-  implicit def byteArrayConverter = ByteArrayDataType
-  implicit def blobConverter = BlobDataType
-  implicit def timestampConverter = TimestampDataType
-  implicit def javaIntConverter = JavaIntDataType
-  implicit def javaLongConverter = JavaLongDataType
-  implicit def javaDoubleConverter = JavaDoubleDataType
-  implicit def option[T: DataType] = DataTypeGenerators.option[T]
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
@@ -72,11 +60,11 @@ abstract class Table(name: String, tableProperties: TableProperty*)(implicit val
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: DataType[T], manifest: Manifest[T]) =
+               (implicit converter: DataType[T], manifest: Manifest[T]): ColumnLike[T] =
     new Column[T](name, converter, manifest, this, properties)
 
   def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]) =
+               (implicit manifest: Manifest[T]): ColumnLike[T] =
     new Column[T](name, converter, manifest, this, properties)
 
   protected[model] def allFields(tpe: Class[_]): Seq[Field] = {

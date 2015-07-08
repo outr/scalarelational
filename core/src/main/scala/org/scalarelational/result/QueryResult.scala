@@ -11,7 +11,7 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
   lazy val converted = converter(this)
 
   def apply() = converted
-  def apply[T](column: Column[T]) = values.collectFirst {
+  def apply[T](column: ColumnLike[T]) = values.collectFirst {
     case cv: ColumnValue[_] if cv.column == column => cv.value.asInstanceOf[T]
   }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
 

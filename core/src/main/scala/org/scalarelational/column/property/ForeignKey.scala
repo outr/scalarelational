@@ -1,11 +1,11 @@
 package org.scalarelational.column.property
 
-import org.scalarelational.model.Column
+import org.scalarelational.model.{ColumnLike, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class ForeignKey(fc: => Column[_]) extends ColumnProperty {
+class ForeignKey(fc: => ColumnLike[_]) extends ColumnProperty {
   lazy val foreignColumn = fc
 
   def name = ForeignKey.name
