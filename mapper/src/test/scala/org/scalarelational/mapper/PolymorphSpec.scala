@@ -121,7 +121,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
 
   object content extends Table("content") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(column: ColumnLike[_]) = StringDataType.VarcharType
+      def sqlType(column: ColumnLike[_]) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =
         value.asInstanceOf[String].split('|').toList
