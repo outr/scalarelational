@@ -135,7 +135,11 @@ class MapperSpec extends WordSpec with Matchers {
   }
 }
 
-case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None)
+case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None) {
+  object Test { // Objects are ignored by mapper
+    val value = 42
+  }
+}
 
 case class Name(value: String)
 
