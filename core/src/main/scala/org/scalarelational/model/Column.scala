@@ -7,7 +7,7 @@ import org.scalarelational.datatype.DataType
  * @author Matt Hicks <matt@outr.com>
  */
 private[scalarelational] class Column[T](val name: String,
-                                         val converter: DataType[T],
+                                         val dataType: DataType[T],
                                          val manifest: Manifest[T],
                                          val table: Table,
                                          val props: Seq[ColumnProperty]

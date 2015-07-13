@@ -249,7 +249,7 @@ abstract class SQLDatastore protected() extends Datastore {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
     case c: DirectCondition[_] => {
-      val conv = c.column.converter.asInstanceOf[DataType[Any]]
+      val conv = c.column.dataType.asInstanceOf[DataType[Any]]
       val op = conv.sqlOperator(c.column, c.value, c.operator)
       args += conv.toSQLType(c.column, c.value)
       s"${c.column.longName} ${op.symbol} ?"
@@ -264,7 +264,7 @@ abstract class SQLDatastore protected() extends Datastore {
     }
     case c: RangeCondition[_] => {
       c.values.foreach {
-        case v => args += c.column.converter.asInstanceOf[DataType[Any]].toSQLType(c.column, v)
+        case v => args += c.column.dataType.asInstanceOf[DataType[Any]].toSQLType(c.column, v)
       }
       val entries = c.operator match {
         case Operator.Between => c.values.map(v => "?").mkString(" AND ")

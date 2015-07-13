@@ -15,7 +15,7 @@ case class ColumnAlias[T](column: ColumnLike[T],
     case Some(s) => s"$tableName.$columnName AS [$s]"
     case None => s"$tableName.$columnName"
   }
-  def converter = column.converter
+  def dataType = column.dataType
   def table = column.table
   def manifest = column.manifest
 

@@ -14,7 +14,7 @@ class ColumnValue[T] private(val column: ColumnLike[T],
     try {
       converterOverride match {
         case Some(converter) => converter.toSQLType(column, value)
-        case None => column.converter.toSQLType(column, value)
+        case None => column.dataType.toSQLType(column, value)
       }
     } catch {
       case t: Throwable =>

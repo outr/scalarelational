@@ -53,7 +53,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int): ExpressionValue[T] =
     expression match {
       case column: ColumnLike[T] => {
-        val value = columnValue(rs, index, column, column.converter)
+        val value = columnValue(rs, index, column, column.dataType)
         ColumnValue(column, value, None)
       }
 

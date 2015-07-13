@@ -15,10 +15,10 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String
   def table: Table
-  def converter: DataType[T]
+  def dataType: DataType[T]
   def manifest: Manifest[T]
 
-  def sqlType = converter.sqlType(this)
+  def sqlType = dataType.sqlType(this)
 
   def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
     ColumnValue[T](this, value, converterOverride)
@@ -59,9 +59,9 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
 
   def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
 
-  def avg = SQLFunction[T](FunctionType.Avg, this, converter)
+  def avg = SQLFunction[T](FunctionType.Avg, this, dataType)
   def count = SQLFunction[Long](FunctionType.Count, this, LongDataType)
-  def min = SQLFunction[T](FunctionType.Min, this, converter)
-  def max = SQLFunction[T](FunctionType.Max, this, converter)
-  def sum = SQLFunction[T](FunctionType.Sum, this, converter)
+  def min = SQLFunction[T](FunctionType.Min, this, dataType)
+  def max = SQLFunction[T](FunctionType.Max, this, dataType)
+  def sum = SQLFunction[T](FunctionType.Sum, this, dataType)
 }
