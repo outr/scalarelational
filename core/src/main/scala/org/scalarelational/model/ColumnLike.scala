@@ -11,15 +11,12 @@ import scala.util.matching.Regex
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait ColumnLike[T] extends SelectExpression[T] {
+trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String
   def table: Table
   def converter: DataType[T]
   def manifest: Manifest[T]
-  def has(property: ColumnProperty): Boolean
-  def get[P <: ColumnProperty](propertyName: String): Option[P]
-  def isOptional: Boolean
 
   def sqlType = converter.sqlType(this)
 

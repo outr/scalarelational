@@ -9,7 +9,7 @@ import org.scalarelational
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter, StringDataType}
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.model.{HikariSupport, Table, ColumnLike}
+import org.scalarelational.model.{ColumnPropertyContainer, HikariSupport, Table, ColumnLike}
 import org.scalarelational.model.table.property.Index
 import org.scalatest.{Matchers, WordSpec}
 
@@ -584,7 +584,7 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(column: ColumnLike[_]) = "VARCHAR(1024)"
+      def sqlType(properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =
         value.asInstanceOf[String].split('|').toList

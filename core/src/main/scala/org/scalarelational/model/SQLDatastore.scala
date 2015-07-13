@@ -6,6 +6,7 @@ import javax.sql.DataSource
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.property.Property
 import org.scalarelational.fun.SQLFunction
+import org.scalarelational.instruction.ddl.CreateTable
 import org.scalarelational.{TableAlias, SelectExpression}
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.DataType
@@ -77,7 +78,7 @@ abstract class SQLDatastore protected() extends Datastore {
       }
     }
 
-    table.properties.foreach {
+    table.properties.values.foreach {
       case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""}INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")});\r\n\r\n")
       case _ => // Ignore other table properties
     }

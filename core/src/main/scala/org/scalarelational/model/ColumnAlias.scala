@@ -22,8 +22,7 @@ case class ColumnAlias[T](column: ColumnLike[T],
   def tableName = tableAlias.getOrElse(table.tableName)
   def columnName = alias.getOrElse(column.name)
 
-  def has(property: ColumnProperty): Boolean = column.has(property)
-  def get[P <: ColumnProperty](propertyName: String): Option[P] = column.get(propertyName)
+  override def classType = column.classType
 
-  def isOptional: Boolean = column.isOptional
+  override def properties = column.properties
 }

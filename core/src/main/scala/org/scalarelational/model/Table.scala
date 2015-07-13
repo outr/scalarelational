@@ -16,7 +16,7 @@ import scala.language.existentials
  */
 abstract class Table(name: String, tableProperties: TableProperty*)
                     (implicit val datastore: Datastore)
-  extends Joinable with SQLContainer with DataTypes {
+  extends Joinable with SQLContainer with DataTypes with TablePropertyContainer {
 
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
@@ -40,7 +40,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   props(tableProperties: _*)      // Add properties from constructor
 
-  def properties = _properties.values
+  def properties = _properties
 
   protected[scalarelational] def addColumn[T](column: Column[T]) = synchronized {
     _columns += column
@@ -98,11 +98,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
     }
     this
   }
-
-  def has(property: TableProperty): Boolean = has(property.name)
-  def has(propertyName: String): Boolean = _properties.contains(propertyName)
-  def get[P <: TableProperty](propertyName: String) = _properties.get(propertyName).asInstanceOf[Option[P]]
-  def prop[P <: TableProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in table '$tableName'."))
 
   override def toString = tableName
 }
