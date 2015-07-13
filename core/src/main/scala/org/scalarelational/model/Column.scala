@@ -22,8 +22,8 @@ private[scalarelational] class Column[T](val name: String,
   lazy val index = table.columns.indexOf(this)
   lazy val fieldName = table.fieldName(this)
 
-  def opt: ColumnLike[Option[T]] = ColumnOption(this)
   def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
+  def opt: ColumnLike[Option[T]] = ColumnOption(this)
 
   def has(property: ColumnProperty): Boolean = has(property.name)
   def has(propertyName: String): Boolean = properties.contains(propertyName)

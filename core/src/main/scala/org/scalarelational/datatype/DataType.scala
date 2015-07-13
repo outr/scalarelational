@@ -151,3 +151,20 @@ class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataT
   def fromSQLType(column: ColumnLike[_], value: Any) =
     enumerated(value.asInstanceOf[String])
 }
+
+trait DataTypes {
+  implicit def booleanConverter = BooleanDataType
+  implicit def intConverter = IntDataType
+  implicit def longConverter = LongDataType
+  implicit def doubleConverter = DoubleDataType
+  implicit def bigDecimalConverter = BigDecimalDataType
+  implicit def stringConverter = StringDataType
+  implicit def wrappedStringConverter = WrappedStringDataType
+  implicit def byteArrayConverter = ByteArrayDataType
+  implicit def blobConverter = BlobDataType
+  implicit def timestampConverter = TimestampDataType
+  implicit def javaIntConverter = JavaIntDataType
+  implicit def javaLongConverter = JavaLongDataType
+  implicit def javaDoubleConverter = JavaDoubleDataType
+  implicit def option[T: DataType] = DataTypeGenerators.option[T]
+}
