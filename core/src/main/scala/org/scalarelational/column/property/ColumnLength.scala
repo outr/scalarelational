@@ -9,6 +9,6 @@ case class ColumnLength(length: Int) extends ColumnProperty {
 
 object ColumnLength {
   val Name = "columnLength"
-  val DefaultVarChar = Int.MaxValue
+  val DefaultVarChar = 65535
   val DefaultBinary  = 1000
 }
