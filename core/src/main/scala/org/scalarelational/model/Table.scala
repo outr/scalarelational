@@ -60,11 +60,11 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: DataType[T], manifest: Manifest[T]): ColumnLike[T] =
+               (implicit converter: DataType[T], manifest: Manifest[T]): Column[T] =
     new Column[T](name, converter, manifest, this, properties)
 
   def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]): ColumnLike[T] =
+               (implicit manifest: Manifest[T]): Column[T] =
     new Column[T](name, converter, manifest, this, properties)
 
   protected[model] def allFields(tpe: Class[_]): Seq[Field] = {

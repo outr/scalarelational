@@ -21,9 +21,6 @@ trait ColumnLike[T] extends SelectExpression[T] {
   def get[P <: ColumnProperty](propertyName: String): Option[P]
   def isOptional: Boolean
 
-  def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
-  def opt: ColumnLike[Option[T]] = ColumnOption(this)
-
   def sqlType = converter.sqlType(this)
 
   def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
