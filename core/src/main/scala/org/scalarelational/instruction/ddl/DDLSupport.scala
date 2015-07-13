@@ -1,14 +1,16 @@
 package org.scalarelational.instruction.ddl
 
 import org.scalarelational.CallableInstruction
-import org.scalarelational.column.property.ColumnProperty
-import org.scalarelational.model.Table
+import org.scalarelational.model.{Column, Table}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 trait DDLSupport {
-  def ddl(table: Table, ifNotExists: Boolean = true): List[CallableInstruction]
+  def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable
+  def column2Create[T](column: Column[T]): CreateColumn[T]
+
+  def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction]
 
   def ddl(create: CreateTable): List[CallableInstruction]
 

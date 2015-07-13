@@ -55,9 +55,20 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     f
   }
 
-  override def createTableExtras(table: Table, b: StringBuilder) = {
-    super.createTableExtras(table, b)
-    createTableTriggers(table, b)
+  override def create(tables: Table*) = {
+    super.create(tables: _*)
+
+    // TODO: convert this to use CallableInstructions
+    val b = new StringBuilder
+    tables.foreach {
+      case table => createTableTriggers(table, b)
+    }
+
+    createFunctions(b)
+
+    if (b.nonEmpty) {
+      session.execute(b.toString())
+    }
   }
 
   private def createTableTriggers(table: Table, b: StringBuilder) = if (table.has(Triggers.name)) {
@@ -74,12 +85,6 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     if (triggers.has(TriggerType.Select)) {
       b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_SELECT_TRIGGER BEFORE SELECT ON ${table.tableName} CALL "org.scalarelational.h2.trigger.TriggerInstance";\r\n\r\n""")
     }
-  }
-
-  override def createExtras(b: StringBuilder) = {
-    super.createExtras(b)
-
-    createFunctions(b)
   }
 
   private def createFunctions(b: StringBuilder) = {

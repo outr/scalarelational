@@ -4,17 +4,18 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
-import org.powerscala.event.processor.{ModifiableProcessor, OptionProcessor}
+import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.instruction._
-import org.scalarelational.result.{QueryResultsIterator, ResultSetIterator}
-import org.scalarelational.SessionSupport
+import org.scalarelational.instruction.ddl.DDLSupport
+import org.scalarelational.result.ResultSetIterator
+import org.scalarelational.{CallableInstruction, SessionSupport}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer {
+trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport {
   implicit def thisDatastore: Datastore = this
 
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
@@ -60,35 +61,12 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
 
   def create(tables: Table*) = {
     if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
-    val s = session
-    val sql = ddl(tables: _*)
-    s.execute(sql)
+    val sql = ddl(tables.toList)
+    exec(sql)
   }
 
-  def ddl(tables: Table*) = {
-    if (tables.isEmpty) throw new RuntimeException(s"Datastore.ddl must include all tables that need to be generated.")
-    val b = new StringBuilder
-
-    val existingTables = jdbcTables
-
-    tables.foreach {
-      case t => if (!existingTables.contains(t.tableName.toUpperCase)) {
-        b.append(createTableSQL(t))
-        b.append("\r\n")
-      } else {
-        debug(s"Table already exists: ${t.tableName}")
-      }
-    }
-
-    tables.foreach {
-      case t => if (!existingTables.contains(t.tableName.toUpperCase)) {
-        createTableExtras(t, b)
-      }
-    }
-
-    createExtras(b)
-
-    b.toString()
+  def exec(instructions: List[CallableInstruction]) = instructions.foreach {
+    case ci => ci.execute(this)
   }
 
   def describe[E, R](query: Query[E, R]): (String, List[Any])
@@ -154,12 +132,6 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   protected def invoke(merge: Merge): Int
   protected def invoke(update: Update): Int
   protected def invoke(delete: Delete): Int
-
-  def createTableSQL(table: Table): String
-
-  def createTableExtras(table: Table, b: StringBuilder): Unit
-
-  def createExtras(b: StringBuilder): Unit
 
   def dispose() = {}
 }

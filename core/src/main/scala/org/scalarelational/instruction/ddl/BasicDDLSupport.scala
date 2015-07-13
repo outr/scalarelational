@@ -3,47 +3,62 @@ package org.scalarelational.instruction.ddl
 import org.scalarelational.CallableInstruction
 import org.scalarelational.column.property._
 import org.scalarelational.model.table.property.Index
-import org.scalarelational.model.{Table, ColumnPropertyContainer}
+import org.scalarelational.model.{Column, Table, ColumnPropertyContainer}
 
 import scala.collection.mutable.ListBuffer
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class BasicDDLSupport extends DDLSupport {
-  override def ddl(table: Table, ifNotExists: Boolean = true): List[CallableInstruction] = {
+trait BasicDDLSupport extends DDLSupport {
+  override def table2Create(table: Table, ifNotExists: Boolean = true) = {
+    val createColumns = table.columns.map(c => column2Create(c))
+    CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties)
+  }
+  override def column2Create[T](column: Column[T]): CreateColumn[T] = {
+    CreateColumn[T](column.table.tableName, column.name, column.dataType, column.properties)(column.manifest)
+  }
+
+  override def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction] = {
     val b = ListBuffer.empty[CallableInstruction]
 
-    // Create Tables
-    val createColumns = table.columns.map(c => CreateColumn(table.tableName, c.name, c.dataType, c.properties))
-    val createTable = CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties)
-    b ++= ddl(createTable)
-
-    // Create Table References
-    table.foreignKeys.foreach {
-      case column => {
-        val foreignKey = ForeignKey(column).foreignColumn
-        val createForeignKey = CreateForeignKey(table.tableName, column.name, foreignKey.table.tableName, foreignKey.name)
-        b ++= ddl(createForeignKey)
+    tables.foreach {
+      case table => {
+        // Create Table
+        val createTable = table2Create(table)
+        b ++= ddl(createTable)
       }
     }
 
-    // Create Column Indexes
-    table.columns.foreach {
-      case column => column.get[Indexed](Indexed.name) match {
-        case Some(index) => {
-          b ++= ddl(CreateIndex(table.tableName, index.indexName, List(column.name)))
+    tables.foreach {
+      case table => {
+        // Create Table References
+        table.foreignKeys.foreach {
+          case column => {
+            val foreignKey = ForeignKey(column).foreignColumn
+            val createForeignKey = CreateForeignKey(table.tableName, column.name, foreignKey.table.tableName, foreignKey.name)
+            b ++= ddl(createForeignKey)
+          }
         }
-        case None => // No index of this column
-      }
-    }
 
-    // Create Table Indexes
-    table.properties.values.foreach {
-      case index: Index => {
-        b ++= ddl(CreateIndex(table.tableName, index.indexName, index.columns.map(_.name), index.unique, ifNotExists))
+        // Create Column Indexes
+        table.columns.foreach {
+          case column => column.get[Indexed](Indexed.name) match {
+            case Some(index) => {
+              b ++= ddl(CreateIndex(table.tableName, index.indexName, List(column.name)))
+            }
+            case None => // No index of this column
+          }
+        }
+
+        // Create Table Indexes
+        table.properties.values.foreach {
+          case index: Index => {
+            b ++= ddl(CreateIndex(table.tableName, index.indexName, index.columns.map(_.name), index.unique, ifNotExists))
+          }
+          case _ => // Ignore other table properties
+        }
       }
-      case _ => // Ignore other table properties
     }
 
     b.toList

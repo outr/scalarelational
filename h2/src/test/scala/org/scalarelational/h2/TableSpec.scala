@@ -5,9 +5,8 @@ import javax.sql.rowset.serial.SerialBlob
 
 import org.h2.jdbc.JdbcSQLException
 import org.powerscala.IO
-import org.scalarelational
 import org.scalarelational.column.property._
-import org.scalarelational.datatype.{DataType, ObjectSerializationConverter, StringDataType}
+import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
 import org.scalarelational.h2.trigger.TriggerType
 import org.scalarelational.model.{ColumnPropertyContainer, HikariSupport, Table, ColumnLike}
 import org.scalarelational.model.table.property.Index
@@ -31,9 +30,10 @@ class TableSpec extends WordSpec with Matchers {
     "have two columns" in {
       test.columns.size should equal(3)
     }
-    "verify the create table String is correct" in {
-      val sql = TestDatastore.createTableSQL(test)
-      sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(1024) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
+    "verify the create table DDL is correct" in {
+      val sql = TestDatastore.ddl(List(test)).toVector
+      sql.size should equal(1)
+      sql.head.sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(1024) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
     }
     "verify that there are no tables currently created" in {
       session {

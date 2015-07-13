@@ -6,12 +6,10 @@ import javax.sql.DataSource
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.property.Property
 import org.scalarelational.fun.SQLFunction
-import org.scalarelational.instruction.ddl.CreateTable
+import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.{TableAlias, SelectExpression}
-import org.scalarelational.column.property._
 import org.scalarelational.datatype.DataType
 import org.scalarelational.instruction._
-import org.scalarelational.model.table.property.Index
 import org.scalarelational.op._
 
 import scala.collection.mutable.ListBuffer
@@ -19,7 +17,7 @@ import scala.collection.mutable.ListBuffer
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class SQLDatastore protected() extends Datastore {
+abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def this(dataSource: DataSource) = {
     this()
     dataSourceProperty := dataSource
@@ -34,74 +32,6 @@ abstract class SQLDatastore protected() extends Datastore {
   val merging = new UnitProcessor[Merge]("merging")
   val updating = new UnitProcessor[Update]("updating")
   val deleting = new UnitProcessor[Delete]("deleting")
-
-  def createTableSQL(table: Table) = {
-    val b = new StringBuilder
-
-    b.append("CREATE TABLE IF NOT EXISTS ")
-    b.append(table.tableName)
-    b.append('(')
-    b.append(table.columns.map(c => column2SQL(c)).mkString(", "))
-
-    if (table.primaryKeys.nonEmpty) {
-      b.append(s", PRIMARY KEY(${table.primaryKeys.map(c => c.name).mkString(", ")})")
-    }
-
-    b.append(");")
-
-    b.toString()
-  }
-
-  def createTableExtras(table: Table, b: StringBuilder) = {
-    createTableReferences(table, b)
-    createTableIndexes(table, b)
-  }
-
-  def createTableReferences(table: Table, b: StringBuilder) = {
-    table.foreignKeys.foreach {
-      case c => {
-        val foreignKey = ForeignKey(c).foreignColumn
-        b.append(s"ALTER TABLE ${table.tableName}\r\n")
-        b.append(s"\tADD FOREIGN KEY(${c.name})\r\n")
-        b.append(s"\tREFERENCES ${foreignKey.table.tableName} (${foreignKey.name});\r\n\r\n")
-      }
-    }
-  }
-
-  def createTableIndexes(table: Table, b: StringBuilder) = {
-    table.columns.foreach {
-      case c => c.get[Indexed](Indexed.name) match {
-        case Some(index) => {
-          b.append(s"CREATE INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${c.name});\r\n\r\n")
-        }
-        case None => // No index on this column
-      }
-    }
-
-    table.properties.values.foreach {
-      case index: Index => b.append(s"CREATE ${if (index.unique) "UNIQUE " else ""}INDEX IF NOT EXISTS ${index.indexName} ON ${table.tableName}(${index.columns.map(c => c.name).mkString(", ")});\r\n\r\n")
-      case _ => // Ignore other table properties
-    }
-  }
-
-  override def createExtras(b: StringBuilder) = {}
-
-  def column2SQL(column: Column[_]) = {
-    val b = new StringBuilder
-    b.append(column.name)
-    b.append(' ')
-    b.append(column.sqlType)
-    if (!column.isOptional && !column.has(Polymorphic)) {
-      b.append(" NOT NULL")
-    }
-    if (column.has(AutoIncrement)) {
-      b.append(" AUTO_INCREMENT")
-    }
-    if (column.has(Unique)) {
-      b.append(" UNIQUE")
-    }
-    b.toString()
-  }
 
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_] => c.longName
