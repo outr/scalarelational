@@ -207,11 +207,7 @@ object ModularDatastore extends H2Datastore {
 
   // If more than one table should be equipped with `created` and `modified`
   // fields that get updated automatically, then this mixin can be used.
-  trait Timestamps extends ModularSupport {
-    // TODO How can we get rid of this method?
-    def column[T](name : String, properties : ColumnProperty*)
-                 (implicit converter : DataType[T], manifest : Manifest[T]): ColumnLike[T]
-
+  trait Timestamps extends ModularSupport { this: Table =>
     val created  = column[Timestamp]("created")
     val modified = column[Timestamp]("modified")
     val DummyValue = 1
