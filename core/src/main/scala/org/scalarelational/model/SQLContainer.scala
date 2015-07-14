@@ -12,7 +12,7 @@ trait SQLContainer {
   protected def beforeInvoke(merge: Merge): Merge = merge
   protected def beforeInvoke(update: Update): Update = update
   protected def beforeInvoke(delete: Delete): Delete = delete
-
+  protected def calling(instructionType: InstructionType, sql: String): Unit = {}
   protected def afterInvoke[E, R](query: Query[E, R]): Unit = {}
   protected def afterInvoke(insert: InsertSingle): Unit = {}
   protected def afterInvoke(insert: InsertMultiple): Unit = {}
@@ -28,7 +28,10 @@ object SQLContainer {
   def beforeInvoke(table: Table, merge: Merge): Merge = table.datastore.beforeInvoke(table.beforeInvoke(merge))
   def beforeInvoke(table: Table, update: Update): Update = table.datastore.beforeInvoke(table.beforeInvoke(update))
   def beforeInvoke(table: Table, delete: Delete): Delete = table.datastore.beforeInvoke(table.beforeInvoke(delete))
-
+  def calling(table: Table, instructionType: InstructionType, sql: String): Unit = {
+    table.calling(instructionType, sql)
+    table.datastore.calling(instructionType, sql)
+  }
   def afterInvoke[E, R](table: Table, query: Query[E, R]): Unit = {
     table.afterInvoke[E, R](query)
     table.datastore.afterInvoke[E, R](query)

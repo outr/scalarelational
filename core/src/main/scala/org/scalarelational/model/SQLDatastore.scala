@@ -27,12 +27,6 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   def dataSource = dataSourceProperty()
 
-  val querying = new UnitProcessor[Query[_, _]]("querying")
-  val inserting = new UnitProcessor[Insert]("inserting")
-  val merging = new UnitProcessor[Merge]("merging")
-  val updating = new UnitProcessor[Update]("updating")
-  val deleting = new UnitProcessor[Delete]("deleting")
-
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_] => c.longName
     case f: SQLFunction[_] => f.alias match {
@@ -95,19 +89,19 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   protected def invoke[E, R](query: Query[E, R]) = {
     val (sql, args) = describe(query)
+    SQLContainer.calling(query.table, InstructionType.Query, sql)
 
-    querying.fire(query)
     session.executeQuery(sql, args)
   }
 
   protected def invoke(insert: InsertSingle) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
-    val table = insert.values.head.column.table
+    val table = insert.table
     val columnNames = insert.values.map(_.column.name).mkString(", ")
     val columnValues = insert.values.map(_.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
-    inserting.fire(insert)
+    SQLContainer.calling(table, InstructionType.Insert, insertString)
     val resultSet = session.executeInsert(insertString, columnValues)
     try {
       if (resultSet.next()) {
@@ -126,7 +120,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val columnValues = merge.values.map(_.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
-    merging.fire(merge)
+    SQLContainer.calling(table, InstructionType.Merge, mergeString)
     session.executeUpdate(mergeString, columnValues)
   }
 
@@ -138,7 +132,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val columnValues = insert.rows.map(r => r.map(_.toSQL))
     val placeholder = insert.rows.head.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
-    inserting.fire(insert)
+    SQLContainer.calling(table, InstructionType.Insert, insertString)
     val resultSet = session.executeInsertMultiple(insertString, columnValues)
     try {
       val indexes = ListBuffer.empty[Int]
@@ -160,7 +154,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val (where, whereArgs) = where2SQL(update.whereCondition)
     args = args ::: whereArgs
     val sql = s"UPDATE ${update.table.tableName} SET $sets$where"
-    updating.fire(update)
+    SQLContainer.calling(update.table, InstructionType.Update, sql)
     session.executeUpdate(sql, args)
   }
 
@@ -170,7 +164,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
     val sql = s"DELETE FROM ${delete.table.tableName}$where"
-    deleting.fire(delete)
+    SQLContainer.calling(delete.table, InstructionType.Delete, sql)
     session.executeUpdate(sql, args)
   }
 

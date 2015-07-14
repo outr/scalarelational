@@ -8,7 +8,7 @@ import org.powerscala.IO
 import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.model.{ColumnPropertyContainer, HikariSupport, Table, ColumnLike}
+import org.scalarelational.model._
 import org.scalarelational.model.table.property.Index
 import org.scalatest.{Matchers, WordSpec}
 
