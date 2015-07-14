@@ -66,8 +66,8 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          val ray = people.persist(Person("Ray", 30)).result
-          ray should equal(Person("Ray", 30, None, Some(4)))
+          val id = people.persist(Person("Ray", 30)).result
+          id should equal(4)
         }
       }
       "query back the inserted object" in {
@@ -81,8 +81,8 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "automatically convert a case class to an update" in {
         session {
-          val jay = people.persist(Person("Jay", 30, None, Some(4))).result
-          jay should equal(Person("Jay", 30, None, Some(4)))
+          val id = people.persist(Person("Jay", 30, None, Some(4))).result
+          id should equal(4)
         }
       }
       "query back the updated object" in {
@@ -101,16 +101,16 @@ class MapperSpec extends WordSpec with Matchers {
       "persist records" in {
         session {
           // Insert Suppliers
-          val acme = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
-          val superior = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
-          val highGround = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+          val acmeId = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
+          val superiorId = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
+          val highGroundId = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
 
           // Insert Coffees
-          coffees.persist(Coffee("Colombian", Some(acme.id.get), 7.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast", Some(superior.id.get), 8.99, 0, 0)).result
-          coffees.persist(Coffee("Espresso", Some(highGround.id.get), 9.99, 0, 0)).result
-          coffees.persist(Coffee("Colombian Decaf", Some(acme.id.get), 8.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast Decaf", Some(superior.id.get), 9.99, 0, 0)).result
+          coffees.persist(Coffee("Colombian", Some(acmeId), 7.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast", Some(superiorId), 8.99, 0, 0)).result
+          coffees.persist(Coffee("Espresso", Some(highGroundId), 9.99, 0, 0)).result
+          coffees.persist(Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0)).result
+          coffees.persist(Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0)).result
           coffees.persist(Coffee("Caffè American", None, 12.99, 0, 0)).result
           // TODO: add batch insert / update support for persist
         }

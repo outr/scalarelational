@@ -88,8 +88,8 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Persist a new Supplier" in {
       session {
         val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled)
-        val updated = suppliers.persist(starbucks).result
-        updated.id should equal(Some(4))
+        val id = suppliers.persist(starbucks).result
+        id should equal(4)
       }
     }
     "Query a Supplier back" in {

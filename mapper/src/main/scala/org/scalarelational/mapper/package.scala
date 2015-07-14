@@ -86,7 +86,7 @@ package object mapper {
 
     def persist[T: ClassTag](value: T,
                              forceInsert: Boolean = false,
-                             strictMapping: Boolean = true): Instruction[T] = {
+                             strictMapping: Boolean = true): Instruction[Int] = {
       val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       val values = fieldValues(value, strictMapping)
       val updates = values.filterNot(_.column == primaryColumn && primaryColumn.has(AutoIncrement))
@@ -102,31 +102,30 @@ package object mapper {
           if (exists) {
             // Update
             val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
-            new InstanceInstruction[T](update, value, table)
+            val id = primaryKey.value match {
+              case Some(v) => v.asInstanceOf[Int]
+              case i: Int => i
+            }
+            new InstanceInstruction(update, table, id)
           } else {
-            val clazz: EnhancedClass = value.getClass
-            val primaryKeyCaseValue = clazz.caseValue(primaryColumn.fieldName).getOrElse(throw new RuntimeException(s"Unable to find case value for ${primaryColumn.name} (field name: ${primaryColumn.fieldName}) in $clazz."))
-            new PersistInsertInstruction[T](table.datastore.insert(updates: _*), primaryKeyCaseValue, value)
+            new PersistInsertInstruction(table.datastore.insert(updates: _*))
           }
         }
-        case None => new InstanceInstruction[T](table.datastore.insert(updates: _*), value, table)
+        case None => new InstanceInstruction(table.datastore.insert(updates: _*), table, 0)
       }
     }
   }
 
-  class InstanceInstruction[T](instruction: Instruction[Int], instance: T, val table: Table) extends Instruction[T] {
+  class InstanceInstruction(instruction: Instruction[Int], val table: Table, id: Int) extends Instruction[Int] {
     override def result = {
       instruction.result
-      instance
+      id
     }
   }
 
-  class PersistInsertInstruction[T](insert: InsertSingle, caseValue: CaseValue, instance: T) extends Instruction[T] {
+  class PersistInsertInstruction(insert: InsertSingle) extends Instruction[Int] {
     override def table = insert.values.head.column.table
 
-    override def result = {
-      val id = insert.result
-      caseValue.copy[T](instance, id)
-    }
+    override def result = insert.result
   }
 }
