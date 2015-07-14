@@ -141,7 +141,9 @@ class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataT
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
     .asInstanceOf[Enumerated[T]]
 
-  def sqlType(properties: ColumnPropertyContainer) = s"VARCHAR(${enumerated.values.size})"
+  val length = enumerated.values.maxBy(_.name.length).name.length
+
+  def sqlType(properties: ColumnPropertyContainer) = s"VARCHAR($length)"
   def toSQLType(column: ColumnLike[_], value: T) = value.name
   def fromSQLType(column: ColumnLike[_], value: Any) =
     enumerated(value.asInstanceOf[String])
