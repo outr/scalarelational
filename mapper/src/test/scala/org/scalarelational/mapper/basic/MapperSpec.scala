@@ -57,11 +57,6 @@ class MapperSpec extends WordSpec with Matchers {
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
-      "map a joined query to two case classes" in {
-        session {
-
-        }
-      }
     }
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
@@ -131,6 +126,11 @@ class MapperSpec extends WordSpec with Matchers {
           caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0, Some(6)))
         }
       }
+      "query back an item using MapTo" in {
+        session {
+          coffees.byId(Some(1)) should equal(Some(Coffee("Colombian", Some(1), 7.99, 0, 0, Some(1))))
+        }
+      }
     }
   }
 }
@@ -164,7 +164,9 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table("COFFEES") {
+  object coffees extends Table("COFFEES") with MapTo[Coffee, Option[Int]] {
+    def manifest = implicitly[Manifest[Coffee]]
+
     val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
     val supId = column[Option[Int]]("SUP_ID", new ForeignKey(suppliers.id))
