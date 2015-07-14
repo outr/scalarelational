@@ -18,7 +18,7 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def dataType: DataType[T]
   def manifest: Manifest[T]
 
-  def sqlType = dataType.sqlType(this)
+  def sqlType = dataType.sqlType(table.datastore, this)
 
   def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
     ColumnValue[T](this, value, converterOverride)

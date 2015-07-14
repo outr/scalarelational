@@ -3,7 +3,7 @@ package org.scalarelational.mapper
 import org.scalarelational.column.property.{Polymorphic, AutoIncrement, PrimaryKey}
 import org.scalarelational.datatype.{StringDataType, DataType}
 import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.model.{ColumnPropertyContainer, ColumnLike, Table}
+import org.scalarelational.model.{Datastore, ColumnPropertyContainer, ColumnLike, Table}
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -125,7 +125,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
 
   object content extends Table("content") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(properties: ColumnPropertyContainer) = "VARCHAR(1024)"
+      def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =
         value.asInstanceOf[String].split('|').toList

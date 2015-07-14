@@ -584,7 +584,7 @@ object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_re
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
-      def sqlType(properties: ColumnPropertyContainer) = "VARCHAR(1024)"
+      def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =
         value.asInstanceOf[String].split('|').toList

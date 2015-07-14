@@ -2,7 +2,7 @@ package org.scalarelational.datatype
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
-import org.scalarelational.model.{ColumnPropertyContainer, ColumnLike}
+import org.scalarelational.model.{Datastore, ColumnPropertyContainer, ColumnLike}
 
 /**
  * ObjectSerializationConverter stores any arbitrary serializable object as a Array[Byte].
@@ -10,7 +10,7 @@ import org.scalarelational.model.{ColumnPropertyContainer, ColumnLike}
  * @author Matt Hicks <matt@outr.com>
  */
 class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
-  def sqlType(properties: ColumnPropertyContainer) = s"BINARY(${Int.MaxValue})"
+  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = s"BINARY(${Int.MaxValue})"
 
   def toSQLType(column: ColumnLike[_], value: T) = if (value != null) {
     val baos = new ByteArrayOutputStream()

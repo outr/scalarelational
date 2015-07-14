@@ -18,6 +18,9 @@ import org.scalarelational.{CallableInstruction, SessionSupport}
 trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport with DDLDSLSupport {
   implicit def thisDatastore: Datastore = this
 
+  def DefaultVarCharLength = 65535
+  def DefaultBinaryLength  = 1000
+
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
