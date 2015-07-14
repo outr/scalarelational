@@ -3,6 +3,8 @@ package org.scalarelational.instruction.ddl
 import org.scalarelational.CallableInstruction
 import org.scalarelational.model.{Column, Table}
 
+import scala.language.implicitConversions
+
 /**
  * @author Matt Hicks <matt@outr.com>
  */
@@ -19,4 +21,6 @@ trait DDLSupport {
   def ddl(alter: CreateForeignKey): List[CallableInstruction]
 
   def ddl(create: CreateIndex): List[CallableInstruction]
+
+  def ddl(drop: DropTable): List[CallableInstruction]
 }

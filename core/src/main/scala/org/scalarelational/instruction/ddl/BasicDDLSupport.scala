@@ -120,6 +120,11 @@ trait BasicDDLSupport extends DDLSupport {
     List(CallableInstruction(b.toString()))
   }
 
+  override def ddl(drop: DropTable): List[CallableInstruction] = {
+    val sql = s"DROP TABLE ${drop.tableName}"
+    List(CallableInstruction(sql))
+  }
+
   protected def columnSQL(create: CreateColumn[_]) = {
     val b = new StringBuilder
     b.append(create.name)

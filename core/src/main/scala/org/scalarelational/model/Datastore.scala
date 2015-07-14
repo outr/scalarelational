@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
-import org.scalarelational.dsl.DSLSupport
+import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
 import org.scalarelational.result.ResultSetIterator
@@ -15,7 +15,7 @@ import org.scalarelational.{CallableInstruction, SessionSupport}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport {
+trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport with DDLDSLSupport {
   implicit def thisDatastore: Datastore = this
 
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
@@ -62,11 +62,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   def create(tables: Table*) = {
     if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
     val sql = ddl(tables.toList)
-    exec(sql)
-  }
-
-  def exec(instructions: List[CallableInstruction]) = instructions.foreach {
-    case ci => ci.execute(this)
+    sql.result()
   }
 
   def describe[E, R](query: Query[E, R]): (String, List[Any])
@@ -134,6 +130,11 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   protected def invoke(delete: Delete): Int
 
   def dispose() = {}
+
+  implicit class CallableInstructions(instructions: List[CallableInstruction]) {
+    def result() = instructions.foreach(i => i.execute(thisDatastore))
+    def async() = thisDatastore.async(result())
+  }
 }
 
 object Datastore {
