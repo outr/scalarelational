@@ -31,6 +31,9 @@ trait DSLSupport {
   def select[E1, E2, E3, E4, E5, E6](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6]) = {
     Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6]), (E1, E2, E3, E4, E5, E6)]((e1, e2, e3, e4, e5, e6), converter = tuple6Converter[E1, E2, E3, E4, E5, E6])
   }
+  def select[E1, E2, E3, E4, E5, E6, E7](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7]) = {
+    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7]), (E1, E2, E3, E4, E5, E6, E7)]((e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
+  }
   def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult[_]](expressions.toVector, converter = DefaultConverter)
   def insert(values: ColumnValue[_]*) = InsertSingle(values)
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
@@ -61,4 +64,7 @@ object DSLSupport extends DSLSupport {
 
   def tuple6Converter[E1, E2, E3, E4, E5, E6] = (qr: QueryResult[(E1, E2, E3, E4, E5, E6)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6])
   implicit def vectorifyTuple6[E1, E2, E3, E4, E5, E6](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5, t._6)
+
+  def tuple7Converter[E1, E2, E3, E4, E5, E6, E7] = (qr: QueryResult[(E1, E2, E3, E4, E5, E6, E7)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7])
+  implicit def vectorifyTuple7[E1, E2, E3, E4, E5, E6, E7](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5, t._6, t._7)
 }
