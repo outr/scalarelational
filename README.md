@@ -10,7 +10,7 @@ making working with your database easier, but this comes at the cost of ineffici
 confusing code mapping. The goal of ScalaRelational is to provide a one-to-one representation of the SQL language in
 Scala and provide performance improvements to working with the database.
 
-Currently, only H2 database is tested, but other databases technically are supported though certain functionality may require
+Currently H2 and MySQL is tested, but other databases technically are supported though certain functionality may require
 some slight alterations to work properly. One of the goals of ScalaRelational is to be a straight-forward, type-safe framework
 to write SQL queries in Scala with no magic or guesswork of what the resulting SQL will be.
 
@@ -24,11 +24,17 @@ and though we try to keep it updated, if you have any problems please refer to t
 
 ## Getting Started
 
-The first thing you need to do is add the dependencies to your SBT project:
+The first thing you need to do is add the H2 dependencies to your SBT project:
 
 ```scala
 libraryDependencies += "org.scalarelational" % "scalarelational-h2" % "1.0.0"
 ```
+
+or for mysql
+```scala
+libraryDependencies += "org.scalarelational" % "scalarelational-mysql" % "1.0.0"
+```
+
 
 ## Setup your Database
 
@@ -55,6 +61,11 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
   }
 }
+```
+or for mysql
+
+```scala
+object GettingStartedDatastore extends MysqlDatastore(MySQLConfig("localhost","databaseName", "user", "password") )
 ```
 
 Our Datastore contains Tables and our Tables contain Columns. This is pretty straight-forward and easy to see how it
