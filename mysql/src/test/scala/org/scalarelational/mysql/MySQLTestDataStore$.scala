@@ -8,7 +8,9 @@ import org.powerscala.log.Level
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
 case class Coffee(name: String, supID : Option[Int], price: Double, sales: Int, total : Int , id: Option[Int])
 
-object MysqlTestDataStore extends MysqlDatastore(MySQLConfig("localhost","test", "user", "password") ) with SQLLogging{
+// TODO: remove this as soon as the TableSpec is working
+@Deprecated
+object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test", "user", "password") ) with SQLLogging{
   sqlLogLevel := Level.Info
 
   object suppliers extends Table("SUPPLIERS") {

@@ -1,11 +1,12 @@
 package org.scalarelational.mysql
 
 
-import org.scalarelational.mysql.MysqlTestDataStore._
-import org.scalarelational.mysql.MysqlTestDataStore.suppliers._
-import org.scalarelational.mysql.MysqlTestDataStore.{coffees, suppliers}
+import org.scalarelational.mysql.MySQLTestDataStore$._
+import org.scalarelational.mysql.MySQLTestDataStore$.suppliers._
+import org.scalarelational.mysql.MySQLTestDataStore$.{coffees, suppliers}
 
-
+// TODO: remove this as soon as the TableSpec is working
+@Deprecated
 object MysqlTest extends App {
 
   override def main(args: Array[String]) {
@@ -13,11 +14,11 @@ object MysqlTest extends App {
       create(suppliers, coffees)
 
       //Create suppliers
-      val acmeId = MysqlTestDataStore.insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+      val acmeId = MySQLTestDataStore$.insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
       val superiorCoffeeId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
       val theHighGroundId = insertInto(suppliers, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
 
-      import org.scalarelational.mysql.MysqlTestDataStore.coffees._
+      import org.scalarelational.mysql.MySQLTestDataStore$.coffees._
 
       session {
         // Batch insert some coffees

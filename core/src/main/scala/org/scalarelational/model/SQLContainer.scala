@@ -32,6 +32,9 @@ object SQLContainer {
     table.calling(instructionType, sql)
     table.datastore.calling(instructionType, sql)
   }
+  def calling(datastore: Datastore, instructionType: InstructionType, sql: String): Unit = {
+    datastore.calling(instructionType, sql)
+  }
   def afterInvoke[E, R](table: Table, query: Query[E, R]): Unit = {
     table.afterInvoke[E, R](query)
     table.datastore.afterInvoke[E, R](query)

@@ -9,12 +9,6 @@ class ForeignKey(fc: => Column[_]) extends ColumnProperty {
   lazy val foreignColumn = fc
 
   def name = ForeignKey.name
-
-  override def addedTo(column: Column[_]) = {
-    super.addedTo(column)
-
-    foreignColumn.table.addForeignColumn(column)
-  }
 }
 
 object ForeignKey {

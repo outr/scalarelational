@@ -4,11 +4,11 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mapper)
+  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mysql, mapper)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest)
-  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core)
-  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test")
-  lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core,mapper)
+  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
+  lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core, core % "test->test")
+  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
@@ -72,7 +72,7 @@ object Details {
   val developerURL = "http://matthicks.com"
 
   val sbtVersion = "0.13.8"
-  val scalaVersion = "2.11.6"
+  val scalaVersion = "2.11.7"
 }
 
 object Dependencies {
@@ -81,7 +81,7 @@ object Dependencies {
   object powerscala {
     val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion
   }
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.8"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.9"
   val h2database = "com.h2database" % "h2" % "1.4.187"
   val mysqldatabase = "mysql" % "mysql-connector-java" % "5.1.16"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"

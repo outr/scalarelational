@@ -13,7 +13,6 @@ import org.scalarelational.model._
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-
 case class MySQLConfig(host: String,
                        schema: String,
                        user: String,
@@ -21,11 +20,7 @@ case class MySQLConfig(host: String,
                        profileSQL: Boolean = false,
                        port: Int = 3306)
 
-
-abstract class MysqlDatastore private() extends SQLDatastore with Logging {
-
-  override def DefaultVarCharLength = 65536
-
+abstract class MySQLDatastore private() extends SQLDatastore with Logging {
   protected def this(mysqlConfig: MySQLConfig) = {
     this()
     config := mysqlConfig
@@ -57,19 +52,5 @@ abstract class MysqlDatastore private() extends SQLDatastore with Logging {
     source.setPort(config().port)
     source.setProfileSQL(config().profileSQL)
     dataSourceProperty := source
-  }
-
-
-  override def dispose() = {
-    super.dispose()
-
-    dataSourceProperty.get match {
-      case Some(ds) => ds match {
-        //TODO: destroy data source
-        case pool: MysqlDataSource => {}
-        case _ => // Not a JdbcConnectionPool
-      }
-      case None => // No previous dataSource
-    }
   }
 }

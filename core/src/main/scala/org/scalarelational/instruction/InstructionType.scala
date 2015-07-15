@@ -8,6 +8,7 @@ import org.powerscala.enum.{Enumerated, EnumEntry}
 sealed trait InstructionType extends EnumEntry
 
 object InstructionType extends Enumerated[InstructionType] {
+  case object DDL extends InstructionType
   case object Delete extends InstructionType
   case object Insert extends InstructionType
   case object Merge extends InstructionType

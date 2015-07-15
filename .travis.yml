@@ -1,3 +1,9 @@
 language: scala
 scala:
-  - 2.11.6
+  - 2.11.7
+addons:
+  postgresql: "9.3"
+before_script:
+  - mysql -e 'create database tablespec;'
+  - mysql -e 'create database cross_reference;'
+  - mysql -e 'create database special_types;'

@@ -26,7 +26,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
-  private var _foreignColumns = ListBuffer.empty[Column[_]]
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {
     case c if c.has(PrimaryKey) => c
@@ -44,9 +43,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   protected[scalarelational] def addColumn[T](column: Column[T]) = synchronized {
     _columns += column
-  }
-  protected[scalarelational] def addForeignColumn[T](column: Column[T]) = synchronized {
-    _foreignColumns += column
   }
 
   def as(alias: String) = TableAlias(this, alias)
