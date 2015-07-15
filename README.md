@@ -65,7 +65,8 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
 or for mysql
 
 ```scala
-object GettingStartedDatastore extends MysqlDatastore(MySQLConfig("localhost","databaseName", "user", "password") )
+object GettingStartedDatastore extends MysqlDatastore(
+    MySQLConfig("localhost","databaseName", "user", "password"))
 ```
 
 Our Datastore contains Tables and our Tables contain Columns. This is pretty straight-forward and easy to see how it
