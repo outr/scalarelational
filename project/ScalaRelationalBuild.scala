@@ -8,6 +8,7 @@ object ScalaRelationalBuild extends Build {
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core)
   lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test")
+  lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core,mapper)
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
@@ -82,5 +83,6 @@ object Dependencies {
   }
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.8"
   val h2database = "com.h2database" % "h2" % "1.4.187"
+  val mysqldatabase = "mysql" % "mysql-connector-java" % "5.1.16"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }
