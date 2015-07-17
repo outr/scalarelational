@@ -101,6 +101,12 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(b.toString()))
   }
 
+  override def ddl[T](alter: ChangeColumnType[T]): List[CallableInstruction] = {
+    val properties = ColumnPropertyContainer[T](alter.properties: _*)(alter.manifest)
+    val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} ${alter.dataType.sqlType(this, properties)}"
+    List(CallableInstruction(sql))
+  }
+
   override def ddl(create: CreateIndex): List[CallableInstruction] = {
     val b = new StringBuilder
     b.append(s"CREATE ")
@@ -120,6 +126,16 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(b.toString()))
   }
 
+  override def ddl(alter: RenameColumn): List[CallableInstruction] = {
+    val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.oldName} RENAME TO ${alter.newName}"
+    List(CallableInstruction(sql))
+  }
+
+  override def ddl(alter: RestartColumn): List[CallableInstruction] = {
+    val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} RESTART WITH ${alter.value}"
+    List(CallableInstruction(sql))
+  }
+
   override def ddl(drop: DropTable): List[CallableInstruction] = {
     val sql = s"DROP TABLE ${drop.tableName}"
     List(CallableInstruction(sql))
@@ -134,6 +150,16 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
       b.append("IF EXISTS ")
     }
     b.append(drop.columnName)
+    List(CallableInstruction(b.toString()))
+  }
+
+  override def ddl(drop: DropIndex): List[CallableInstruction] = {
+    val b = new StringBuilder
+    b.append("DROP INDEX ")
+    if (drop.ifExists) {
+      b.append("IF EXISTS ")
+    }
+    b.append(drop.indexName)
     List(CallableInstruction(b.toString()))
   }
 

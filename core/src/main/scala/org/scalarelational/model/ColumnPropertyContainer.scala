@@ -15,3 +15,11 @@ trait ColumnPropertyContainer {
   def prop[P <: ColumnProperty](propertyName: String) = get[P](propertyName).getOrElse(throw new NullPointerException(s"Unable to find property by name '$propertyName' in $this."))
   def isOptional = classType == classOf[Option[_]]
 }
+
+object ColumnPropertyContainer {
+  def apply[T](columnProperties: ColumnProperty*)(implicit manifest: Manifest[T]) = new ColumnPropertyContainer {
+    override val properties = columnProperties.map(cp => cp.name -> cp).toMap
+
+    override def classType = manifest.runtimeClass
+  }
+}
