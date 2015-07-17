@@ -1,7 +1,8 @@
 package org.scalarelational.mysql
 
 import org.powerscala.log.Level
-import org.scalarelational.model.{SQLLogging, HikariSupport}
+import org.scalarelational.extra.HikariSupport
+import org.scalarelational.model.SQLLogging
 import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTestCrossReferenceDatastore, AbstractTestDatastore, AbstractTableSpec}
 import org.scalatest.Ignore
 

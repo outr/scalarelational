@@ -1,5 +1,6 @@
 package org.scalarelational.h2
 
+import org.scalarelational.extra.HikariSupport
 import org.scalarelational.{AbstractTableSpec, AbstractTestDatastore, AbstractTestCrossReferenceDatastore, AbstractSpecialTypesDatastore}
 import org.scalarelational.model._
 import scala.language.postfixOps

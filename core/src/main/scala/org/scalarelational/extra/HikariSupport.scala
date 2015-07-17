@@ -1,6 +1,7 @@
-package org.scalarelational.model
+package org.scalarelational.extra
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import org.scalarelational.model.SQLDatastore
 
 /**
  * @author Matt Hicks <matt@outr.com>
