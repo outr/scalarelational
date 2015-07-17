@@ -31,17 +31,19 @@ trait VersioningSupport extends PersistentProperties {
         version := latestVersion // New database created, we don't have to run upgrades
       } else {
         info(s"Current Version: ${version()}, Latest Version: ${latestVersion}")
-        (version() to latestVersion).foreach {
+        (version() until latestVersion).foreach {
           case v => transaction {
             val nextVersion = v + 1
             info(s"Upgrading from version $v to $nextVersion...")
             val upgrade = upgrades.getOrElse(nextVersion, throw new RuntimeException(s"No version registered for $nextVersion."))
             upgrade.upgrade()
+            version := nextVersion
             info(s"$nextVersion upgrade finished successfully.")
           }
         }
       }
     }
+
 
     upgrades = Map.empty      // Clear the map so upgrades can be released
   }
