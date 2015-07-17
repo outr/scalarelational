@@ -23,4 +23,6 @@ trait DDLSupport {
   def ddl(create: CreateIndex): List[CallableInstruction]
 
   def ddl(drop: DropTable): List[CallableInstruction]
+
+  def ddl(drop: DropColumn): List[CallableInstruction]
 }

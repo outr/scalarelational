@@ -125,6 +125,18 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(sql))
   }
 
+  override def ddl(drop: DropColumn): List[CallableInstruction] = {
+    val b = new StringBuilder
+    b.append("ALTER TABLE ")
+    b.append(drop.tableName)
+    b.append(" DROP COLUMN ")
+    if (drop.ifExists) {
+      b.append("IF EXISTS ")
+    }
+    b.append(drop.columnName)
+    List(CallableInstruction(b.toString()))
+  }
+
   protected def columnSQL(create: CreateColumn[_]) = {
     val b = new StringBuilder
     b.append(create.name)
