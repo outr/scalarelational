@@ -12,6 +12,6 @@ trait DDLDSLSupport {
   def dropTable(table: Table) = ddl(DropTable(table.tableName))
   def dropTable(tableName: String) = ddl(DropTable(tableName))
 
-  def dropColumn(column: Column, ifExists: Boolean = false) = ddl(DropColumn(column.table.tableName, column.name, ifExists))
-  def dropColumn(tableName: String, columnName: String, ifExists: Boolean = false) = ddl(DropColumn(tableName, columnName, ifExists))
+  def dropColumn(column: Column[_]) = ddl(DropColumn(column.table.tableName, column.name))
+  def dropColumn(tableName: String, columnName: String) = ddl(DropColumn(tableName, columnName))
 }
