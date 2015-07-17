@@ -17,25 +17,29 @@ trait PersistentProperties extends Datastore {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val key = column[String]("name", Unique)
     val value = column[String]("value")
+  }
 
+  object persistence {
     def get(name: String): Option[String] = {
-      val query = select(value) from persistentProperties where key === name
+      val query = select(persistentProperties.value) from persistentProperties where persistentProperties.key === name
       query.result.converted.headOption
     }
 
-    def apply(name: String) = get(name).getOrElse(throw new NullPointerException(s"Unable to find $name in persistent properties table."))
+    def apply(name: String): String = {
+      get(name).getOrElse(throw new NullPointerException(s"Unable to find $name in persistent properties table."))
+    }
 
-    def update(name: String, newValue: String) = {
-      val m = merge(key, key(name), value(newValue))
+    def update(name: String, newValue: String): Unit = {
+      val m = merge(persistentProperties.key, persistentProperties.key(name), persistentProperties.value(newValue))
       m.result
     }
 
-    def remove(name: String) = {
-      val d = delete(persistentProperties) where(key === name)
+    def remove(name: String): Unit = {
+      val d = delete(persistentProperties) where(persistentProperties.key === name)
       d.result
     }
 
-    def stringProperty(key: String, default: String = null) = {
+    def stringProperty(key: String, default: String = null): Property[String] = {
       val p = Property[String](default = Some(get(key).getOrElse(default)))
       p.change.on {
         case evt => if (evt.newValue != null) {
@@ -47,7 +51,7 @@ trait PersistentProperties extends Datastore {
       p
     }
 
-    def intProperty(key: String, default: Int = 0) = {
+    def intProperty(key: String, default: Int = 0): Property[Int] = {
       val p = Property[Int](default = Some(get(key).map(s => s.toInt).getOrElse(default)))
       p.change.on {
         case evt => this(key) = evt.newValue.toString
