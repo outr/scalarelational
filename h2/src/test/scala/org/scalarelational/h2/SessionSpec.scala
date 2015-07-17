@@ -1,8 +1,9 @@
 package org.scalarelational.h2
 
 import org.powerscala.concurrent.Time
-import org.scalarelational.{StickySessionSupport, Session}
+import org.scalarelational.Session
 import org.scalarelational.column.property.{Unique, AutoIncrement, PrimaryKey}
+import org.scalarelational.extra.StickySessionSupport
 import org.scalarelational.model.Table
 import org.scalatest.{Matchers, WordSpec}
 
