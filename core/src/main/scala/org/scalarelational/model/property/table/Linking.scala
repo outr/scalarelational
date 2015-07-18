@@ -1,4 +1,4 @@
-package org.scalarelational.model.table.property
+package org.scalarelational.model.property.table
 
 /**
  * @author Matt Hicks <matt@outr.com>

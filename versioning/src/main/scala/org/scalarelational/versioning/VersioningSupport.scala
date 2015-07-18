@@ -1,6 +1,5 @@
 package org.scalarelational.versioning
 
-import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.extra.PersistentProperties
 import org.scalarelational.model.{Table, Datastore}
 

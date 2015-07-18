@@ -1,4 +1,4 @@
-package org.scalarelational.column
+package org.scalarelational.model.property.column
 
 import java.io._
 import java.sql.Blob

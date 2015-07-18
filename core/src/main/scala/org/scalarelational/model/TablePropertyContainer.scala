@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import org.scalarelational.model.table.property.TableProperty
+import org.scalarelational.model.property.table.TableProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

@@ -1,7 +1,7 @@
 package org.scalarelational.extra
 
 import org.powerscala.property.Property
-import org.scalarelational.column.property.{Unique, AutoIncrement, PrimaryKey}
+import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, AutoIncrement}
 import org.scalarelational.model.{Table, Datastore}
 
 /**

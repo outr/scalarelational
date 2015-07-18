@@ -1,10 +1,10 @@
 package org.scalarelational.mapper.gettingstarted
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
-import org.scalarelational.column.property._
 import org.scalarelational.datatype.EnumDataType
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.model.Table
+import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
 import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
 

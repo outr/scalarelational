@@ -1,8 +1,7 @@
 package org.scalarelational.mysql
 
-import org.scalarelational.column.property._
+import org.scalarelational.model.property.column.property.{ColumnLength, PrimaryKey, AutoIncrement, ForeignKey}
 import org.scalarelational.model.{SQLLogging, Table}
-import org.scalarelational.column.property.ForeignKey
 import org.powerscala.log.Level
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)

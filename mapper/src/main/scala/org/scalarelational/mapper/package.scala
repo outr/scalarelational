@@ -1,8 +1,8 @@
 package org.scalarelational
 
 import org.powerscala.reflect._
-import org.scalarelational.column.property.AutoIncrement
 import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
+import org.scalarelational.model.property.column.property.AutoIncrement
 import org.scalarelational.model.{Column, Table}
 import org.scalarelational.result.QueryResult
 

@@ -1,8 +1,8 @@
 package org.scalarelational.model
 
 import org.scalarelational._
-import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.fun.{SQLFunction, FunctionType}
+import org.scalarelational.model.property.column.property.ColumnProperty
 import org.scalarelational.op._
 import org.scalarelational.datatype.{LongDataType, DataType}
 

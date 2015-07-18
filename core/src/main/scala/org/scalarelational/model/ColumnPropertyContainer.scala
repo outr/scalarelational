@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import org.scalarelational.column.property.ColumnProperty
+import org.scalarelational.model.property.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

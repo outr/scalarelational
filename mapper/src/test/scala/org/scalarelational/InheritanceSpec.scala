@@ -1,8 +1,8 @@
 package org.scalarelational
 
-import org.scalarelational.column.property._
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.model.Table
+import org.scalarelational.model.property.column.property.{PrimaryKey, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalarelational.mapper._
 

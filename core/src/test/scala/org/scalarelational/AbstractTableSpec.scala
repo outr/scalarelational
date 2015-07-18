@@ -4,10 +4,10 @@ import java.sql.{Blob, Timestamp}
 import javax.sql.rowset.serial.SerialBlob
 
 import org.powerscala.IO
-import org.scalarelational.column.property._
 import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
 import org.scalarelational.model._
-import org.scalarelational.model.table.property.Index
+import org.scalarelational.model.property.column.property._
+import org.scalarelational.model.property.table.Index
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.Await

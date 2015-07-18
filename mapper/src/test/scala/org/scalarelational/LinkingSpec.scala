@@ -1,7 +1,7 @@
 package org.scalarelational
 
-import org.scalarelational.column.property._
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.model.property.column.property.{IgnoreCase, PrimaryKey, Unique, AutoIncrement}
 import org.scalarelational.model.{LinkingTable, Table}
 import org.scalatest.{Matchers, WordSpec}
 

@@ -1,8 +1,8 @@
 package org.scalarelational.instruction.ddl
 
-import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.DataType
 import org.scalarelational.model.ColumnPropertyContainer
+import org.scalarelational.model.property.column.property.ColumnProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

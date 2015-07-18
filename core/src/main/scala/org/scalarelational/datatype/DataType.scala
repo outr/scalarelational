@@ -4,8 +4,8 @@ import java.sql.{Blob, Timestamp}
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
-import org.scalarelational.column.WrappedString
-import org.scalarelational.column.property.{ColumnProperty, ColumnLength, IgnoreCase, NumericStorage}
+import org.scalarelational.model.property.column.WrappedString
+import org.scalarelational.model.property.column.property.{IgnoreCase, ColumnLength, NumericStorage}
 import org.scalarelational.model.{Datastore, ColumnPropertyContainer, ColumnLike}
 import org.scalarelational.op.Operator
 

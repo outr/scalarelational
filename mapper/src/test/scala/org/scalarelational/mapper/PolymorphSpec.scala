@@ -1,8 +1,8 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.column.property.{Polymorphic, AutoIncrement, PrimaryKey}
 import org.scalarelational.datatype.{StringDataType, DataType}
 import org.scalarelational.h2.{H2Memory, H2Datastore}
+import org.scalarelational.model.property.column.property.{Polymorphic, PrimaryKey, AutoIncrement}
 import org.scalarelational.model.{Datastore, ColumnPropertyContainer, ColumnLike, Table}
 import org.scalatest.{Matchers, WordSpec}
 

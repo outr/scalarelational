@@ -1,9 +1,8 @@
 package org.scalarelational.result
 
 import java.sql.ResultSet
-
-import org.scalarelational.column.property.Polymorphic
 import org.scalarelational.datatype.DataType
+import org.scalarelational.model.property.column.property.Polymorphic
 import org.scalarelational.{ExpressionValue, SelectExpression, ColumnValue}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction.Query

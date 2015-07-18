@@ -1,7 +1,7 @@
 package org.scalarelational.instruction.ddl
 
 import org.scalarelational.model.TablePropertyContainer
-import org.scalarelational.model.table.property.TableProperty
+import org.scalarelational.model.property.table.TableProperty
 
 /**
  * @author Matt Hicks <matt@outr.com>

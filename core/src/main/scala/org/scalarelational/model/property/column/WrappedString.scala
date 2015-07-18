@@ -1,4 +1,4 @@
-package org.scalarelational.column
+package org.scalarelational.model.property.column
 
 /**
  * WrappedString trait gives the ability create a wrapper type for a String that offers validations, modifications, etc.

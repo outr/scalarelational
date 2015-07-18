@@ -1,4 +1,4 @@
-package org.scalarelational.column.property
+package org.scalarelational.model.property.column.property
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>

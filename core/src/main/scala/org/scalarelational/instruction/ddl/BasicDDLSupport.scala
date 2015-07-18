@@ -1,8 +1,8 @@
 package org.scalarelational.instruction.ddl
 
 import org.scalarelational.CallableInstruction
-import org.scalarelational.column.property._
-import org.scalarelational.model.table.property.Index
+import org.scalarelational.model.property.column.property._
+import org.scalarelational.model.property.table.Index
 import org.scalarelational.model.{Datastore, Column, Table, ColumnPropertyContainer}
 
 import scala.collection.mutable.ListBuffer
