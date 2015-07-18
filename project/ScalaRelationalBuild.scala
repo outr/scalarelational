@@ -5,7 +5,9 @@ object ScalaRelationalBuild extends Build {
   import Dependencies._
 
   lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mysql, mapper, versioning)
-  lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest)
+  lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
+    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
+  )
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
   lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core, core % "test->test")
   lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
@@ -20,9 +22,11 @@ object ScalaRelationalBuild extends Build {
     fork := true,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq(
-      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-      "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
+      Resolver.sonatypeRepo("snapshots"),
+      Resolver.sonatypeRepo("releases"),
+      Resolver.typesafeRepo("releases")
     ),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
     publishTo <<= version {
       (v: String) =>
         val nexus = "https://oss.sonatype.org/"

@@ -1,6 +1,9 @@
 package org.scalarelational
 
+import java.sql.Timestamp
+
 import org.scalarelational.column.property.{ForeignKey, PrimaryKey, AutoIncrement}
+import org.scalarelational.extra.typedTable
 import org.scalarelational.model.{Table, SQLDatastore}
 import org.scalatest.{Matchers, WordSpec}
 
@@ -55,6 +58,38 @@ class ModelSpec extends WordSpec with Matchers {
         args should equal(Nil)
       }
     }
+    "checking Macro created table" should {
+      "have 'PERSON' as the table name" in {
+        person.tableName should equal("PERSON")
+      }
+      "have exactly four columns" in {
+        person.columns.size should equal(4)
+      }
+      "have id: Option[Int] as the first column" in {
+        val c = person.columns.head
+        c.name should equal("ID")
+        c.fieldName should equal("id")
+        c.classType should equal(classOf[Option[_]])
+      }
+      "have name: String as the second column" in {
+        val c = person.columns.tail.head
+        c.name should equal("NAME")
+        c.fieldName should equal("name")
+        c.classType should equal(classOf[String])
+      }
+      "have age: Int as the third column" in {
+        val c = person.columns.tail.tail.head
+        c.name should equal("AGE")
+        c.fieldName should equal("age")
+        c.classType should equal(classOf[Int])
+      }
+      "have created: Timestamp as the fourth column" in {
+        val c = person.columns.tail.tail.tail.head
+        c.name should equal("created")
+        c.fieldName should equal("created")
+        c.classType should equal(classOf[Timestamp])
+      }
+    }
   }
 }
 
@@ -69,4 +104,9 @@ object ModelDatastore extends SQLDatastore {
     val name = column[String]("name")
     val t1Fk = column[Int]("t1Fk", new ForeignKey(t1.id))
   }
+  @typedTable[Person] object person {
+    val created = column[Timestamp]("created")
+  }
 }
+
+case class Person(id: Option[Int], name: String, age: Int)
