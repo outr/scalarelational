@@ -233,7 +233,6 @@ trait AbstractTableSpec extends WordSpec with Matchers {
           and(name("Xavier")).
           and(name("Yasser")).
           and(name("Zach")).async
-        (select(*) from test).result.toList.length should equal(0)
         Await.result(future, 10.seconds) should equal(List(28))       // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
         (select(*) from test).result.toList.length should equal(26)
       }
