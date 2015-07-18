@@ -46,11 +46,13 @@ trait SessionSupport {
   protected def commitTransaction() = {
     connection.commit()
     connection.setAutoCommit(false)
+    session.inTransaction = false
   }
 
   protected def rollbackTransaction() = {
     connection.rollback()
     connection.setAutoCommit(false)
+    session.inTransaction = false
   }
 
   def session[Result](f: => Result): Result = {
