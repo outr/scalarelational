@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import org.scalarelational.extra.typedTable
 import org.scalarelational.model.property.column.property.{PrimaryKey, ForeignKey, AutoIncrement}
-import org.scalarelational.model.{Table, SQLDatastore}
+import org.scalarelational.model.{Column, Table, SQLDatastore}
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -66,28 +66,39 @@ class ModelSpec extends WordSpec with Matchers {
         person.columns.size should equal(4)
       }
       "have id: Option[Int] as the first column" in {
-        val c = person.columns.head
+        val c: Column[_] = person.columns.head
         c.name should equal("ID")
         c.fieldName should equal("id")
         c.classType should equal(classOf[Option[_]])
+        // TODO: fix bug in macros not loading entire body
+//        c.has(AutoIncrement) should equal(true)
+//        c.has(PrimaryKey) should equal(true)
       }
       "have name: String as the second column" in {
-        val c = person.columns.tail.head
+        val c: Column[_] = person.columns.tail.head
         c.name should equal("NAME")
         c.fieldName should equal("name")
         c.classType should equal(classOf[String])
+        c.has(AutoIncrement) should equal(false)
+        c.has(PrimaryKey) should equal(false)
       }
       "have age: Int as the third column" in {
-        val c = person.columns.tail.tail.head
+        val c: Column[_] = person.columns.tail.tail.head
         c.name should equal("AGE")
         c.fieldName should equal("age")
         c.classType should equal(classOf[Int])
       }
       "have created: Timestamp as the fourth column" in {
-        val c = person.columns.tail.tail.tail.head
+        val c: Column[_] = person.columns.tail.tail.tail.head
         c.name should equal("created")
         c.fieldName should equal("created")
         c.classType should equal(classOf[Timestamp])
+      }
+      "verify type access" in {
+        person.id.name should equal("ID")
+        person.name.name should equal("NAME")
+        person.age.name should equal("AGE")
+        person.created.name should equal("created")
       }
     }
   }
@@ -105,6 +116,7 @@ object ModelDatastore extends SQLDatastore {
     val t1Fk = column[Int]("t1Fk", new ForeignKey(t1.id))
   }
   @typedTable[Person] object person {
+    id.props(AutoIncrement, PrimaryKey)         // TODO: fix this getting dropped
     val created = column[Timestamp]("created")
   }
 }

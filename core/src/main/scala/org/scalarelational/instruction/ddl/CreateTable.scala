@@ -9,4 +9,4 @@ import org.scalarelational.model.property.table.TableProperty
 case class CreateTable(name: String,
                        ifNotExists: Boolean = false,
                        columns: List[CreateColumn[_]] = Nil,
-                       properties: Map[String, TableProperty] = Map.empty) extends TablePropertyContainer
+                       props: Seq[TableProperty] = Nil) extends TablePropertyContainer

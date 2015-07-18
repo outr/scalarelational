@@ -17,7 +17,7 @@ trait DDLDSLSupport extends DataTypes {
   def createColumn[T](column: Column[T]) = ddl(column2Create(column))
   def createColumn[T](tableName: String, columnName: String, columnProperty: ColumnProperty*)
                      (implicit manifest: Manifest[T], dataType: DataType[T]) = {
-    ddl(CreateColumn[T](tableName, columnName, dataType, columnProperty.map(cp => cp.name -> cp).toMap))
+    ddl(CreateColumn[T](tableName, columnName, dataType, columnProperty.toSeq))
   }
 
   def renameColumn(tableName: String, oldName: String, newName: String) = {

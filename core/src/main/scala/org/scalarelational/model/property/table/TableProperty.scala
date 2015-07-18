@@ -1,12 +1,10 @@
 package org.scalarelational.model.property.table
 
-import org.scalarelational.model.Table
+import org.scalarelational.model.property.Prop
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait TableProperty {
+trait TableProperty extends Prop {
   def name: String
-
-  def addedTo(table: Table) = {}
 }

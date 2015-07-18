@@ -13,9 +13,7 @@ private[scalarelational] class Column[T](val name: String,
                                          val props: Seq[ColumnProperty]
                                         ) extends ColumnLike[T] {
   table.addColumn(this)     // Add this column to the table
-  props.foreach(_.addedTo(this))
-
-  val properties = props.map(p => p.name -> p).toMap
+  this.props(props: _*)
 
   lazy val classType = manifest.runtimeClass
   lazy val longName = s"${table.tableName}.$name"

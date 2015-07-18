@@ -24,7 +24,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   implicit def thisTable = this
 
-  private var _properties = Map.empty[String, TableProperty]
   private var _columns = ListBuffer.empty[Column[_]]
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {
@@ -38,8 +37,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   lazy val q = datastore.select(*) from this
 
   props(tableProperties: _*)      // Add properties from constructor
-
-  def properties = _properties
 
   protected[scalarelational] def addColumn[T](column: Column[T]) = synchronized {
     _columns += column
@@ -78,22 +75,6 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   }
 
   def exists = datastore.doesTableExist(tableName)
-
-  /**
-   * Adds the supplied properties to this table.
-   *
-   * @param properties the properties to add
-   * @return this
-   */
-  def props(properties: TableProperty*) = synchronized {
-    properties.foreach {
-      case p => {
-        _properties += p.name -> p
-        p.addedTo(this)
-      }
-    }
-    this
-  }
 
   override def toString = tableName
 }
