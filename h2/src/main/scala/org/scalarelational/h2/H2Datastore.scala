@@ -56,7 +56,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
   }
 
   override def create(tables: Table*) = {
-    super.create(tables: _*)
+    val created = super.create(tables: _*)
 
     // TODO: convert this to use CallableInstructions
     val b = new StringBuilder
@@ -69,6 +69,8 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     if (b.nonEmpty) {
       session.execute(b.toString())
     }
+
+    created
   }
 
   private def createTableTriggers(table: Table, b: StringBuilder) = if (table.has(Triggers.name)) {

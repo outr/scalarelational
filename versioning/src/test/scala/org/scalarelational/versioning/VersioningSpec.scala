@@ -10,7 +10,6 @@ import org.scalatest.{Matchers, WordSpec}
  */
 class VersioningSpec extends WordSpec with Matchers {
   import VersioningDatastore._
-  import test._
 
   "Versioning" should {
     "create the database" in {
@@ -18,9 +17,10 @@ class VersioningSpec extends WordSpec with Matchers {
         create(test, persistentProperties)
       }
     }
-    "version should be 0" in {
+    "have version at 0" in {
       session {
         version() should equal(0)
+        persistence.get("databaseVersion") should equal(None)
       }
     }
     "register an upgrade" in {
@@ -33,8 +33,11 @@ class VersioningSpec extends WordSpec with Matchers {
         upgrade()
       }
     }
-    "version should be 1" in {
-      version() should equal(1)
+    "have version at 1" in {
+      session {
+        version() should equal(1)
+        persistence.get("databaseVersion") should equal(Some("1"))
+      }
     }
     "register more upgrades" in {
       register(Upgrade2)
@@ -45,10 +48,66 @@ class VersioningSpec extends WordSpec with Matchers {
         upgrade()
       }
     }
-    "version should be 3" in {
-      Upgrade2.invoked should equal(true)
-      Upgrade3.invoked should equal(true)
-      version() should equal(3)
+    "have version at 3" in {
+      session {
+        Upgrade2.invoked should equal(true)
+        Upgrade3.invoked should equal(true)
+        version() should equal(3)
+        persistence.get("databaseVersion") should equal(Some("3"))
+      }
+    }
+    "register a fourth upgrade" in {
+      register(Upgrade4)
+    }
+    "have only two tables in the datastore" in {
+      session {
+        jdbcTables should equal(Set("TEST", "PERSISTENT_PROPERTIES"))
+      }
+    }
+    "run fourth upgrade" in {
+      session {
+        upgrade()
+      }
+    }
+    "have version at 4" in {
+      session {
+        version() should equal(4)
+        persistence.get("databaseVersion") should equal(Some("4"))
+        jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
+        jdbcColumns("TEST2") should equal(Set("ID", "NAME", "AGE"))
+      }
+    }
+    "register a fifth upgrade" in {
+      register(Upgrade5)
+    }
+    "run fifth upgrade" in {
+      session {
+        upgrade()
+      }
+    }
+    "have version at 5" in {
+      session {
+        version() should equal(5)
+        persistence.get("databaseVersion") should equal(Some("5"))
+        jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
+        jdbcColumns("TEST2") should equal(Set("ID", "AGE"))
+      }
+    }
+    "register a sixth upgrade" in {
+      register(Upgrade6)
+    }
+    "run sixth upgrade" in {
+      session {
+        upgrade()
+      }
+    }
+    "have version at 6" in {
+      session {
+        version() should equal(6)
+        persistence.get("databaseVersion") should equal(Some("6"))
+        jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
+        jdbcColumns("TEST2") should equal(Set("ID", "YEARSOLD"))
+      }
     }
   }
 }
@@ -76,6 +135,36 @@ object Upgrade3 extends UpgradableVersion {
 
   override def upgrade() = {
     invoked = true
+  }
+}
+
+object Upgrade4 extends UpgradableVersion {
+  override def version = 4
+  override def upgrade() = {
+    import VersioningDatastore._
+
+    createTable("test2").
+      and(createColumn[Int]("test2", "id", PrimaryKey, AutoIncrement)).
+      and(createColumn[String]("test2", "name")).
+      and(createColumn[Option[Int]]("test2", "age")).result
+  }
+}
+
+object Upgrade5 extends UpgradableVersion {
+  override def version = 5
+  override def upgrade() = {
+    import VersioningDatastore._
+
+    dropColumn("test2", "name").result
+  }
+}
+
+object Upgrade6 extends UpgradableVersion {
+  override def version = 6
+  override def upgrade() = {
+    import VersioningDatastore._
+
+    renameColumn("test2", "age", "yearsOld").result
   }
 }
 

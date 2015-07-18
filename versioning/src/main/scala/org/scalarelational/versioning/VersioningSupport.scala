@@ -29,6 +29,9 @@ trait VersioningSupport extends PersistentProperties {
       if (version() == 0 && persistence.get("databaseVersion").isEmpty) {
         info(s"New database created. Setting version to latest (version $latestVersion) without running upgrades.")
         version := latestVersion // New database created, we don't have to run upgrades
+        if (latestVersion == 0) {
+          persistence("databaseVersion") = "0"    // Make sure the value is created in the database
+        }
       } else {
         info(s"Current Version: ${version()}, Latest Version: ${latestVersion}")
         (version() until latestVersion).foreach {
@@ -43,7 +46,6 @@ trait VersioningSupport extends PersistentProperties {
         }
       }
     }
-
 
     upgrades = Map.empty      // Clear the map so upgrades can be released
   }

@@ -49,6 +49,17 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     }
   }
 
+  def jdbcColumns(tableName: String) = {
+    val s = session
+    val meta = s.connection.getMetaData
+    val results = meta.getColumns(null, "PUBLIC", tableName, null)
+    try {
+      new ResultSetIterator(results).map(_.getString("COLUMN_NAME")).toSet
+    } finally {
+      results.close()
+    }
+  }
+
   def doesTableExist(name: String) = {
     val s = session
     val meta = s.connection.getMetaData
@@ -65,7 +76,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   def create(tables: Table*) = {
     if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
     val sql = ddl(tables.toList)
-    sql.result()
+    sql.result
   }
 
   def describe[E, R](query: Query[E, R]): (String, List[Any])
@@ -135,8 +146,12 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   def dispose() = {}
 
   implicit class CallableInstructions(instructions: List[CallableInstruction]) {
-    def result() = instructions.foreach(i => i.execute(thisDatastore))
-    def async() = thisDatastore.async(result())
+    def result = {
+      instructions.foreach(i => i.execute(thisDatastore))
+      instructions.size
+    }
+    def async = thisDatastore.async(result)
+    def and(moreInstructions: List[CallableInstruction]) = new CallableInstructions(instructions ::: moreInstructions)
   }
 }
 
