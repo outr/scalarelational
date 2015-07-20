@@ -1,7 +1,7 @@
 package org.scalarelational
 
 import org.powerscala.reflect._
-import org.scalarelational.instruction.{InsertSingle, Instruction, Query}
+import org.scalarelational.instruction._
 import org.scalarelational.model.property.column.property.AutoIncrement
 import org.scalarelational.model.{Column, Table}
 import org.scalarelational.result.QueryResult
@@ -59,7 +59,7 @@ package object mapper {
         case position => fullName.substring(position + 1)
       }
 
-    private def fieldValues[T: ClassTag](value: T, strictMapping: Boolean): Seq[ColumnValue[Any]] = {
+    private def fieldValues[T: ClassTag](value: T, strictMapping: Boolean): List[ColumnValue[Any]] = {
       val refl = currentMirror.reflect(value)
       val members = refl.symbol.asType.typeSignature.members
       val fields = members.filter(_.asTerm.isVal)
@@ -81,39 +81,52 @@ package object mapper {
             throw new RuntimeException(s"Field $f incompatible to table column type ${column.get.classType}")
           }
         }
-      }.toSeq
+      }.toList
     }
 
     def persist[T: ClassTag](value: T,
                              forceInsert: Boolean = false,
                              strictMapping: Boolean = true): Instruction[Int] = {
-      val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
       val values = fieldValues(value, strictMapping)
-      val updates = values.filterNot(_.column == primaryColumn && primaryColumn.has(AutoIncrement))
-      values.find(_.column == primaryColumn) match {
-        case Some(primaryKey) => {
-          val exists = primaryKey.value match {
-            case _ if forceInsert => false
-            case None => false
-            case null => false
-            case i: Int if i < 1 => false
-            case _ => true
-          }
-          if (exists) {
-            // Update
-            val update = table.datastore.update(updates: _*) where (primaryColumn === primaryKey.value)
-            val id = primaryKey.value match {
-              case Some(v) => v.asInstanceOf[Int]
-              case i: Int => i
-            }
-            new InstanceInstruction(update, table, id)
-          } else {
-            new PersistInsertInstruction(table.datastore.insert(updates: _*))
-          }
-        }
-        case None => new InstanceInstruction(table.datastore.insert(updates: _*), table, 0)
-      }
+      persistColumnValues(table, values, forceInsert)
     }
+  }
+
+  def persistColumnValues(table: Table, values: List[ColumnValue[Any]], forceInsert: Boolean = false): Instruction[Int] = {
+    val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
+    val updates = values.filterNot(_.column == primaryColumn && primaryColumn.has(AutoIncrement))
+    values.find(_.column == primaryColumn) match {
+      case Some(primaryKey) => {
+        val exists = primaryKey.value match {
+          case _ if forceInsert => false
+          case None => false
+          case null => false
+          case i: Int if i < 1 => false
+          case _ => true
+        }
+        if (exists) {
+          // Update
+          val update = updateColumnValues(table, primaryKey, updates)
+          val id = primaryKey.value match {
+            case Some(v) => v.asInstanceOf[Int]
+            case i: Int => i
+          }
+          new InstanceInstruction(update, table, id)
+        } else {
+          new PersistInsertInstruction(insertColumnValues(table, updates))
+        }
+      }
+      case None => new InstanceInstruction(insertColumnValues(table, updates), table, 0)
+    }
+  }
+
+  def updateColumnValues(table: Table, primaryKey: ColumnValue[Any], values: List[ColumnValue[Any]]): Update = {
+    val primaryColumn = primaryKey.column
+    table.datastore.update(values: _*) where (primaryColumn === primaryKey.value)
+  }
+
+  def insertColumnValues(table: Table, values: List[ColumnValue[Any]]): InsertSingle = {
+    table.datastore.insert(values: _*)
   }
 
   class InstanceInstruction(instruction: Instruction[Int], val table: Table, id: Int) extends Instruction[Int] {

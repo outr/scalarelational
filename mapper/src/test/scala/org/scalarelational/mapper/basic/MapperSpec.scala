@@ -1,5 +1,6 @@
 package org.scalarelational.mapper.basic
 
+import org.scalarelational.ColumnValue
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.mapper._
 import org.scalarelational.model.Table
@@ -112,7 +113,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back 'French Roast' with 'Superior Coffee'" in {
         session {
-          val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supId === suppliers.id) where(coffees.name === "French Roast")
+          val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supId === suppliers.id) where (coffees.name === "French Roast")
           val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
           frenchRoast should equal(Coffee("French Roast", Some(superior.id.get), 8.99, 0, 0, Some(2)))
           superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
@@ -132,6 +133,34 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
     }
+    "working with @mapped Macro Annotation" should {
+      val s = Supplier("Supplier Name", "Supplier Street", "Supplier City", "Supplier State", "Supplier Zip")
+
+      "verify Supplier is an instance of TableMappable" in {
+        s.isInstanceOf[TableMappable] should equal(true)
+      }
+      "return exactly six ColumnValues" in {
+        val values: List[ColumnValue[Any]] = s.toColumnValues
+        values.length should equal(6)
+      }
+      "return the correct six ColumnValues" in {
+        import suppliers._
+
+        val values: List[ColumnValue[Any]] = s.toColumnValues
+        values.head should equal(name("Supplier Name"))
+        values.tail.head should equal(street("Supplier Street"))
+        values.tail.tail.head should equal(city("Supplier City"))
+        values.tail.tail.tail.head should equal(state("Supplier State"))
+        values.tail.tail.tail.tail.head should equal(zip("Supplier Zip"))
+        values.tail.tail.tail.tail.tail.head should equal(id(None))
+      }
+      "insert a @mapped Supplier" in {
+        session {
+          val target = Supplier("Target", "123 All Over Rd.", "Lotsaplaces", "California", "95461")
+          target.persist.result should equal(4)
+        }
+      }
+    }
   }
 }
 
@@ -145,7 +174,7 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
-case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
+@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
 
 case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 
