@@ -19,7 +19,9 @@ object MappedMacro {
     import c.universe._
 
     def modified(classDecl: ClassDef): c.Expr[Any] = {
-      val (className, fields, parents, body) = extractCaseClassesParts(classDecl)
+      val (className, fields, originalParents, body) = extractCaseClassesParts(classDecl)
+
+      val parents = originalParents.asInstanceOf[List[Ident]].filterNot(v => v.toString().indexOf("TableMappable") != -1)
 
       val params = fields.asInstanceOf[List[ValDef]] map {p => p.duplicate}
 

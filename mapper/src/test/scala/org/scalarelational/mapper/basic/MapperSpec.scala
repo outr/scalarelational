@@ -174,7 +174,7 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
-@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
+@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends TableMappable
 
 case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 
