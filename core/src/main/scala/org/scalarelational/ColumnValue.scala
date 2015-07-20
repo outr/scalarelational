@@ -24,6 +24,11 @@ class ColumnValue[T] private(val column: ColumnLike[T],
     }
 
   override def toString = s"$column: $value"
+
+  override def equals(obj: scala.Any) = obj match {
+    case cv: ColumnValue[_] => cv.column == column && cv.value == value
+    case _ => false
+  }
 }
 
 object ColumnValue {

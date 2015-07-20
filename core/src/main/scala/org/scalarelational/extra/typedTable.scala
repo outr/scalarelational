@@ -36,12 +36,12 @@ object TypedTableGenerator {
 
     def modifiedObject(objectDef: ModuleDef): c.Expr[Table] = {
       val ModuleDef(_, objectName, template) = objectDef
-      val additional = template collect { case x: ValDef => x }
+      val body = template.body.tail     // Drop the init method
       val decoded = objectName.decodedName.toString.toUpperCase
       val ret = q"""
         object $objectName extends Table($decoded) {
           ..$columns
-          ..$additional
+          ..$body
         }
       """
       c.Expr[Table](ret)

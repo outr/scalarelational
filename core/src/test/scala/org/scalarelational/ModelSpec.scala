@@ -70,9 +70,8 @@ class ModelSpec extends WordSpec with Matchers {
         c.name should equal("ID")
         c.fieldName should equal("id")
         c.classType should equal(classOf[Option[_]])
-        // TODO: fix bug in macros not loading entire body
-//        c.has(AutoIncrement) should equal(true)
-//        c.has(PrimaryKey) should equal(true)
+        c.has(AutoIncrement) should equal(true)
+        c.has(PrimaryKey) should equal(true)
       }
       "have name: String as the second column" in {
         val c: Column[_] = person.columns.tail.head
