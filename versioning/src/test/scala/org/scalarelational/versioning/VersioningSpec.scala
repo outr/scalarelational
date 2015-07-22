@@ -1,8 +1,8 @@
 package org.scalarelational.versioning
 
 import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.model.Table
-import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 /**

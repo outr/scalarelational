@@ -1,8 +1,8 @@
 package org.scalarelational
 
-import org.scalarelational.model.Datastore
-
 import scala.concurrent._
+
+import org.scalarelational.model.Datastore
 
 /**
  * @author Matt Hicks <matt@outr.com>

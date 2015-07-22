@@ -1,9 +1,10 @@
 package org.scalarelational.dsl
 
-import org.scalarelational.datatype.{DataTypes, DataType}
+import org.scalarelational.table.Table
+import org.scalarelational.column.Column
+import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.instruction.ddl._
-import org.scalarelational.model.property.column.property.ColumnProperty
-import org.scalarelational.model.{Column, Table}
+import org.scalarelational.datatype.{DataTypes, DataType}
 
 /**
  * @author Matt Hicks <matt@outr.com>

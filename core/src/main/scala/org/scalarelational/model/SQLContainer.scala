@@ -1,6 +1,7 @@
 package org.scalarelational.model
 
 import org.scalarelational.instruction._
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

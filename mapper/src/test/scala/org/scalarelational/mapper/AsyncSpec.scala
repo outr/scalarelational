@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.powerscala.concurrent.Time
 import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.model.Table
-import org.scalarelational.model.property.column.property.{PrimaryKey, AutoIncrement}
+import org.scalarelational.table.Table
+import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
 
 /**

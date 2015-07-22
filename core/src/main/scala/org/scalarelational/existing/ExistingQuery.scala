@@ -1,10 +1,12 @@
 package org.scalarelational.existing
 
 import java.sql.ResultSet
-import org.powerscala.reflect._
-import org.scalarelational.model.Datastore
 
 import scala.annotation.tailrec
+
+import org.powerscala.reflect._
+
+import org.scalarelational.model.Datastore
 
 /**
  * ExistingQuery allows mapping of an existing query to a result result of type R.

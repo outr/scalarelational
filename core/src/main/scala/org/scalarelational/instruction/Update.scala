@@ -1,8 +1,8 @@
 package org.scalarelational.instruction
 
+import org.scalarelational.column.ColumnValue
 import org.scalarelational.op.Condition
-import org.scalarelational.model.{Datastore, Table}
-import org.scalarelational.ColumnValue
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

@@ -1,8 +1,8 @@
 package org.scalarelational.h2
 
 import org.scalarelational.h2.trigger.TriggerType
-import org.scalarelational.model.Table
-import org.scalarelational.model.property.column.property.{PrimaryKey, AutoIncrement}
+import org.scalarelational.table.Table
+import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
 
 /**

@@ -1,10 +1,11 @@
 package org.scalarelational.mapper.basic
 
-import org.scalarelational.ColumnValue
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.column.ColumnValue
 import org.scalarelational.mapper._
-import org.scalarelational.model.Table
-import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
+import org.scalarelational.table.Table
+import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**

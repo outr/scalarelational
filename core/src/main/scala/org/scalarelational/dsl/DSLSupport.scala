@@ -1,9 +1,10 @@
 package org.scalarelational.dsl
 
-import org.scalarelational.model.{Column, Table}
+import org.scalarelational.column.{Column, ColumnValue}
 import org.scalarelational.result.QueryResult
-import org.scalarelational.{ColumnValue, SelectExpression}
+import org.scalarelational.SelectExpression
 import org.scalarelational.instruction._
+import org.scalarelational.table.Table
 
 import scala.language.implicitConversions
 

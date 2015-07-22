@@ -1,8 +1,8 @@
 package org.scalarelational.h2
 
 import java.sql.Connection
-import org.scalarelational.model.Table
-import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.table.Table
+import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
 
 /**

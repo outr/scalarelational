@@ -4,7 +4,7 @@ import scala.reflect.macros._
 import scala.language.experimental.macros
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
-import org.scalarelational.model.Table
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -37,7 +37,7 @@ object MappedMacro {
           case class $className(..$params) extends ..$parents with Entity {
             ..$body
 
-            import org.scalarelational.ColumnValue
+            import org.scalarelational.column.ColumnValue
             override def toColumnValues: List[ColumnValue[Any]] =
               List(..$converted).asInstanceOf[List[ColumnValue[Any]]]
           }

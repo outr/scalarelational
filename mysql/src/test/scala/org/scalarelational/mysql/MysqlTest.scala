@@ -1,6 +1,5 @@
 package org.scalarelational.mysql
 
-
 import org.scalarelational.mysql.MySQLTestDataStore$._
 import org.scalarelational.mysql.MySQLTestDataStore$.suppliers._
 import org.scalarelational.mysql.MySQLTestDataStore$.{coffees, suppliers}

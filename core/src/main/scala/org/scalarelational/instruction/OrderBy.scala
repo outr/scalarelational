@@ -1,6 +1,7 @@
 package org.scalarelational.instruction
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
+
 import org.scalarelational.SelectExpression
 
 /**

@@ -3,8 +3,9 @@ package org.scalarelational.instruction
 import org.scalarelational._
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
-import org.scalarelational.model.{ColumnAlias, ColumnLike, Table}
 import org.scalarelational.result.{QueryResultsIterator, QueryResult}
+import org.scalarelational.table.Table
+import org.scalarelational.column.{ColumnAlias, ColumnLike}
 
 /**
  * @author Matt Hicks <matt@outr.com>
