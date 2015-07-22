@@ -38,9 +38,8 @@ object MappedMacro {
             ..$body
 
             import org.scalarelational.ColumnValue
-            def toColumnValues: List[ColumnValue[Any]] = {
+            override def toColumnValues: List[ColumnValue[Any]] =
               List(..$converted).asInstanceOf[List[ColumnValue[Any]]]
-            }
           }
         """)
     }

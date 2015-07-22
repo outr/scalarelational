@@ -8,7 +8,8 @@ import org.scalarelational.model.property.column.property.PrimaryKey
  * @author Matt Hicks <matt@outr.com>
  */
 trait TableMappable {
-  def toColumnValues: List[ColumnValue[Any]]
+  def toColumnValues: List[ColumnValue[Any]] =
+    throw new RuntimeException(s"@mapped annotation missing for table ${this.getClass}")
 
   def persist(): Instruction[Int] = {
     val values = toColumnValues
