@@ -1,15 +1,17 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.datatype.{StringDataType, DataType}
+import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
+import org.scalarelational.datatype.DataType
 import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.model.property.column.property.{Polymorphic, PrimaryKey, AutoIncrement}
-import org.scalarelational.model.{Datastore, ColumnPropertyContainer, ColumnLike, Table}
+import org.scalarelational.column.property.{Polymorphic, PrimaryKey, AutoIncrement}
+import org.scalarelational.model.Datastore
+import org.scalarelational.table.Table
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>
  */
-
 class PolymorphSpec extends WordSpec with Matchers {
   import PolymorphDatastore._
 

@@ -1,14 +1,16 @@
 package org.scalarelational
 
-import org.powerscala.reflect._
-import org.scalarelational.instruction._
-import org.scalarelational.model.property.column.property.{PrimaryKey, AutoIncrement}
-import org.scalarelational.model.{Column, Table}
-import org.scalarelational.result.QueryResult
-
 import scala.util.Try
 import scala.reflect.ClassTag
 import scala.reflect.runtime.currentMirror
+
+import org.powerscala.reflect._
+
+import org.scalarelational.instruction._
+import org.scalarelational.column.ColumnValue
+import org.scalarelational.column.property.PrimaryKey
+import org.scalarelational.table.Table
+import org.scalarelational.result.QueryResult
 
 /**
  * @author Matt Hicks <matt@outr.com>

@@ -6,7 +6,7 @@ import org.powerscala.enum.{EnumEntry, Enumerated}
 
 import org.scalarelational.SelectExpression
 import org.scalarelational.datatype.DataType
-import org.scalarelational.model.ColumnLike
+import org.scalarelational.column.ColumnLike
 
 /**
  * @author Matt Hicks <matt@outr.com>

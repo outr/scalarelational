@@ -1,12 +1,13 @@
 package org.scalarelational.result
 
 import java.sql.ResultSet
+
+import org.scalarelational.column.{ColumnValue, ColumnLike}
+import org.scalarelational.column.property.Polymorphic
 import org.scalarelational.datatype.DataType
-import org.scalarelational.model.property.column.property.Polymorphic
-import org.scalarelational.{ExpressionValue, SelectExpression, ColumnValue}
+import org.scalarelational.{ExpressionValue, SelectExpression}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.instruction.Query
-import org.scalarelational.model.ColumnLike
 
 /**
  * @author Matt Hicks <matt@outr.com>

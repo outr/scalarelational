@@ -2,9 +2,10 @@ package org.scalarelational.h2.modular
 
 import java.sql.Timestamp
 
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.h2.H2Datastore
-import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, AutoIncrement}
-import org.scalarelational.model.{ModularSupport, Table}
+import org.scalarelational.model.ModularSupport
+import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 /**

@@ -3,16 +3,18 @@ package org.scalarelational.model
 import java.io.File
 import javax.sql.DataSource
 
-import org.powerscala.event.processor.UnitProcessor
+import scala.collection.mutable.ListBuffer
+
 import org.powerscala.property.Property
+
+import org.scalarelational.op._
+import org.scalarelational.instruction._
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.table.{Table, TableAlias}
 import org.scalarelational.fun.SQLFunction
 import org.scalarelational.instruction.ddl.BasicDDLSupport
-import org.scalarelational.{TableAlias, SelectExpression}
+import org.scalarelational.SelectExpression
 import org.scalarelational.datatype.DataType
-import org.scalarelational.instruction._
-import org.scalarelational.op._
-
-import scala.collection.mutable.ListBuffer
 
 /**
  * @author Matt Hicks <matt@outr.com>

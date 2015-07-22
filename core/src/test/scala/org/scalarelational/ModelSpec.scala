@@ -3,8 +3,10 @@ package org.scalarelational
 import java.sql.Timestamp
 
 import org.scalarelational.extra.typedTable
-import org.scalarelational.model.property.column.property.{PrimaryKey, ForeignKey, AutoIncrement}
-import org.scalarelational.model.{Column, Table, SQLDatastore}
+import org.scalarelational.column.property.{PrimaryKey, ForeignKey, AutoIncrement}
+import org.scalarelational.column.Column
+import org.scalarelational.model.SQLDatastore
+import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 /**

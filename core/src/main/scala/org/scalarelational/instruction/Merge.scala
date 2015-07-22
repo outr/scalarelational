@@ -1,9 +1,8 @@
 package org.scalarelational.instruction
 
-import org.scalarelational.ColumnValue
-import org.scalarelational.model.Column
-
 import scala.language.existentials
+
+import org.scalarelational.column.{ColumnValue, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>

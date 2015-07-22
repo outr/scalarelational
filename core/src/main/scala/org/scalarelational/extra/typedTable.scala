@@ -1,10 +1,10 @@
 package org.scalarelational.extra
 
-import org.scalarelational.model.Table
-
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
-import scala.language.experimental.macros
 import scala.reflect.macros._
+import scala.language.experimental.macros
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
+
+import org.scalarelational.table.Table
 
 /**
  * Typed Table allows generation of a Table object automatically from a provided case class. You can set specific
