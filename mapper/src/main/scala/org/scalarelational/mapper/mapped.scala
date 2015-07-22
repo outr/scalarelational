@@ -1,15 +1,15 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.model.Table
-
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
-import scala.language.experimental.macros
 import scala.reflect.macros._
+import scala.language.experimental.macros
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
+
+import org.scalarelational.model.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-@compileTimeOnly("enable macro paradise to expand macro annotations")
+@compileTimeOnly("Enable macro paradise to expand macro annotations")
 class mapped(table: Table) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro MappedMacro.impl
 }
@@ -21,11 +21,12 @@ object MappedMacro {
     def modified(classDecl: ClassDef): c.Expr[Any] = {
       val (className, fields, originalParents, body) = extractCaseClassesParts(classDecl)
 
-      val parents = originalParents.asInstanceOf[List[Ident]].filterNot(v => v.toString().indexOf("TableMappable") != -1)
+      val parents = originalParents.asInstanceOf[List[Ident]]
+        .filterNot(_.toString() == "TableMappable")
 
-      val params = fields.asInstanceOf[List[ValDef]] map {p => p.duplicate}
+      val params = fields.asInstanceOf[List[ValDef]].map(_.duplicate)
+      val table = extractAnnotationArgument(c.prefix.tree)
 
-      val table = extractAnnotationParameters(c.prefix.tree).head
       val converted = params.map(p => {
         val name = p.name.toTermName
         q"$table.$name($name)"
@@ -37,9 +38,8 @@ object MappedMacro {
             ..$body
 
             import org.scalarelational.ColumnValue
-            def toColumnValues: List[ColumnValue[Any]] = {
+            override def toColumnValues: List[ColumnValue[Any]] =
               List(..$converted).asInstanceOf[List[ColumnValue[Any]]]
-            }
           }
         """)
     }
@@ -48,9 +48,9 @@ object MappedMacro {
       case q"case class $className(..$fields) extends ..$parents { ..$body }" => (className, fields, parents, body)
     }
 
-    def extractAnnotationParameters(tree: Tree): List[c.universe.Tree] = tree match {
-      case q"new $name( ..$params )" => params
-      case _ => throw new Exception("ToStringObfuscate annotation must be have at least one parameter.")
+    def extractAnnotationArgument(tree: Tree): c.universe.Tree = tree match {
+      case q"new $name($param)" => param
+      case _ => c.abort(c.enclosingPosition, "@mapped annotation must have one argument")
     }
 
     annottees.map(_.tree) match {
