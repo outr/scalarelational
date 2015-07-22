@@ -157,7 +157,7 @@ class MapperSpec extends WordSpec with Matchers {
       "insert a @mapped Supplier" in {
         session {
           val target = Supplier("Target", "123 All Over Rd.", "Lotsaplaces", "California", "95461")
-          target.persist.result should equal(4)
+          target.persist().result should equal(4)
         }
       }
     }
