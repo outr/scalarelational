@@ -11,19 +11,19 @@ trait TableMappable {
   def toColumnValues: List[ColumnValue[Any]] =
     throw new RuntimeException(s"@mapped annotation missing for table ${this.getClass}")
 
-  def persist(): Instruction[Int] = {
+  def persist: Instruction[Int] = {
     val values = toColumnValues
     val table = values.head.column.table
     persistColumnValues(table, values)
   }
 
-  def insert(): InsertSingle = {
+  def insert: InsertSingle = {
     val values = toColumnValues
     val table = values.head.column.table
     insertColumnValues(table, values)
   }
 
-  def update(): Update = {
+  def update: Update = {
     val values = toColumnValues
     val table = values.head.column.table
     val primaryKey = values.find(cv => cv.column.has(PrimaryKey))
