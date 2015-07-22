@@ -6,7 +6,7 @@ import org.scalarelational.instruction.{Update, InsertSingle}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait TableMappable {
+trait Entity {
   def toColumnValues: List[ColumnValue[Any]] =
     throw new RuntimeException(s"@mapped annotation missing for table ${this.getClass}")
 

@@ -136,7 +136,7 @@ class MapperSpec extends WordSpec with Matchers {
       val s = Supplier("Supplier Name", "Supplier Street", "Supplier City", "Supplier State", "Supplier Zip")
 
       "verify Supplier is an instance of TableMappable" in {
-        s.isInstanceOf[TableMappable] should equal(true)
+        s.isInstanceOf[Entity] should equal(true)
       }
       "return exactly six ColumnValues" in {
         val values: List[ColumnValue[Any]] = s.toColumnValues
@@ -173,7 +173,7 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
-@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends TableMappable
+@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity
 
 case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 

@@ -22,7 +22,7 @@ object MappedMacro {
       val (className, fields, originalParents, body) = extractCaseClassesParts(classDecl)
 
       val parents = originalParents.asInstanceOf[List[Ident]]
-        .filterNot(_.toString() == "TableMappable")
+        .filterNot(_.toString() == "Entity")
 
       val params = fields.asInstanceOf[List[ValDef]].map(_.duplicate)
       val table = extractAnnotationArgument(c.prefix.tree)
@@ -34,7 +34,7 @@ object MappedMacro {
 
       c.Expr[Any](
         q"""
-          case class $className(..$params) extends ..$parents with TableMappable {
+          case class $className(..$params) extends ..$parents with Entity {
             ..$body
 
             import org.scalarelational.ColumnValue
