@@ -1,18 +1,22 @@
 package org.scalarelational
 
 import java.sql.{Blob, Timestamp}
-import javax.sql.rowset.serial.SerialBlob
 
-import org.powerscala.IO
-import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
-import org.scalarelational.model._
-import org.scalarelational.model.property.column.property._
-import org.scalarelational.model.property.table.Index
-import org.scalatest.{Matchers, WordSpec}
+import javax.sql.rowset.serial.SerialBlob
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
+
+import org.powerscala.IO
+
+import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
+import org.scalarelational.model._
+import org.scalarelational.column.property._
+import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
+import org.scalarelational.table.Table
+import org.scalarelational.table.property.Index
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>

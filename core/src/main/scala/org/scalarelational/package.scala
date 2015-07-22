@@ -1,9 +1,9 @@
 package org
 
-import org.scalarelational.model.Column
-import org.scalarelational.op.Condition
-
 import scala.language.implicitConversions
+
+import org.scalarelational.op.Condition
+import org.scalarelational.column.{ColumnValue, Column}
 
 /**
  * @author Matt Hicks <matt@outr.com>

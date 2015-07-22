@@ -2,7 +2,7 @@ package org.scalarelational.instruction
 
 import scala.concurrent.Future
 
-import org.scalarelational.model.{Table, Datastore}
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

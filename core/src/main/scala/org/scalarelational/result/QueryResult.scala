@@ -1,8 +1,9 @@
 package org.scalarelational.result
 
+import org.scalarelational.column.{ColumnLike, ColumnValue, Column}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
-import org.scalarelational.{ColumnValue, ExpressionValue}
-import org.scalarelational.model.{ColumnLike, Column, Table}
+import org.scalarelational.ExpressionValue
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

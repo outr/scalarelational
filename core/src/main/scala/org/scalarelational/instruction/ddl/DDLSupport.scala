@@ -1,7 +1,8 @@
 package org.scalarelational.instruction.ddl
 
-import org.scalarelational.CallableInstruction
-import org.scalarelational.model.{Column, Table}
+import org.scalarelational.table.Table
+import org.scalarelational.column.Column
+import org.scalarelational.instruction.CallableInstruction
 
 import scala.language.implicitConversions
 

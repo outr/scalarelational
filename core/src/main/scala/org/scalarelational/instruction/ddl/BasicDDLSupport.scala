@@ -1,11 +1,14 @@
 package org.scalarelational.instruction.ddl
 
-import org.scalarelational.CallableInstruction
-import org.scalarelational.model.property.column.property._
-import org.scalarelational.model.property.table.Index
-import org.scalarelational.model.{Datastore, Column, Table, ColumnPropertyContainer}
+import org.scalarelational.table.property.Index
 
 import scala.collection.mutable.ListBuffer
+
+import org.scalarelational.table.Table
+import org.scalarelational.column.{ColumnPropertyContainer, Column}
+import org.scalarelational.column.property._
+import org.scalarelational.model.Datastore
+import org.scalarelational.instruction.CallableInstruction
 
 /**
  * @author Matt Hicks <matt@outr.com>

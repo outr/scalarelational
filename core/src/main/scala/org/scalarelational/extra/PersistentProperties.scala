@@ -1,8 +1,9 @@
 package org.scalarelational.extra
 
 import org.powerscala.property.Property
-import org.scalarelational.model.property.column.property.{PrimaryKey, Unique, AutoIncrement}
-import org.scalarelational.model.{Table, Datastore}
+import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.model.Datastore
+import org.scalarelational.table.Table
 
 /**
  * Persistent Properties allows key/value pairs to be persisted to a table for later retrieval and modification.

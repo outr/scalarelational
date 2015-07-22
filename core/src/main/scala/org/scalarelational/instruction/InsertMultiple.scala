@@ -1,6 +1,6 @@
 package org.scalarelational.instruction
 
-import org.scalarelational.ColumnValue
+import org.scalarelational.column.ColumnValue
 
 /**
  * @author Matt Hicks <matt@outr.com>

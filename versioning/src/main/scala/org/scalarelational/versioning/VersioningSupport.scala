@@ -1,7 +1,7 @@
 package org.scalarelational.versioning
 
 import org.scalarelational.extra.PersistentProperties
-import org.scalarelational.model.{Table, Datastore}
+import org.scalarelational.model.Datastore
 
 /**
  * @author Matt Hicks <matt@outr.com>

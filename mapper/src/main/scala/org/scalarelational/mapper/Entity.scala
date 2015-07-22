@@ -1,6 +1,6 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.ColumnValue
+import org.scalarelational.column.ColumnValue
 import org.scalarelational.instruction.{Update, InsertSingle}
 
 /**

@@ -1,16 +1,20 @@
 package org.scalarelational.model
 
 import java.sql.ResultSet
+
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.OptionProcessor
 import org.powerscala.log.Logging
+
+import org.scalarelational.column.ColumnLike
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
 import org.scalarelational.result.ResultSetIterator
-import org.scalarelational.{CallableInstruction, SessionSupport}
+import org.scalarelational.table.Table
+import org.scalarelational.SessionSupport
 
 /**
  * @author Matt Hicks <matt@outr.com>

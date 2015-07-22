@@ -1,7 +1,7 @@
 package org.scalarelational.op
 
+import org.scalarelational.column.ColumnLike
 import org.scalarelational.instruction.ConnectType
-import org.scalarelational.model.ColumnLike
 
 import scala.util.matching.Regex
 
