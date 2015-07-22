@@ -13,4 +13,9 @@ trait Instruction[R] {
 
   def result: R
   final def async: Future[R] = thisDatastore.async(result)
+
+  /**
+   * Convenience wrapper that simply calls <code>result</code>
+   */
+  def apply(): R = result
 }
