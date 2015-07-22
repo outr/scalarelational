@@ -2,7 +2,7 @@ package org.scalarelational
 
 import org.powerscala.reflect._
 import org.scalarelational.instruction._
-import org.scalarelational.model.property.column.property.AutoIncrement
+import org.scalarelational.model.property.column.property.{PrimaryKey, AutoIncrement}
 import org.scalarelational.model.{Column, Table}
 import org.scalarelational.result.QueryResult
 
@@ -84,43 +84,20 @@ package object mapper {
       }.toList
     }
 
-    def persist[T: ClassTag](value: T,
-                             forceInsert: Boolean = false,
-                             strictMapping: Boolean = true): Instruction[Int] = {
+    def insert[T: ClassTag](value: T, strictMapping: Boolean = true): InsertSingle = {
       val values = fieldValues(value, strictMapping)
-      persistColumnValues(table, values, forceInsert)
+      insertColumnValues(table, values)
+    }
+
+    def update[T: ClassTag](value: T, strictMapping: Boolean = true): Update = {
+      val values = fieldValues(value, strictMapping)
+      updateColumnValues(table, values)
     }
   }
 
-  def persistColumnValues(table: Table, values: List[ColumnValue[Any]], forceInsert: Boolean = false): Instruction[Int] = {
-    val primaryColumn = table.primaryKeys.head.asInstanceOf[Column[Any]]
-    val updates = values.filterNot(_.column == primaryColumn && primaryColumn.has(AutoIncrement))
-    values.find(_.column == primaryColumn) match {
-      case Some(primaryKey) => {
-        val exists = primaryKey.value match {
-          case _ if forceInsert => false
-          case None => false
-          case null => false
-          case i: Int if i < 1 => false
-          case _ => true
-        }
-        if (exists) {
-          // Update
-          val update = updateColumnValues(table, primaryKey, updates)
-          val id = primaryKey.value match {
-            case Some(v) => v.asInstanceOf[Int]
-            case i: Int => i
-          }
-          new InstanceInstruction(update, table, id)
-        } else {
-          new PersistInsertInstruction(insertColumnValues(table, updates))
-        }
-      }
-      case None => new InstanceInstruction(insertColumnValues(table, updates), table, 0)
-    }
-  }
-
-  def updateColumnValues(table: Table, primaryKey: ColumnValue[Any], values: List[ColumnValue[Any]]): Update = {
+  def updateColumnValues(table: Table, values: List[ColumnValue[Any]]): Update = {
+    val primaryKey = values.find(cv => cv.column.has(PrimaryKey))
+      .getOrElse(throw new RuntimeException("Update must have a PrimaryKey value specified to be able to update."))
     val primaryColumn = primaryKey.column
     table.datastore.update(values: _*) where (primaryColumn === primaryKey.value)
   }

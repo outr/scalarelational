@@ -262,21 +262,20 @@ based on the field name to the column name in the table so order doesn't matter.
 
 ## Persist a new Supplier
 
-We've create a Supplier case class, but now we need to create an instance and persist it into the database:
+We've create a Supplier case class, but now we need to create an instance and insert it into the database:
 
 ```scala
 import org.scalarelational.mapper._
 
 session {
     val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966")
-    val updated = suppliers.persist(starbucks).result
+    val id = suppliers.insert(starbucks).result
 }
 ```
 
-We first import the mapper package so we have access to the handy implicit conversions to allow persisting directly to a
-table. Next we create a simple supplier instance, and finally we call **persist** on the **suppliers** table. It is worth
-noting here that **updated** is a 'Supplier', but it has been updated to include the database-generated ID, so though
-'starbucks.id' will be **None**, 'updated.id' will be **Some(4)** (since it is the fourth inserted supplier).
+We first import the mapper package so we have access to the handy implicit conversions to allow inserting directly to a
+table. Next we create a simple supplier instance, and finally we call **insert** on the **suppliers** table. It is worth
+noting here that **id** is the database-generated primary key.
 
 ## Query a Supplier back
 
@@ -346,7 +345,7 @@ val insertUsers = Seq(
   UserAdmin("admin", true)
 )
 
-insertUsers.foreach(users.persist(_).result)
+insertUsers.foreach(users.insert(_).result)
 ```
 
 To query the table, you will need to evaluate the column which encodes the original type of the object, namely ``isGuest`` in this case. For more complex type hierarchies you may want to use an enumeration instead.

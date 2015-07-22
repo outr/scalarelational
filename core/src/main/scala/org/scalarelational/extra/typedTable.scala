@@ -13,7 +13,7 @@ import scala.reflect.macros._
  *
  * @author Matt Hicks <matt@outr.com>
  */
-@compileTimeOnly("enable macro paradise to expand macro annotations")
+@compileTimeOnly("Enable macro paradise to expand macro annotations")
 class typedTable[T] extends StaticAnnotation {
   def macroTransform(annottees: Any*): Table = macro TypedTableGenerator.impl[T]
 }

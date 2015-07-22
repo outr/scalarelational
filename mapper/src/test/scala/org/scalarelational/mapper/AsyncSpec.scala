@@ -46,7 +46,7 @@ class AsyncSpec extends WordSpec with Matchers {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()
-            users.persist(AsyncUser(s"User $index", index)).async.onSuccess {
+            users.insert(AsyncUser(s"User $index", index)).async.onSuccess {
               case v => running.decrementAndGet()
             }
           }

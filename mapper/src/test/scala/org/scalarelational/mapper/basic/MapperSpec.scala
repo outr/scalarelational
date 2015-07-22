@@ -62,7 +62,7 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          val id = people.persist(Person("Ray", 30)).result
+          val id = people.insert(Person("Ray", 30)).result
           id should equal(4)
         }
       }
@@ -77,8 +77,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "automatically convert a case class to an update" in {
         session {
-          val id = people.persist(Person("Jay", 30, None, Some(4))).result
-          id should equal(4)
+          people.update(Person("Jay", 30, None, Some(4))).result
         }
       }
       "query back the updated object" in {
@@ -97,17 +96,17 @@ class MapperSpec extends WordSpec with Matchers {
       "persist records" in {
         session {
           // Insert Suppliers
-          val acmeId = suppliers.persist(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
-          val superiorId = suppliers.persist(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
-          val highGroundId = suppliers.persist(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+          val acmeId = suppliers.insert(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
+          val superiorId = suppliers.insert(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
+          val highGroundId = suppliers.insert(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
 
           // Insert Coffees
-          coffees.persist(Coffee("Colombian", Some(acmeId), 7.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast", Some(superiorId), 8.99, 0, 0)).result
-          coffees.persist(Coffee("Espresso", Some(highGroundId), 9.99, 0, 0)).result
-          coffees.persist(Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0)).result
-          coffees.persist(Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0)).result
-          coffees.persist(Coffee("Caffè American", None, 12.99, 0, 0)).result
+          coffees.insert(Coffee("Colombian", Some(acmeId), 7.99, 0, 0)).result
+          coffees.insert(Coffee("French Roast", Some(superiorId), 8.99, 0, 0)).result
+          coffees.insert(Coffee("Espresso", Some(highGroundId), 9.99, 0, 0)).result
+          coffees.insert(Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0)).result
+          coffees.insert(Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0)).result
+          coffees.insert(Coffee("Caffè American", None, 12.99, 0, 0)).result
           // TODO: add batch insert / update support for persist
         }
       }
@@ -157,7 +156,7 @@ class MapperSpec extends WordSpec with Matchers {
       "insert a @mapped Supplier" in {
         session {
           val target = Supplier("Target", "123 All Over Rd.", "Lotsaplaces", "California", "95461")
-          target.persist.result should equal(4)
+          target.insert.result should equal(4)
         }
       }
     }

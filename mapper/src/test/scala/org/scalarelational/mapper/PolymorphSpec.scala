@@ -33,7 +33,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertUsers.zipWithIndex.foreach {
           case (usr, index) => {
-            val id = users.persist(usr).result
+            val id = users.insert(usr).result
             id should equal(index + 1)
           }
         }
@@ -61,7 +61,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertContent.zipWithIndex.foreach {
           case (c, index) => {
-            val id = content.persist(c).result
+            val id = content.insert(c).result
             id should equal(index + 1)
           }
         }
