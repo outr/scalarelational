@@ -140,13 +140,13 @@ class MapperSpec extends WordSpec with Matchers {
         s.isInstanceOf[Entity] should equal(true)
       }
       "return exactly six ColumnValues" in {
-        val values: List[ColumnValue[Any]] = s.toColumnValues
+        val values = s.columns
         values.length should equal(6)
       }
       "return the correct six ColumnValues" in {
         import suppliers._
 
-        val values: List[ColumnValue[Any]] = s.toColumnValues
+        val values = s.columns
         values.head should equal(name("Supplier Name"))
         values.tail.head should equal(street("Supplier Street"))
         values.tail.tail.head should equal(city("Supplier City"))
@@ -174,7 +174,9 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
-@mapped(Datastore.suppliers) case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity
+case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity {
+  def columns = mapTo[Supplier](Datastore.suppliers)
+}
 
 case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 

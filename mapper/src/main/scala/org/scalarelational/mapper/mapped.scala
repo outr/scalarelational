@@ -2,60 +2,40 @@ package org.scalarelational.mapper
 
 import scala.reflect.macros._
 import scala.language.experimental.macros
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.compileTimeOnly
 
 import org.scalarelational.table.Table
+import org.scalarelational.column.ColumnValue
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
-class mapped(table: Table) extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro MappedMacro.impl
-}
+object mapped {
+  def simpleName(fullName: String) =
+    fullName.lastIndexOf('.') match {
+      case -1       => fullName
+      case position => fullName.substring(position + 1)
+    }
 
-object MappedMacro {
-  def impl(c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def mapTo[T](c: blackbox.Context)
+              (table: c.Expr[Table])
+              (implicit t: c.WeakTypeTag[T]): c.Expr[List[ColumnValue[Any]]] = {
     import c.universe._
 
-    def modified(classDecl: ClassDef): c.Expr[Any] = {
-      val (className, fields, originalParents, body) = extractCaseClassesParts(classDecl)
+    val members = weakTypeOf[T].decls
+    val fields  = members.filter(_.asTerm.isVal)
 
-      val parents = originalParents.asInstanceOf[List[Ident]]
-        .filterNot(_.toString() == "Entity")
-
-      val params = fields.asInstanceOf[List[ValDef]].map(_.duplicate)
-      val table = extractAnnotationArgument(c.prefix.tree)
-
-      val converted = params.map(p => {
-        val name = p.name.toTermName
-        q"$table.$name($name)"
-      })
-
-      c.Expr[Any](
-        q"""
-          case class $className(..$params) extends ..$parents with Entity {
-            ..$body
-
-            import org.scalarelational.column.ColumnValue
-            override def toColumnValues: List[ColumnValue[Any]] =
-              List(..$converted).asInstanceOf[List[ColumnValue[Any]]]
-          }
-        """)
+    val columns = fields.map { field =>
+      // TODO field.name.toTermName contains a trailing space
+      val name = TermName(simpleName(field.fullName))
+      q"$table.$name($name)"
     }
 
-    def extractCaseClassesParts(classDecl: ClassDef) = classDecl match {
-      case q"case class $className(..$fields) extends ..$parents { ..$body }" => (className, fields, parents, body)
-    }
+    val listTree = q"List(..$columns)"
+    val listTreeCast =
+      q"$listTree.asInstanceOf[List[org.scalarelational.column.ColumnValue[Any]]]"
 
-    def extractAnnotationArgument(tree: Tree): c.universe.Tree = tree match {
-      case q"new $name($param)" => param
-      case _ => c.abort(c.enclosingPosition, "@mapped annotation must have one argument")
-    }
-
-    annottees.map(_.tree) match {
-      case (classDecl: ClassDef) :: _ => modified(classDecl)
-      case x => c.abort(c.enclosingPosition, s"@mapped can only be applied to a case class, not to $x")
-    }
+    c.Expr[List[ColumnValue[Any]]](listTreeCast)
   }
 }
