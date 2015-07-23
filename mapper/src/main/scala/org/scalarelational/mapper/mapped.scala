@@ -32,7 +32,10 @@ object mapped {
       q"$table.$name($name)"
     }
 
-    val columnTree = q"List(..$columns).asInstanceOf[List[ColumnValue[Any]]]"
-    c.Expr[List[ColumnValue[Any]]](columnTree)
+    val listTree = q"List(..$columns)"
+    val listTreeCast =
+      q"$listTree.asInstanceOf[List[org.scalarelational.column.ColumnValue[Any]]]"
+
+    c.Expr[List[ColumnValue[Any]]](listTreeCast)
   }
 }
