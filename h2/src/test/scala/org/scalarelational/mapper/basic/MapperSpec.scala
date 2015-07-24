@@ -1,9 +1,8 @@
 package org.scalarelational.mapper.basic
 
-import org.scalarelational.column.ColumnValue
-import org.scalarelational.datatype.Ref
 import org.scalarelational.mapper._
 import org.scalarelational.table.Table
+import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
 
@@ -130,7 +129,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back an item using MapTo" in {
         session {
-          coffees.byId(1) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
+          coffees.by(coffees.id, Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
     }

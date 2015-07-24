@@ -11,7 +11,7 @@ import org.scalarelational.table.Table
  * @author Matt Hicks <matt@outr.com>
  */
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
-object mapped {
+object Mapped {
   def simpleName(fullName: String) =
     fullName.lastIndexOf('.') match {
       case -1       => fullName

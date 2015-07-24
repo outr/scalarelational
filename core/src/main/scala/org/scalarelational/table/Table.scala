@@ -2,16 +2,15 @@ package org.scalarelational.table
 
 import java.lang.reflect.Field
 
-import scala.collection.mutable.ListBuffer
 import scala.language.existentials
+import scala.collection.mutable.ListBuffer
 
-import org.scalarelational.column.{RefOption, ColumnLike, Column}
-import org.scalarelational.mapper._
 import org.scalarelational.datatype._
-import org.scalarelational.instruction.Joinable
 import org.scalarelational.model.{SQLContainer, Datastore}
-import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
+import org.scalarelational.instruction.{InsertSingle, Update, Joinable}
 import org.scalarelational.table.property.TableProperty
+import org.scalarelational.column.{ColumnValue, RefOption, ColumnLike, Column}
+import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -46,10 +45,9 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
 
   def as(alias: String) = TableAlias(this, alias)
 
-  def ref: ColumnLike[Ref[MappedType]] = {
-    val idColumn = columns.find(_.has(PrimaryKey)).get
-    RefOption[MappedType](idColumn)
-  }
+  def primaryKey: Column[_] = columns.find(_.has(PrimaryKey)).get
+
+  def ref: ColumnLike[Ref[MappedType]] = RefOption[MappedType](primaryKey)
 
   def columns = _columns.toList
 
@@ -85,12 +83,21 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
 
   def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
 
-  def byId(id: Int)(implicit manifest: Manifest[MappedType]) = datastore.session {
-    val idColumn = columns.find(_.has(PrimaryKey)).get
-      .asInstanceOf[Column[Option[Int]]]
-    val q = query where idColumn === Some(id)
+  def by[T](column: Column[T], value: T)
+           (implicit manifest: Manifest[MappedType]) = datastore.session {
+    val q = query where column === value
     q.result.converted.headOption
   }
+
+  private[scalarelational] def updateColumnValues(values: List[ColumnValue[Any]]): Update[MappedType] = {
+    val primaryKey = values.find(_.column.has(PrimaryKey))
+      .getOrElse(throw new RuntimeException("Update must have a PrimaryKey value specified to be able to update."))
+    val primaryColumn = primaryKey.column
+    datastore.update(this, values: _*) where primaryColumn === primaryKey.value
+  }
+
+  private[scalarelational] def insertColumnValues[T](values: List[ColumnValue[Any]]): InsertSingle[MappedType] =
+    datastore.insert(this, values: _*)
 
   override def toString = tableName
 }

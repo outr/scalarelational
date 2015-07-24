@@ -241,12 +241,7 @@ query. This is where the **Mapper** module comes in.
 
 ## Mapper
 
-The mapper module provides functionality to auto or explicitly map when persisting and when querying. We must first add
-another dependency to our build file:
-
-```scala
-libraryDependencies += "org.scalarelational" % "scalarelational-mapper" % "1.0.0"
-```
+The mapper module provides functionality to auto or explicitly map when persisting and when querying.
 
 ## Create a Supplier case class
 
@@ -265,8 +260,6 @@ based on the field name to the column name in the table so order doesn't matter.
 We've create a Supplier case class, but now we need to create an instance and insert it into the database:
 
 ```scala
-import org.scalarelational.mapper._
-
 session {
     val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966")
     val id = suppliers.insert(starbucks).result
@@ -282,7 +275,6 @@ noting here that **id** is the database-generated primary key.
 We've successfully inserted our Supplier instance, but now how do we query it back out? It's actually surprisingly easy:
 
 ```scala
-import org.scalarelational.mapper._
 import suppliers._
 
 session {

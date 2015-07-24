@@ -12,19 +12,19 @@ import org.scalarelational.table.Table
  */
 trait Entity[Mapped] extends Id[Mapped] {
   def mapTo[T <: Entity[T]](table: Table[T]): List[ColumnValue[Any]] =
-    macro mapped.mapTo[T]
+    macro Mapped.mapTo[T]
 
   def columns: List[ColumnValue[Any]]
 
   def insert: InsertSingle[Mapped] = {
     val values = columns
     val table = values.head.column.table.asInstanceOf[Table[Mapped]]
-    insertColumnValues(table, values)
+    table.insertColumnValues(values)
   }
 
   def update: Update[Mapped] = {
     val values = columns
     val table = values.head.column.table.asInstanceOf[Table[Mapped]]
-    updateColumnValues(table, values)
+    table.updateColumnValues(values)
   }
 }

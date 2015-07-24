@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 import org.powerscala.IO
 
-import org.scalarelational.datatype.{DataTypeGenerators, Ref, DataType, ObjectSerializationConverter}
+import org.scalarelational.datatype.{Ref, DataType, ObjectSerializationConverter}
 import org.scalarelational.model._
 import org.scalarelational.column.property._
 import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
