@@ -2,10 +2,10 @@ package org.scalarelational.mapper
 
 import scala.language.experimental.macros
 
-import org.scalarelational.table.Table
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.datatype.Id
-import org.scalarelational.instruction.{Update, InsertSingle}
+import org.scalarelational.instruction.{InsertSingle, Update}
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>

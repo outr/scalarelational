@@ -1,16 +1,15 @@
 package org.scalarelational
 
-import scala.util.Try
-import scala.reflect.ClassTag
-import scala.reflect.runtime.currentMirror
-
 import org.powerscala.reflect._
-
-import org.scalarelational.instruction._
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.column.property.PrimaryKey
-import org.scalarelational.table.Table
+import org.scalarelational.instruction._
 import org.scalarelational.result.QueryResult
+import org.scalarelational.table.Table
+
+import scala.reflect.ClassTag
+import scala.reflect.runtime.currentMirror
+import scala.util.Try
 
 /**
  * @author Matt Hicks <matt@outr.com>

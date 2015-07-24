@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 
 import org.scalarelational.column.{RefOption, ColumnLike, Column}
+import org.scalarelational.mapper._
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.Joinable
 import org.scalarelational.model.{SQLContainer, Datastore}
@@ -18,11 +19,6 @@ import org.scalarelational.table.property.TableProperty
 abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
                                 (implicit val datastore: Datastore)
   extends Joinable with SQLContainer with DataTypes with TablePropertyContainer {
-
-  def ref: ColumnLike[Ref[MappedType]] = {
-    val idColumn = columns.find(_.has(PrimaryKey)).get
-    RefOption[MappedType](idColumn)
-  }
 
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
@@ -49,6 +45,11 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
   }
 
   def as(alias: String) = TableAlias(this, alias)
+
+  def ref: ColumnLike[Ref[MappedType]] = {
+    val idColumn = columns.find(_.has(PrimaryKey)).get
+    RefOption[MappedType](idColumn)
+  }
 
   def columns = _columns.toList
 
@@ -81,6 +82,15 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
   }
 
   def exists = datastore.doesTableExist(tableName)
+
+  def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
+
+  def byId(id: Int)(implicit manifest: Manifest[MappedType]) = datastore.session {
+    val idColumn = columns.find(_.has(PrimaryKey)).get
+      .asInstanceOf[Column[Option[Int]]]
+    val q = query where idColumn === Some(id)
+    q.result.converted.headOption
+  }
 
   override def toString = tableName
 }

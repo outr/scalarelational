@@ -130,7 +130,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back an item using MapTo" in {
         session {
-          coffees.byId(Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
+          coffees.byId(1) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
     }
@@ -196,9 +196,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table[Coffee]("COFFEES") with MapTo[Coffee, Option[Int]] {
-    def manifest = implicitly[Manifest[Coffee]]
-
+  object coffees extends Table[Coffee]("COFFEES") {
     val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
     val supId = column[Option[Ref[Supplier]]]("SUP_ID", new ForeignKey(suppliers.id))
