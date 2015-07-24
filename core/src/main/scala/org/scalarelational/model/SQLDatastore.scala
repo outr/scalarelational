@@ -70,7 +70,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
-  def exportTable(table: Table, file: File, drop: Boolean = true) = {
+  def exportTable(table: Table[_], file: File, drop: Boolean = true) = {
     val command = new StringBuilder("SCRIPT ")
     if (drop) {
       command.append("DROP ")
@@ -96,7 +96,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeQuery(sql, args)
   }
 
-  protected def invoke(insert: InsertSingle) = {
+  protected def invoke[T](insert: InsertSingle[T]) = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.table
     val columnNames = insert.values.map(_.column.name).mkString(", ")
@@ -116,7 +116,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  protected def invoke(merge: Merge) = {
+  protected def invoke[T](merge: Merge[T]) = {
     val table = merge.key.table
     val columnNames = merge.values.map(_.column.name).mkString(", ")
     val columnValues = merge.values.map(_.toSQL)
@@ -126,7 +126,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(mergeString, columnValues)
   }
 
-  protected def invoke(insert: InsertMultiple) = {
+  protected def invoke[T](insert: InsertMultiple[T]) = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
     if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
     val table = insert.rows.head.head.column.table
@@ -147,7 +147,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  protected def invoke(update: Update) = {
+  protected def invoke[T](update: Update[T]) = {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
     val setArgs = update.values.map(_.toSQL)
@@ -160,7 +160,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(sql, args)
   }
 
-  protected def invoke(delete: Delete) = {
+  protected def invoke[T](delete: Delete[T]) = {
     var args = List.empty[Any]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)
@@ -219,7 +219,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
         }
         b.append(pre)
         join.joinable match {
-          case t: Table => b.append(t.tableName)
+          case t: Table[_] => b.append(t.tableName)
           case t: TableAlias => b.append(s"${t.table.tableName} AS ${t.tableAlias}")
           case q: Query[_, _] => {
             val (sql, queryArgs) = describe(q)

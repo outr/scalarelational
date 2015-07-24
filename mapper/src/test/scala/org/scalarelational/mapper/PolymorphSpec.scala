@@ -35,8 +35,8 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertUsers.zipWithIndex.foreach {
           case (usr, index) => {
-            val id = users.insert(usr).result
-            id should equal(index + 1)
+            val result = users.insert(usr).result
+            result.id should equal(index + 1)
           }
         }
       }
@@ -63,8 +63,8 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertContent.zipWithIndex.foreach {
           case (c, index) => {
-            val id = content.insert(c).result
-            id should equal(index + 1)
+            val result = content.insert(c).result
+            result.id should equal(index + 1)
           }
         }
       }
@@ -118,14 +118,14 @@ case class ContentList(entries: List[String], id: Option[Int] = None) extends Co
 // ---
 
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
-  object users extends Table("users") {
+  object users extends Table[User]("users") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
   }
 
-  object content extends Table("content") {
+  object content extends Table[Content]("content") {
     implicit val listStringConverter = new DataType[List[String]] {
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")

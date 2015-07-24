@@ -1,5 +1,7 @@
 package org.scalarelational.instruction
 
+import scala.language.existentials
+
 import org.scalarelational._
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
@@ -11,7 +13,7 @@ import org.scalarelational.column.{ColumnAlias, ColumnLike}
  * @author Matt Hicks <matt@outr.com>
  */
 case class Query[Expressions, Result](expressions: Expressions,
-                                      table: Table = null,
+                                      table: Table[_] = null,
                                       joins: List[Join] = Nil,
                                       whereCondition: Condition = null,
                                       grouping: List[SelectExpression[_]] = Nil,
@@ -30,7 +32,7 @@ case class Query[Expressions, Result](expressions: Expressions,
   def withoutField(expression: SelectExpression[_]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = expressions.filterNot(se => se == expression), converter = DSLSupport.DefaultConverter)
   def clearFields() = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = Vector.empty, converter = DSLSupport.DefaultConverter)
 
-  def from(table: Table) = copy[Expressions, Result](table = table)
+  def from(table: Table[_]) = copy[Expressions, Result](table = table)
   def where(condition: Condition) = copy[Expressions, Result](whereCondition = condition)
 
   def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Expressions, Result](this, joinable, joinType)

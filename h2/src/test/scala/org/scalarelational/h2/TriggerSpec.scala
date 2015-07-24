@@ -40,7 +40,8 @@ class TriggerSpec extends WordSpec with Matchers {
     }
     "insert a record to fire a trigger" in {
       session {
-        insert(triggerTest.name("Test1")).result should equal(1)
+        val result = insert(triggerTest, triggerTest.name("Test1")).result
+        result.id should equal(1)
       }
     }
     "validate that one insert was triggered" in {
@@ -51,7 +52,7 @@ class TriggerSpec extends WordSpec with Matchers {
     }
     "update a record to fire a trigger" in {
       session {
-        exec(update(triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
+        exec(update(triggerTest, triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
       }
     }
     "validate that one update was triggered" in {
@@ -87,7 +88,7 @@ class TriggerSpec extends WordSpec with Matchers {
 }
 
 object TriggerTestDatastore extends H2Datastore(mode = H2Memory("trigger_test")) {
-  object triggerTest extends Table("trigger_test", Triggers.All) {
+  object triggerTest extends Table[Unit]("trigger_test", Triggers.All) {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
   }

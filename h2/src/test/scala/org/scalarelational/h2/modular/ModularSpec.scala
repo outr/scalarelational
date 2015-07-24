@@ -93,7 +93,7 @@ class ModularSpec extends WordSpec with Matchers {
         import users._
         inserting should equal(0)
         inserted should equal(0)
-        insert(name("John Doe"), age(21)).result
+        insert(users, name("John Doe"), age(21)).result
         inserting should equal(1)
         inserted should equal(1)
       }
@@ -130,7 +130,7 @@ class ModularSpec extends WordSpec with Matchers {
         import users._
         inserting should equal(1)
         inserted should equal(1)
-        insert(name("Jane Doe"), age(20)).result
+        insert(users, name("Jane Doe"), age(20)).result
         inserting should equal(2)
         inserted should equal(2)
       }
@@ -166,7 +166,7 @@ class ModularSpec extends WordSpec with Matchers {
     "updating second record" in {
       session {
         import users._
-        (update(name("updated")) where id === 2).result
+        (update(users, name("updated")) where id === 2).result
       }
     }
     "query back the record expecting a modified date" in {
@@ -181,12 +181,12 @@ class ModularSpec extends WordSpec with Matchers {
     "insert and update record using mixin" in {
       session {
         import users2._
-        insert(name("Jane Doe"), age(20)).result
+        insert(users2, name("Jane Doe"), age(20)).result
 
         val q = select (created, modified) from users2 where id === 1
         val result = q.result.converted.one
 
-        (update(name("updated")) where id === 1).result
+        (update(users2, name("updated")) where id === 1).result
         val q2 = select (created, modified) from users2 where id === 1
         val result2 = q2.result.converted.one
         result2._2.after(result2._1) should be (true)
@@ -197,7 +197,7 @@ class ModularSpec extends WordSpec with Matchers {
 }
 
 object ModularDatastore extends H2Datastore {
-  object users extends Table("users") with ModularSupport {
+  object users extends Table[Unit]("users") with ModularSupport {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")
     val created = column[Option[Timestamp]]("created")
@@ -207,7 +207,7 @@ object ModularDatastore extends H2Datastore {
 
   // If more than one table should be equipped with `created` and `modified`
   // fields that get updated automatically, then this mixin can be used.
-  trait Timestamps extends ModularSupport { this: Table =>
+  trait Timestamps extends ModularSupport { this: Table[_] =>
     val created  = column[Timestamp]("created")
     val modified = column[Timestamp]("modified")
     val DummyValue = 1
@@ -223,7 +223,7 @@ object ModularDatastore extends H2Datastore {
     }
   }
 
-  object users2 extends Table("users2") with Timestamps {
+  object users2 extends Table[Unit]("users2") with Timestamps {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")
     val id = column[Int]("id", PrimaryKey, AutoIncrement)

@@ -6,66 +6,72 @@ import org.scalarelational.datatype.DataTypes
 import org.scalarelational.instruction._
 
 /**
- * ModularSupport can be optionally mixed into a Datastore and/or Table to receive and even modify calls to the the
- * database.
+ * ModularSupport can be optionally mixed into a Datastore and/or Table to
+ * receive and even modify calls to the the database.
  *
  * @author Matt Hicks <matt@outr.com>
  */
 trait ModularSupport extends SQLContainer with Listenable with DataTypes {
   object handlers {
     val inserting = new ModifiableProcessor[Insert]("inserting")
-    val merging = new ModifiableProcessor[Merge]("merging")
-    val updating = new ModifiableProcessor[Update]("updating")
-    val deleting = new ModifiableProcessor[Delete]("deleting")
+    val merging = new ModifiableProcessor[Merge[_]]("merging")
+    val updating = new ModifiableProcessor[Update[_]]("updating")
+    val deleting = new ModifiableProcessor[Delete[_]]("deleting")
     val querying = new ModifiableProcessor[Query[_, _]]("querying")
 
     val inserted = new UnitProcessor[Insert]("inserted")
-    val merged = new UnitProcessor[Merge]("merged")
-    val updated = new UnitProcessor[Update]("updated")
-    val deleted = new UnitProcessor[Delete]("deleted")
+    val merged = new UnitProcessor[Merge[_]]("merged")
+    val updated = new UnitProcessor[Update[_]]("updated")
+    val deleted = new UnitProcessor[Delete[_]]("deleted")
     val queried = new UnitProcessor[Query[_, _]]("queried")
   }
 
   import handlers._
 
-  override protected def beforeInvoke[E, R](query: Query[E, R]): Query[E, R] = querying.fire(super.beforeInvoke(query)).asInstanceOf[Query[E, R]]
+  override protected def beforeInvoke[E, R](query: Query[E, R]): Query[E, R] =
+    querying.fire(super.beforeInvoke(query)).asInstanceOf[Query[E, R]]
 
-  override protected def beforeInvoke(insert: InsertSingle): InsertSingle = inserting.fire(super.beforeInvoke(insert)).asInstanceOf[InsertSingle]
+  override protected def beforeInvoke[T](insert: InsertSingle[T]): InsertSingle[T] =
+    inserting.fire(super.beforeInvoke(insert)).asInstanceOf[InsertSingle[T]]
 
-  override protected def beforeInvoke(insert: InsertMultiple): InsertMultiple = inserting.fire(super.beforeInvoke(insert)).asInstanceOf[InsertMultiple]
+  override protected def beforeInvoke[T](insert: InsertMultiple[T]): InsertMultiple[T] =
+    inserting.fire(super.beforeInvoke(insert)).asInstanceOf[InsertMultiple[T]]
 
-  override protected def beforeInvoke(merge: Merge): Merge = merging.fire(super.beforeInvoke(merge))
+  override protected def beforeInvoke[T](merge: Merge[T]): Merge[T] =
+    merging.fire(super.beforeInvoke(merge)).asInstanceOf[Merge[T]]
 
-  override protected def beforeInvoke(update: Update): Update = updating.fire(super.beforeInvoke(update))
+  override protected def beforeInvoke[T](update: Update[T]): Update[T] =
+    updating.fire(super.beforeInvoke(update)).asInstanceOf[Update[T]]
 
-  override protected def beforeInvoke(delete: Delete): Delete = deleting.fire(super.beforeInvoke(delete))
+  override protected def beforeInvoke[T](delete: Delete[T]): Delete[T] =
+    deleting.fire(super.beforeInvoke(delete)).asInstanceOf[Delete[T]]
 
-  override protected def afterInvoke[E, R](query: Query[E, R]): Unit = {
+  override protected def afterInvoke[E, R](query: Query[E, R]) {
     super.afterInvoke(query)
     queried.fire(query)
   }
 
-  override protected def afterInvoke(insert: InsertSingle): Unit = {
+  override protected def afterInvoke[T](insert: InsertSingle[T]) {
     super.afterInvoke(insert)
     inserted.fire(insert)
   }
 
-  override protected def afterInvoke(insert: InsertMultiple): Unit = {
+  override protected def afterInvoke[T](insert: InsertMultiple[T]) {
     super.afterInvoke(insert)
     inserted.fire(insert)
   }
 
-  override protected def afterInvoke(merge: Merge): Unit = {
+  override protected def afterInvoke[T](merge: Merge[T]) {
     super.afterInvoke(merge)
     merged.fire(merge)
   }
 
-  override protected def afterInvoke(update: Update): Unit = {
+  override protected def afterInvoke[T](update: Update[T]) {
     super.afterInvoke(update)
     updated.fire(update)
   }
 
-  override protected def afterInvoke(delete: Delete): Unit = {
+  override protected def afterInvoke[T](delete: Delete[T]) {
     super.afterInvoke(delete)
     deleted.fire(delete)
   }

@@ -29,7 +29,7 @@ class AsyncSpec extends WordSpec with Matchers {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()
-            insert(users.name(s"User $index"), users.age(index)).async.onSuccess {
+            insert(users, users.name(s"User $index"), users.age(index)).async.onSuccess {
               case v => running.decrementAndGet()
             }
           }
@@ -62,7 +62,7 @@ class AsyncSpec extends WordSpec with Matchers {
 case class AsyncUser(name: String, age: Int, id: Option[Int] = None)
 
 object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
-  object users extends Table("users") {
+  object users extends Table[Unit]("users") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")

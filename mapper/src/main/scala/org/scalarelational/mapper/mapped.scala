@@ -19,7 +19,7 @@ object mapped {
     }
 
   def mapTo[T](c: blackbox.Context)
-              (table: c.Expr[Table])
+              (table: c.Expr[Table[T]])
               (implicit t: c.WeakTypeTag[T]): c.Expr[List[ColumnValue[Any]]] = {
     import c.universe._
 

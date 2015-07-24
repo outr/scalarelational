@@ -1,6 +1,7 @@
 package org.scalarelational.mapper.basic
 
 import org.scalarelational.column.ColumnValue
+import org.scalarelational.datatype.Ref
 import org.scalarelational.mapper._
 import org.scalarelational.table.Table
 import org.scalarelational.h2.{H2Datastore, H2Memory}
@@ -25,9 +26,9 @@ class MapperSpec extends WordSpec with Matchers {
         import people._
 
         session {
-          insert(name("John"), age(21), surname(Some("Doe"))).
+          insert(people, name("John"), age(21), surname(Some("Doe"))).
              and(name("Jane"), age(19), surname(Some("Doe"))).result
-          insert(name("Baby"), age(21)).result
+          insert(people, name("Baby"), age(21)).result
         }
       }
     }
@@ -63,8 +64,8 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          val id = people.insert(Person("Ray", 30)).result
-          id should equal(4)
+          val result = people.insert(Person("Ray", 30)).result
+          result.id should equal(4)
         }
       }
       "query back the inserted object" in {
@@ -113,9 +114,9 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back 'French Roast' with 'Superior Coffee'" in {
         session {
-          val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supId === suppliers.id) where (coffees.name === "French Roast")
+          val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supId === suppliers.ref.opt) where (coffees.name === "French Roast")
           val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
-          frenchRoast should equal(Coffee("French Roast", Some(superior.id.get), 8.99, 0, 0, Some(2)))
+          frenchRoast should equal(Coffee("French Roast", Some(superior.ref), 8.99, 0, 0, Some(2)))
           superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
         }
       }
@@ -129,7 +130,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "query back an item using MapTo" in {
         session {
-          coffees.byId(Some(1)) should equal(Some(Coffee("Colombian", Some(1), 7.99, 0, 0, Some(1))))
+          coffees.byId(Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
     }
@@ -137,7 +138,7 @@ class MapperSpec extends WordSpec with Matchers {
       val s = Supplier("Supplier Name", "Supplier Street", "Supplier City", "Supplier State", "Supplier Zip")
 
       "verify Supplier is an instance of TableMappable" in {
-        s.isInstanceOf[Entity] should equal(true)
+        s.isInstanceOf[Entity[_]] should equal(true)
       }
       "return exactly six ColumnValues" in {
         val values = s.columns
@@ -157,7 +158,7 @@ class MapperSpec extends WordSpec with Matchers {
       "insert a @mapped Supplier" in {
         session {
           val target = Supplier("Target", "123 All Over Rd.", "Lotsaplaces", "California", "95461")
-          target.insert.result should equal(4)
+          target.insert.result.id should equal(4)
         }
       }
     }
@@ -174,20 +175,20 @@ case class Name(value: String)
 
 case class Age(value: Int)
 
-case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity {
+case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity[Supplier] {
   def columns = mapTo[Supplier](Datastore.suppliers)
 }
 
-case class Coffee(name: String, supId: Option[Int], price: Double, sales: Int, total: Int, id: Option[Int] = None)
+case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
-  object people extends Table("person") {
+  object people extends Table[Person]("person") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")
     val surname = column[Option[String]]("surname")
   }
-  object suppliers extends Table("SUPPLIERS") {
+  object suppliers extends Table[Supplier]("SUPPLIERS") {
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -195,12 +196,12 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table("COFFEES") with MapTo[Coffee, Option[Int]] {
+  object coffees extends Table[Coffee]("COFFEES") with MapTo[Coffee, Option[Int]] {
     def manifest = implicitly[Manifest[Coffee]]
 
     val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
-    val supId = column[Option[Int]]("SUP_ID", new ForeignKey(suppliers.id))
+    val supId = column[Option[Ref[Supplier]]]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")

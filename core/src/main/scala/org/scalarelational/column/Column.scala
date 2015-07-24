@@ -10,7 +10,7 @@ import org.scalarelational.table.Table
 private[scalarelational] class Column[T](val name: String,
                                          val dataType: DataType[T],
                                          val manifest: Manifest[T],
-                                         val table: Table,
+                                         val table: Table[_],
                                          val props: Seq[ColumnProperty]
                                         ) extends ColumnLike[T] {
   table.addColumn(this)     // Add this column to the table
@@ -22,7 +22,6 @@ private[scalarelational] class Column[T](val name: String,
   lazy val fieldName = table.fieldName(this)
 
   def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
-  def opt: ColumnLike[Option[T]] = ColumnOption(this)
 
   override def toString = name
 }

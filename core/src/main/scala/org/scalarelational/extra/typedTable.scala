@@ -1,25 +1,27 @@
 package org.scalarelational.extra
 
 import scala.reflect.macros._
+import scala.language.existentials
 import scala.language.experimental.macros
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
 import org.scalarelational.table.Table
 
 /**
- * Typed Table allows generation of a Table object automatically from a provided case class. You can set specific
- * properties or add additional fields to the object and they will be retained. This is all generated at compile-time
- * via Macros.
+ * Typed Table allows generation of a Table object automatically from a provided
+ * case class. You can set specific properties or add additional fields to the
+ * object and they will be retained. This is all generated at compile-time via
+ * macros.
  *
  * @author Matt Hicks <matt@outr.com>
  */
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 class typedTable[T] extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Table = macro TypedTableGenerator.impl[T]
+  def macroTransform(annottees: Any*): Table[T] = macro TypedTableGenerator.impl[T]
 }
 
 object TypedTableGenerator {
-  def impl[T](c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Table] = {
+  def impl[T](c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Table[T]] = {
     import c.universe._
 
     val q"""new typedTable[$cls]().macroTransform($a)""" = c.macroApplication
@@ -34,7 +36,7 @@ object TypedTableGenerator {
       q"val $name = column[$returnType]($decoded)"
     })
 
-    def modifiedObject(objectDef: ModuleDef): c.Expr[Table] = {
+    def modifiedObject(objectDef: ModuleDef): c.Expr[Table[T]] = {
       val ModuleDef(_, objectName, template) = objectDef
       val body = template.body.tail     // Drop the init method
       val decoded = objectName.decodedName.toString.toUpperCase
@@ -44,7 +46,7 @@ object TypedTableGenerator {
           ..$body
         }
       """
-      c.Expr[Table](ret)
+      c.Expr[Table[T]](ret)
     }
 
     annottees.map(_.tree) match {

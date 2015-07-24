@@ -24,7 +24,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     }
     "insert some records" in {
       session {
-        insert(users.name("Adam"), users.language("English")).
+        insert(users, users.name("Adam"), users.language("English")).
            and(users.name("Victor"), users.language("Russian")).result
       }
     }
@@ -44,7 +44,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
 case class ExistingResult(id: Int, name: String, language: String)
 
 object TestDatastore extends H2Datastore {
-  val users = new Table("users") {
+  val users = new Table[Unit]("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val language = column[String]("language")

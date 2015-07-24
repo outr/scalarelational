@@ -24,7 +24,7 @@ package object mapper {
       }
       query.convert[R](f)
     }
-    def to[R1, R2](t1: Table, t2: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
+    def to[R1, R2](t1: Table[_], t2: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
       val c1: EnhancedClass = manifest1.runtimeClass
       val c2: EnhancedClass = manifest2.runtimeClass
       val f = (r: QueryResult[(R1, R2)]) => {
@@ -34,7 +34,7 @@ package object mapper {
       }
       query.convert[(R1, R2)](f)
     }
-    def to[R1, R2, R3](t1: Table, t2: Table, t3: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
+    def to[R1, R2, R3](t1: Table[_], t2: Table[_], t3: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
       val c1: EnhancedClass = manifest1.runtimeClass
       val c2: EnhancedClass = manifest2.runtimeClass
       val c3: EnhancedClass = manifest3.runtimeClass
@@ -54,7 +54,7 @@ package object mapper {
     }
   }
 
-  implicit class MappableTable(table: Table) {
+  implicit class MappableTable[Mapped: ClassTag](table: Table[Mapped]) {
     def simpleName(fullName: String) =
       fullName.lastIndexOf('.') match {
         case -1 => fullName
@@ -86,38 +86,24 @@ package object mapper {
       }.toList
     }
 
-    def insert[T: ClassTag](value: T, strictMapping: Boolean = true): InsertSingle = {
+    def insert(value: Mapped, strictMapping: Boolean = true): InsertSingle[Mapped] = {
       val values = fieldValues(value, strictMapping)
       insertColumnValues(table, values)
     }
 
-    def update[T: ClassTag](value: T, strictMapping: Boolean = true): Update = {
+    def update(value: Mapped, strictMapping: Boolean = true): Update[Mapped] = {
       val values = fieldValues(value, strictMapping)
       updateColumnValues(table, values)
     }
   }
 
-  def updateColumnValues(table: Table, values: List[ColumnValue[Any]]): Update = {
-    val primaryKey = values.find(cv => cv.column.has(PrimaryKey))
+  def updateColumnValues[T](table: Table[T], values: List[ColumnValue[Any]]): Update[T] = {
+    val primaryKey = values.find(_.column.has(PrimaryKey))
       .getOrElse(throw new RuntimeException("Update must have a PrimaryKey value specified to be able to update."))
     val primaryColumn = primaryKey.column
-    table.datastore.update(values: _*) where (primaryColumn === primaryKey.value)
+    table.datastore.update(table, values: _*) where (primaryColumn === primaryKey.value)
   }
 
-  def insertColumnValues(table: Table, values: List[ColumnValue[Any]]): InsertSingle = {
-    table.datastore.insert(values: _*)
-  }
-
-  class InstanceInstruction(instruction: Instruction[Int], val table: Table, id: Int) extends Instruction[Int] {
-    override def result = {
-      instruction.result
-      id
-    }
-  }
-
-  class PersistInsertInstruction(insert: InsertSingle) extends Instruction[Int] {
-    override def table = insert.values.head.column.table
-
-    override def result = insert.result
-  }
+  def insertColumnValues[T](table: Table[T], values: List[ColumnValue[Any]]): InsertSingle[T] =
+    table.datastore.insert(table, values: _*)
 }

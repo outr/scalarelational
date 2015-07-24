@@ -44,6 +44,12 @@ object DataTypeGenerators {
         case t => Some(dt.fromSQLType(column, t))
       }
   }
+
+  def ref[T]: DataType[Ref[T]] = new DataType[Ref[T]] {
+    def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
+    def toSQLType(column: ColumnLike[_], value: Ref[T]) = value.id
+    def fromSQLType(column: ColumnLike[_], value: Any) = new Ref[T](value.asInstanceOf[Int])
+  }
 }
 
 object BooleanDataType extends DataType[Boolean] {
@@ -165,4 +171,5 @@ trait DataTypes {
   implicit def javaLongDataType = JavaLongDataType
   implicit def javaDoubleDataType = JavaDoubleDataType
   implicit def option[T: DataType] = DataTypeGenerators.option[T]
+  implicit def reference[T] = DataTypeGenerators.ref[T]
 }

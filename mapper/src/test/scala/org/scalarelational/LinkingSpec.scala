@@ -24,14 +24,14 @@ class LinkingSpec extends WordSpec with Matchers {
 
     "insert rows" in {
       session {
-        insert(Content.title("content")).result should equal (1)
-        insert(Content.title("content2")).result should equal (2)
+        insert(Content, Content.title("content")).result.id should equal (1)
+        insert(Content, Content.title("content2")).result.id should equal (2)
 
-        insert(Tag.name("tag")).result should equal (1)
-        insert(Tag.name("tag2")).result should equal (2)
+        insert(Tag, Tag.name("tag")).result.id should equal (1)
+        insert(Tag, Tag.name("tag2")).result.id should equal (2)
 
-        insertInto(ContentTagLinking, 1, 2).result should equal (1)
-        insertInto(ContentTagLinking, 2, 1).result should equal (2)
+        insertInto(ContentTagLinking, 1, 2).result.id should equal (1)
+        insertInto(ContentTagLinking, 2, 1).result.id should equal (2)
       }
     }
 
@@ -52,12 +52,12 @@ class LinkingSpec extends WordSpec with Matchers {
 }
 
 object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) {
-  object Content extends Table("Content") {
+  object Content extends Table[Unit]("Content") {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
     val title = column[String]("title")
   }
 
-  object Tag extends Table("Tag") {
+  object Tag extends Table[Unit]("Tag") {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
     val name = column[String]("name", Unique, IgnoreCase)
   }

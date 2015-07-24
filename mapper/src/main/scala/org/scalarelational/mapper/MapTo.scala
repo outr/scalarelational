@@ -7,7 +7,7 @@ import org.scalarelational.column.Column
  * @author Matt Hicks <matt@outr.com>
  */
 trait MapTo[MappedType, Id] {
-  this: Table =>
+  this: Table[_] =>
 
   def manifest: Manifest[MappedType]
 

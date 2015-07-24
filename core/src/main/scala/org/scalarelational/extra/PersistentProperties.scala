@@ -1,6 +1,7 @@
 package org.scalarelational.extra
 
 import org.powerscala.property.Property
+
 import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
@@ -14,7 +15,7 @@ import org.scalarelational.table.Table
  * @author Matt Hicks <matt@outr.com>
  */
 trait PersistentProperties extends Datastore {
-  object persistentProperties extends Table("PERSISTENT_PROPERTIES") {
+  object persistentProperties extends Table[Unit]("PERSISTENT_PROPERTIES") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val key = column[String]("name", Unique)
     val value = column[String]("value")
@@ -30,12 +31,13 @@ trait PersistentProperties extends Datastore {
       get(name).getOrElse(throw new NullPointerException(s"Unable to find $name in persistent properties table."))
     }
 
-    def update(name: String, newValue: String): Unit = {
-      val m = merge(persistentProperties.key, persistentProperties.key(name), persistentProperties.value(newValue))
+    def update(name: String, newValue: String) {
+      val m = merge(persistentProperties, persistentProperties.key,
+        persistentProperties.key(name), persistentProperties.value(newValue))
       m.result
     }
 
-    def remove(name: String): Unit = {
+    def remove(name: String) {
       val d = delete(persistentProperties) where(persistentProperties.key === name)
       d.result
     }

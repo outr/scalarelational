@@ -23,8 +23,8 @@ class InheritanceSpec extends WordSpec with Matchers {
 
     "insert rows" in {
       session {
-        insert(Content.title("content")).result should equal (1)
-        insert(Content.title("content2")).result should equal (2)
+        insert(Content, Content.title("content")).result.id should equal (1)
+        insert(Content, Content.title("content2")).result.id should equal (2)
       }
     }
 
@@ -45,7 +45,7 @@ class InheritanceSpec extends WordSpec with Matchers {
 }
 
 object InheritanceDatastore extends H2Datastore(mode = H2Memory("inheritance_test")) {
-  class BaseTable(table: String) extends Table(table) {
+  class BaseTable(table: String) extends Table[Unit](table) {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
   }
 

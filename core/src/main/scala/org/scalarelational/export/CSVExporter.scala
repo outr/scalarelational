@@ -11,14 +11,14 @@ import org.scalarelational.table.Table
 object CSVExporter {
   private val NewLine = "\r\n"
 
-  def exportTables(directory: File, tables: Table*) = {
+  def exportTables(directory: File, tables: Table[_]*) = {
     directory.mkdirs()
     tables.foreach {
       case table => exportTable(new File(directory, s"${table.tableName.toLowerCase}.csv"), table)
     }
   }
 
-  def exportTable(file: File, table: Table) = {
+  def exportTable(file: File, table: Table[_]) = {
     val writer = new FileWriter(file)
     try {
       val columnNames = table.columns.map(c => c.name).mkString(",")

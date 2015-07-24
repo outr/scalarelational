@@ -7,12 +7,11 @@ import org.scalarelational.table.Table
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Instruction[R] {
-  protected final def thisDatastore = table.datastore
-  def table: Table
+trait Instruction[T, R] {
+  def table: Table[T]
 
   def result: R
-  final def async: Future[R] = thisDatastore.async(result)
+  final def async: Future[R] = table.datastore.async(result)
 
   /**
    * Convenience wrapper that simply calls <code>result</code>

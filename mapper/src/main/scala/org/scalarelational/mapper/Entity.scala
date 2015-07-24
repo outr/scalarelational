@@ -4,26 +4,27 @@ import scala.language.experimental.macros
 
 import org.scalarelational.table.Table
 import org.scalarelational.column.ColumnValue
+import org.scalarelational.datatype.Id
 import org.scalarelational.instruction.{Update, InsertSingle}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Entity {
-  def mapTo[T <: Entity](table: Table): List[ColumnValue[Any]] =
+trait Entity[Mapped] extends Id[Mapped] {
+  def mapTo[T <: Entity[T]](table: Table[T]): List[ColumnValue[Any]] =
     macro mapped.mapTo[T]
 
   def columns: List[ColumnValue[Any]]
 
-  def insert: InsertSingle = {
+  def insert: InsertSingle[Mapped] = {
     val values = columns
-    val table = values.head.column.table
+    val table = values.head.column.table.asInstanceOf[Table[Mapped]]
     insertColumnValues(table, values)
   }
 
-  def update: Update = {
+  def update: Update[Mapped] = {
     val values = columns
-    val table = values.head.column.table
+    val table = values.head.column.table.asInstanceOf[Table[Mapped]]
     updateColumnValues(table, values)
   }
 }

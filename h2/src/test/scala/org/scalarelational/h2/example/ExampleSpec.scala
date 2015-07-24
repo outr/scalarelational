@@ -22,8 +22,8 @@ class ExampleSpec extends WordSpec with Matchers {
 
       session {
         // Clean and type-safe inserts
-        insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
-        insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+        insert(suppliers, id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+        insert(suppliers, id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
         // Short-hand when using values in order
         insertInto(suppliers, 150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
       }
@@ -33,7 +33,7 @@ class ExampleSpec extends WordSpec with Matchers {
 
       session {
         // Batch insert some coffees
-        insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
+        insert(coffees, name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
            and(name("French Roast"), supID(49), price(8.99), sales(0), total(0), rating(Some(0.3))).
            and(name("Espresso"), supID(150), price(9.99), sales(0), total(0), rating(None)).
            and(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0), rating(Some(0.2))).
@@ -79,7 +79,7 @@ class ExampleSpec extends WordSpec with Matchers {
 }
 
 object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
-  object suppliers extends Table("SUPPLIERS") {
+  object suppliers extends Table[Unit]("SUPPLIERS") {
     val id = column[Int]("SUP_ID", PrimaryKey)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -88,7 +88,7 @@ object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
     val zip = column[String]("ZIP")
   }
 
-  object coffees extends Table("COFFEES") {
+  object coffees extends Table[Unit]("COFFEES") {
     val name = column[String]("COF_NAME", PrimaryKey)
     val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
     val price = column[Double]("PRICE")

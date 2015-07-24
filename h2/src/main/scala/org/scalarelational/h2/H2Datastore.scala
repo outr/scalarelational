@@ -58,7 +58,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     f
   }
 
-  override def create(tables: Table*) = {
+  override def create(tables: Table[_]*) = {
     val created = super.create(tables: _*)
 
     // TODO: convert this to use CallableInstructions
@@ -76,7 +76,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     created
   }
 
-  private def createTableTriggers(table: Table, b: StringBuilder) = if (table.has(Triggers.name)) {
+  private def createTableTriggers(table: Table[_], b: StringBuilder) = if (table.has(Triggers.name)) {
     val triggers = table.get[Triggers](Triggers.name).get
     if (triggers.has(TriggerType.Insert)) {
       b.append(s"""CREATE TRIGGER IF NOT EXISTS ${table.tableName}_INSERT_TRIGGER AFTER INSERT ON ${table.tableName} FOR EACH ROW CALL "org.scalarelational.h2.trigger.TriggerInstance";\r\n\r\n""")
