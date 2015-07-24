@@ -1,10 +1,8 @@
 package org.scalarelational
 
-import org.powerscala.reflect._
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.instruction._
-import org.scalarelational.result.QueryResult
 import org.scalarelational.table.Table
 
 import scala.reflect.ClassTag
@@ -15,44 +13,6 @@ import scala.util.Try
  * @author Matt Hicks <matt@outr.com>
  */
 package object mapper {
-  implicit class MappableQuery[Expressions, OriginalResult](query: Query[Expressions, OriginalResult]) {
-    def to[R](implicit manifest: Manifest[R]) = {
-      val clazz: EnhancedClass = manifest.runtimeClass
-      val f = (r: QueryResult[R]) => {
-        clazz.create[R](r.toFieldMap)
-      }
-      query.convert[R](f)
-    }
-    def to[R1, R2](t1: Table[_], t2: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
-      val c1: EnhancedClass = manifest1.runtimeClass
-      val c2: EnhancedClass = manifest2.runtimeClass
-      val f = (r: QueryResult[(R1, R2)]) => {
-        val r1 = c1.create[R1](r.toFieldMapForTable(t1))
-        val r2 = c2.create[R2](r.toFieldMapForTable(t2))
-        (r1, r2)
-      }
-      query.convert[(R1, R2)](f)
-    }
-    def to[R1, R2, R3](t1: Table[_], t2: Table[_], t3: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
-      val c1: EnhancedClass = manifest1.runtimeClass
-      val c2: EnhancedClass = manifest2.runtimeClass
-      val c3: EnhancedClass = manifest3.runtimeClass
-      val f = (r: QueryResult[(R1, R2, R3)]) => {
-        val r1 = c1.create[R1](r.toFieldMapForTable(t1))
-        val r2 = c2.create[R2](r.toFieldMapForTable(t2))
-        val r3 = c3.create[R3](r.toFieldMapForTable(t3))
-        (r1, r2, r3)
-      }
-      query.convert[(R1, R2, R3)](f)
-    }
-    def asCase[R](classForRow: QueryResult[R] => Class[_])(implicit manifest: Manifest[R]): Query[Expressions, R] = {
-      query.convert[R] { r =>
-        val clazz = classForRow(r)
-        clazz.create[R](r.toFieldMap)
-      }
-    }
-  }
-
   implicit class MappableTable[Mapped: ClassTag](table: Table[Mapped]) {
     def simpleName(fullName: String) =
       fullName.lastIndexOf('.') match {
