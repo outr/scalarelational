@@ -41,7 +41,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
 
   init()
 
-  protected def init() = {
+  protected def init(): Unit = {
     modeProperty.change.on {
       case evt => updateDataSource()      // Update the data source if the mode changes
     }
