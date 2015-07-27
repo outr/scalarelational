@@ -107,17 +107,4 @@ package object mapper {
   def insertColumnValues(table: Table, values: List[ColumnValue[Any]]): InsertSingle = {
     table.datastore.insert(values: _*)
   }
-
-  class InstanceInstruction(instruction: Instruction[Int], val table: Table, id: Int) extends Instruction[Int] {
-    override def result = {
-      instruction.result
-      id
-    }
-  }
-
-  class PersistInsertInstruction(insert: InsertSingle) extends Instruction[Int] {
-    override def table = insert.values.head.column.table
-
-    override def result = insert.result
-  }
 }
