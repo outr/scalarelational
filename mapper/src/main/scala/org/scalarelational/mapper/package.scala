@@ -86,11 +86,13 @@ package object mapper {
       }.toList
     }
 
+    @deprecated("Use Entity mix-in for case classes instead of MappableTable", "1.1.0")
     def insert[T: ClassTag](value: T, strictMapping: Boolean = true): InsertSingle = {
       val values = fieldValues(value, strictMapping)
       insertColumnValues(table, values)
     }
 
+    @deprecated("Use Entity mix-in for case classes instead of MappableTable", "1.1.0")
     def update[T: ClassTag](value: T, strictMapping: Boolean = true): Update = {
       val values = fieldValues(value, strictMapping)
       updateColumnValues(table, values)
