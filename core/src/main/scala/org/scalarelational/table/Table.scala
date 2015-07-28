@@ -61,6 +61,14 @@ abstract class Table(name: String, tableProperties: TableProperty*)
                (implicit manifest: Manifest[T]): Column[T] =
     new Column[T](name, converter, manifest, this, properties)
 
+  def column[T, S](name: String, properties: ColumnProperty*)
+               (implicit converter: MappedDataType[T, S], manifest: Manifest[T]): Column[T] =
+    new Column[T](name, converter, manifest, this, properties)
+
+  def column[T, S](name: String, converter: MappedDataType[T, S], properties: ColumnProperty*)
+                  (implicit manifest: Manifest[T]): Column[T] =
+    new Column[T](name, converter, manifest, this, properties)
+
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
     tpe.getSuperclass match {
       case null => tpe.getDeclaredFields
