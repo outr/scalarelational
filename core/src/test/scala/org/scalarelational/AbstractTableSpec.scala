@@ -476,6 +476,60 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
   }
+  "Cleanup" when {
+    "using test" should {
+      val ds = testDatastore
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(test).result
+          dropTable(suppliers).result
+          dropTable(coffees).result
+          dropTable(names).result
+          dropTable(fruitColors).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
+        }
+      }
+    }
+    "using cross reference" should {
+      val ds = testCrossReference
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(first).result
+          dropTable(second).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
+        }
+      }
+    }
+    "using special types" should {
+      val ds = specialTypes
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(lists).result
+          dropTable(data).result
+          dropTable(combinedUnique).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
+        }
+      }
+    }
+  }
 }
 
 trait AbstractTestDatastore extends Datastore {
