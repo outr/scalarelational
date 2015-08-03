@@ -37,11 +37,6 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "have two columns" in {
       test.columns.size should equal(3)
     }
-    "verify the create table DDL is correct" in {
-      val sql = testDatastore.ddl(List(test)).toVector
-      sql.size should equal(1)
-      sql.head.sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(1024) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
-    }
     "verify that there are no tables currently created" in {
       session {
         testDatastore.jdbcTables should equal(Set.empty)
