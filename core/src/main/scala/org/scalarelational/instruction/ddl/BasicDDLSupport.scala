@@ -170,12 +170,16 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     val b = new StringBuilder
     b.append(create.name)
     b.append(' ')
-    b.append(create.dataType.sqlType(this, create))
+    b.append(columnSQLType(create))
     val props = columnPropertiesSQL(create)
     if (props.nonEmpty) {
       b.append(props.mkString(" ", " ", ""))
     }
     b.toString()
+  }
+
+  protected def columnSQLType(create: CreateColumn[_]) = {
+    create.dataType.sqlType(this, create)
   }
 
   protected def columnPropertiesSQL(container: ColumnPropertyContainer): List[String] = {
