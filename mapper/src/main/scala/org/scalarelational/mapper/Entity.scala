@@ -9,8 +9,14 @@ import org.scalarelational.instruction.{InsertSingle, Update}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
+trait BaseEntity[Mapped] {
+  def insert: InsertSingle[Ref[Mapped]]
+  def update: Update[Ref[Mapped]]
+}
+
 trait Entity[Mapped] extends Id[Mapped] {
-  def mapTo[T <: Entity[T]](table: MappedTable[T]): List[ColumnValue[Any]] =
+  // TODO We cannot use MappedTable[T] because it would need to be co-variant
+  def mapTo[T <: Entity[T]](table: MappedTable[_]): List[ColumnValue[Any]] =
     macro Mapped.mapTo[T]
 
   def columns: List[ColumnValue[Any]]

@@ -7,7 +7,7 @@ import org.scalarelational.table.Table
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Instruction[R] {
+trait Instruction[+R] {
   def table: Table
 
   def result: R
