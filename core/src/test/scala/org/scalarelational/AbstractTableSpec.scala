@@ -37,11 +37,6 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "have two columns" in {
       test.columns.size should equal(3)
     }
-    "verify the create table DDL is correct" in {
-      val sql = testDatastore.ddl(List(test)).toVector
-      sql.size should equal(1)
-      sql.head.sql should equal("CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT, name VARCHAR(1024) NOT NULL UNIQUE, date TIMESTAMP, PRIMARY KEY(id));")
-    }
     "verify that there are no tables currently created" in {
       session {
         testDatastore.jdbcTables should equal(Set.empty)
@@ -481,6 +476,60 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         intercept[Throwable] {
           insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result
           fail()
+        }
+      }
+    }
+  }
+  "Cleanup" when {
+    "using test" should {
+      val ds = testDatastore
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(test, cascade = true).result
+          dropTable(coffees, cascade = true).result
+          dropTable(suppliers, cascade = true).result
+          dropTable(names, cascade = true).result
+          dropTable(fruitColors, cascade = true).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
+        }
+      }
+    }
+    "using cross reference" should {
+      val ds = testCrossReference
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(first, cascade = true).result
+          dropTable(second, cascade = true).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
+        }
+      }
+    }
+    "using special types" should {
+      val ds = specialTypes
+      import ds._
+
+      "drop all tables" in {
+        session {
+          dropTable(lists, cascade = true).result
+          dropTable(data, cascade = true).result
+          dropTable(combinedUnique, cascade = true).result
+        }
+      }
+      "verify no tables exist anymore" in {
+        session {
+          jdbcTables should equal(Set.empty[String])
         }
       }
     }

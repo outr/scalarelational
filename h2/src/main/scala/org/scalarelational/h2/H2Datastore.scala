@@ -17,11 +17,11 @@ import org.scalarelational.table.Table
  */
 abstract class H2Datastore private() extends SQLDatastore with Logging {
   protected def this(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
-                     dbUser: String = "sa",
-                     dbPassword: String = "sa") = {
+                     username: String = "sa",
+                     password: String = "sa") = {
     this()
-    username := dbUser
-    password := dbPassword
+    dbUsername := username
+    dbPassword := password
     modeProperty := mode
   }
 
@@ -33,15 +33,15 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
   Class.forName("org.h2.Driver")
 
   val modeProperty = Property[H2ConnectionMode]()
-  val username = Property[String](default = Some("sa"))
-  val password = Property[String](default = Some("sa"))
+  val dbUsername = Property[String](default = Some("sa"))
+  val dbPassword = Property[String](default = Some("sa"))
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
   private var functions = Set.empty[H2Function]
 
   init()
 
-  protected def init() = {
+  protected def init(): Unit = {
     modeProperty.change.on {
       case evt => updateDataSource()      // Update the data source if the mode changes
     }
@@ -49,7 +49,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
 
   def updateDataSource() = {
     dispose()     // Make sure to shut down the previous DataSource if possible
-    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, username(), password())
+    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, dbUsername(), dbPassword())
   }
 
   def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {

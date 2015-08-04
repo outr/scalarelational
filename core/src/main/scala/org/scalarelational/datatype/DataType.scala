@@ -20,6 +20,13 @@ trait DataType[T] {
   def fromSQLType(column: ColumnLike[_], value: Any): T
 }
 
+trait MappedDataType[T, S] extends DataType[T] {
+  override def toSQLType(column: ColumnLike[_], value: T): S
+  def fromSQLTyped(column: ColumnLike[_], value: S): T
+
+  override final def fromSQLType(column: ColumnLike[_], value: Any): T = fromSQLTyped(column, value.asInstanceOf[S])
+}
+
 object DataTypeGenerators {
   def option[T](implicit dt: DataType[T]): DataType[Option[T]] = new DataType[Option[T]] {
     def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = dt.sqlType(datastore, properties)
@@ -143,6 +150,12 @@ object TimestampDataType extends DataType[Timestamp] {
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Timestamp]
 }
 
+object LongTimestampDataType extends MappedDataType[Long, Timestamp] {
+  override def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "TIMESTAMP"
+  override def toSQLType(column: ColumnLike[_], value: Long) = new Timestamp(value)
+  override def fromSQLTyped(column: ColumnLike[_], value: Timestamp) = value.getTime
+}
+
 class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataType[T] {
   val enumerated = manifest.runtimeClass.instance
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
@@ -172,4 +185,5 @@ trait DataTypes {
   implicit def javaDoubleDataType = JavaDoubleDataType
   implicit def option[T: DataType] = DataTypeGenerators.option[T]
   implicit def reference[T] = DataTypeGenerators.ref[T]
+  implicit def longTimestampDataType = LongTimestampDataType
 }
