@@ -3,6 +3,7 @@ package org.scalarelational.h2.example
 import org.scalarelational.column.property.{ForeignKey, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**

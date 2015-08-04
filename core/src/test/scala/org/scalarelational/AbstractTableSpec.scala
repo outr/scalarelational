@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 import org.powerscala.IO
 
-import org.scalarelational.datatype.{DataType, ObjectSerializationConverter}
+import org.scalarelational.datatype.{Ref, DataType, ObjectSerializationConverter}
 import org.scalarelational.model._
 import org.scalarelational.column.property._
 import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
@@ -56,8 +56,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert a record" in {
       session {
-        val id = insert(test.name("John Doe")).result
-        id should equal(1)
+        val result = insert(test.name("John Doe")).result
+        result should equal (1)
       }
     }
     "create a simple query" in {
@@ -148,7 +148,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "update 'John Doe' to 'Joe Doe'" in {
       session {
-        val updated = exec(update(test.name("Joe Doe")) where (test.name === "John Doe"))
+        val updated = exec(update(test.name("Joe Doe")) where test.name === "John Doe")
         updated should equal(1)
       }
     }
@@ -413,8 +413,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     val ds = specialTypes
     import ds._
 
-    var listId: Int = -1
-    var dataId: Int = -1
+    var listId = -1
+    var dataId = -1
 
     "create the tables successfully" in {
       session {
@@ -426,7 +426,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         val idOption = insert(lists.strings(List("One", "Two", "Three")))
         idOption shouldNot equal(None)
         listId = idOption.result
-        listId should equal(1)
+        listId should equal (1)
       }
     }
     "query a List[String] entry" in {
@@ -442,7 +442,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "insert a Blob entry" in {
       session {
         dataId = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
-        dataId should equal(1)
+        dataId should equal (1)
       }
     }
     "query a Blob entry" in {
@@ -459,12 +459,16 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert John Doe into combinedUnique" in {
       session {
-        insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result should equal(1)
+        insert(
+          combinedUnique.firstName("John"),
+          combinedUnique.lastName("Doe")).result should equal (1)
       }
     }
     "insert Jane Doe into combinedUnique" in {
       session {
-        insert(combinedUnique.firstName("Jane"), combinedUnique.lastName("Doe")).result should equal(2)
+        insert(
+          combinedUnique.firstName("Jane"),
+          combinedUnique.lastName("Doe")).result should equal (2)
       }
     }
     "attempting to insert John Doe again throws a constraint violation" in {

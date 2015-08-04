@@ -1,12 +1,14 @@
 package org.scalarelational.mapper.gettingstarted
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
-import org.scalarelational.datatype.EnumDataType
-import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.table.Table
-import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
-import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
+
+import org.powerscala.enum.{EnumEntry, Enumerated}
+
+import org.scalarelational.datatype.{Id, Ref, EnumDataType}
+import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
+import org.scalarelational.mapper.MappedTable
+import org.scalarelational.result.QueryResult
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -27,7 +29,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Insert some Suppliers" in {
       import suppliers._
 
-      session {
+      transaction {
         // Clean and type-safe inserts
         acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state(Some("CA")), status(Status.Unconfirmed), zip("95199")).result
         superiorCoffeeId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), zip("95460"), status(Status.Unconfirmed)).result
@@ -37,27 +39,27 @@ class GettingStartedSpec extends WordSpec with Matchers {
       }
     }
     "Validate Supplier IDs" in {
-      acmeId should equal(1)
-      superiorCoffeeId should equal(2)
-      theHighGroundId should equal(3)
+      acmeId should equal (1)
+      superiorCoffeeId should equal (2)
+      theHighGroundId should equal (3)
     }
     "Batch Insert some Coffees" in {
       import coffees._
 
       session {
         // Batch insert some coffees
-        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
-          and(name("French Roast"), supID(superiorCoffeeId), price(8.99), sales(0), total(0)).
-          and(name("Espresso"), supID(theHighGroundId), price(9.99), sales(0), total(0)).
-          and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
-          and(name("French Roast Decaf"), supID(superiorCoffeeId), price(9.99), sales(0), total(0)).result
+        insert(name("Colombian"), supID(Ref[Supplier](acmeId)), price(7.99), sales(0), total(0)).
+          and(name("French Roast"), supID(Ref[Supplier](superiorCoffeeId)), price(8.99), sales(0), total(0)).
+          and(name("Espresso"), supID(Ref[Supplier](theHighGroundId)), price(9.99), sales(0), total(0)).
+          and(name("Colombian Decaf"), supID(Ref[Supplier](acmeId)), price(8.99), sales(0), total(0)).
+          and(name("French Roast Decaf"), supID(Ref[Supplier](superiorCoffeeId)), price(9.99), sales(0), total(0)).result
       }
     }
     "Query all the Coffees" in {
       import coffees._
 
       session {
-        val results = (select(*) from coffees).result.toVector
+        val results = (select (*) from coffees).result.toVector
         results.length should equal(5)
         check(results(0), "COFFEES(COF_NAME: Colombian, SUP_ID: 1, PRICE: 7.99, SALES: 0, TOTAL: 0, COF_ID: Some(1))")
         check(results(1), "COFFEES(COF_NAME: French Roast, SUP_ID: 2, PRICE: 8.99, SALES: 0, TOTAL: 0, COF_ID: Some(2))")
@@ -73,7 +75,13 @@ class GettingStartedSpec extends WordSpec with Matchers {
     }
     "Query all Coffees filtering and joining with Suppliers" in {
       session {
-        val query = select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID.opt === suppliers.id where coffees.price < 9.0
+        val query = (
+          select (coffees.name, suppliers.name)
+            from coffees
+            innerJoin suppliers
+            on coffees.supID === suppliers.ref
+            where coffees.price < 9.0
+        )
         val results = query.result.toVector
         results.length should equal(3)
         results(0)() should equal(("Colombian", "Acme, Inc."))
@@ -88,17 +96,17 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Persist a new Supplier" in {
       session {
         val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled)
-        val id = suppliers.insert(starbucks).result
-        id should equal(4)
+        val result = suppliers.insert(starbucks).result
+        result.id should equal(4)
       }
     }
     "Query a Supplier back" in {
       session {
         import suppliers._
 
-        val query = select(*) from suppliers where name === "Starbucks"
+        val query = select (*) from suppliers where name === "Starbucks"
         val starbucks = query.to[Supplier].result.head()
-        starbucks should equal(Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled, Some(4)))
+        starbucks should equal (Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled, Some(4)))
       }
     }
     "Query a Supplier back as a tuple" in {
@@ -128,9 +136,9 @@ class GettingStartedSpec extends WordSpec with Matchers {
     }
     "Query 'French Roast' with 'Superior Coffee' for (Coffee, Supplier)" in {
       session {
-        val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID.opt === suppliers.id) where(coffees.name === "French Roast")
+        val query = select (coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supID === suppliers.ref) where coffees.name === "French Roast"
         val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
-        frenchRoast should equal(Coffee("French Roast", superior.id.get, 8.99, 0, 0, Some(2)))
+        frenchRoast should equal(Coffee("French Roast", superior.ref, 8.99, 0, 0, Some(2)))
         superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", None, "95460", Status.Unconfirmed, Some(2)))
       }
     }
@@ -148,7 +156,7 @@ object Status extends Enumerated[Status] {
 }
 
 object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_started")) {
-  object suppliers extends Table("SUPPLIERS") {
+  object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
     val name = column[String]("SUP_NAME", Unique)
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -158,9 +166,9 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 
-  object coffees extends Table("COFFEES") {
+  object coffees extends MappedTable[Coffee]("COFFEES") {
     val name = column[String]("COF_NAME", Unique)
-    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val supID = column[Ref[Supplier]]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
@@ -168,6 +176,6 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
   }
 }
 
-case class Supplier(name: String, street: String, city: String, state: Option[String], zip: String, status: Status, id: Option[Int] = None)
+case class Supplier(name: String, street: String, city: String, state: Option[String], zip: String, status: Status, id: Option[Int] = None) extends Id[Supplier]
 
-case class Coffee(name: String, supID: Int, price: Double, sales: Int, total: Int, id: Option[Int] = None)
+case class Coffee(name: String, supID: Ref[Supplier], price: Double, sales: Int, total: Int, id: Option[Int] = None) extends Id[Coffee]

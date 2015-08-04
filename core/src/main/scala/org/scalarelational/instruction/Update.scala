@@ -1,27 +1,28 @@
 package org.scalarelational.instruction
 
-import org.scalarelational.column.ColumnValue
 import org.scalarelational.op.Condition
 import org.scalarelational.table.Table
+import org.scalarelational.column.ColumnValue
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class Update(values: List[ColumnValue[_]],
-                  table: Table,
-                  whereCondition: Condition = null) extends WhereSupport[Update] with Instruction[Int] {
-  def where(condition: Condition) = copy(whereCondition = condition)
+case class Update[ResultType](table: Table,
+                              values: List[ColumnValue[_]],
+                              whereCondition: Condition = null,
+                              mapResult: Int => ResultType)
+  extends WhereSupport[Update[ResultType]] with Instruction[ResultType] {
 
-  def result = {
-    val datastore = table.datastore
-    datastore.exec(this)
-  }
+  def where(condition: Condition): Update[ResultType] =
+    copy(whereCondition = condition)
+
+  def result: ResultType = mapResult(table.datastore.exec(this))
 
   /**
    * Returns a new copy of this Update with an additional column value. Will
    * replace if the column is already represented.
    */
-  def add(value: ColumnValue[_]): Update = {
+  def add(value: ColumnValue[_]): Update[ResultType] = {
     val filtered = values.filterNot(_.column == value.column)
     copy(values = value :: filtered.toList)
   }

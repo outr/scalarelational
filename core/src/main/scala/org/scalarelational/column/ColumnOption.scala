@@ -1,7 +1,7 @@
 package org.scalarelational.column
 
-import org.scalarelational.datatype.{DataType, DataTypeGenerators}
 import org.scalarelational.table.Table
+import org.scalarelational.datatype.{DataType, DataTypeGenerators}
 
 case class ColumnOption[T](column: ColumnLike[T]) extends ColumnLike[Option[T]] {
   def name: String = column.name
@@ -11,6 +11,5 @@ case class ColumnOption[T](column: ColumnLike[T]) extends ColumnLike[Option[T]] 
   def manifest: Manifest[Option[T]] = column.manifest.asInstanceOf[Manifest[Option[T]]]
 
   override def classType = manifest.runtimeClass
-
   override def properties = column.properties
 }

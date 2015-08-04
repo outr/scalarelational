@@ -3,6 +3,7 @@ package org.scalarelational.h2
 import org.scalarelational.h2.trigger.TriggerType
 import org.scalarelational.table.Table
 import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -40,7 +41,8 @@ class TriggerSpec extends WordSpec with Matchers {
     }
     "insert a record to fire a trigger" in {
       session {
-        insert(triggerTest.name("Test1")).result should equal(1)
+        val result = insert(triggerTest.name("Test1")).result
+        result should equal (1)
       }
     }
     "validate that one insert was triggered" in {

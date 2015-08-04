@@ -1,5 +1,7 @@
 package org.scalarelational.result
 
+import scala.language.existentials
+
 import org.scalarelational.column.{ColumnLike, ColumnValue, Column}
 import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
 import org.scalarelational.ExpressionValue

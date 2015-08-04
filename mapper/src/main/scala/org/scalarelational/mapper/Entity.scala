@@ -2,28 +2,32 @@ package org.scalarelational.mapper
 
 import scala.language.experimental.macros
 
-import org.scalarelational.table.Table
 import org.scalarelational.column.ColumnValue
-import org.scalarelational.instruction.{Update, InsertSingle}
+import org.scalarelational.datatype.{Ref, Id}
+import org.scalarelational.instruction.{InsertSingle, Update}
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Entity {
-  def mapTo[T <: Entity](table: Table): List[ColumnValue[Any]] =
-    macro mapped.mapTo[T]
+trait Entity[Mapped] extends Id[Mapped] {
+  def mapTo[T <: Entity[T]](table: MappedTable[T]): List[ColumnValue[Any]] =
+    macro Mapped.mapTo[T]
 
   def columns: List[ColumnValue[Any]]
 
-  def insert: InsertSingle = {
+  def insert: InsertSingle[Ref[Mapped]] = {
     val values = columns
-    val table = values.head.column.table
-    insertColumnValues(table, values)
+    values.head.column.table match {
+      case mt: MappedTable[Mapped] => mt.insertColumnValues(values)
+      case _ => throw new RuntimeException("Entity can only be used with MappedTables")
+    }
   }
 
-  def update: Update = {
+  def update: Update[Ref[Mapped]] = {
     val values = columns
-    val table = values.head.column.table
-    updateColumnValues(table, values)
+    values.head.column.table match {
+      case mt: MappedTable[Mapped] => mt.updateColumnValues(values)
+      case _ => throw new RuntimeException("Entity can only be used with MappedTables")
+    }
   }
 }

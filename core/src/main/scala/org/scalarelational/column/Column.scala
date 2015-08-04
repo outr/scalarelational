@@ -22,7 +22,6 @@ private[scalarelational] class Column[T](val name: String,
   lazy val fieldName = table.fieldName(this)
 
   def as(alias: String) = ColumnAlias[T](this, None, None, Option(alias))
-  def opt: ColumnLike[Option[T]] = ColumnOption(this)
 
   override def toString = name
 }

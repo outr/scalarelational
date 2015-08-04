@@ -1,8 +1,10 @@
 package org.scalarelational.mysql
 
-import org.scalarelational.column.property.{ColumnLength, PrimaryKey, AutoIncrement, ForeignKey}
-import org.scalarelational.model.SQLLogging
 import org.powerscala.log.Level
+
+import org.scalarelational.column.property.{ColumnLength, PrimaryKey, AutoIncrement, ForeignKey}
+import org.scalarelational.datatype.Ref
+import org.scalarelational.model.SQLLogging
 import org.scalarelational.table.Table
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
@@ -32,4 +34,3 @@ object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test"
   }
 
 }
-

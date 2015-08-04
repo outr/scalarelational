@@ -96,13 +96,13 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeQuery(sql, args)
   }
 
-  protected def invoke(insert: InsertSingle) = {
+  protected def invoke[T](insert: InsertSingle[T]): Int = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.table
     val columnNames = insert.values.map(_.column.name).mkString(", ")
     val columnValues = insert.values.map(_.toSQL)
     val placeholder = columnValues.map(v => "?").mkString(", ")
-    val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
+    val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES ($placeholder)"
     SQLContainer.calling(table, InstructionType.Insert, insertString)
     val resultSet = session.executeInsert(insertString, columnValues)
     try {
@@ -147,7 +147,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  protected def invoke(update: Update) = {
+  protected def invoke[T](update: Update[T]): Int = {
     var args = List.empty[Any]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
     val setArgs = update.values.map(_.toSQL)

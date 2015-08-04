@@ -2,15 +2,15 @@ package org.scalarelational.table
 
 import java.lang.reflect.Field
 
-import scala.collection.mutable.ListBuffer
 import scala.language.existentials
+import scala.collection.mutable.ListBuffer
 
-import org.scalarelational.column.Column
 import org.scalarelational.datatype._
-import org.scalarelational.instruction.Joinable
 import org.scalarelational.model.{SQLContainer, Datastore}
-import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
+import org.scalarelational.instruction.{InsertSingle, Update, Joinable}
 import org.scalarelational.table.property.TableProperty
+import org.scalarelational.column.{ColumnValue, RefColumn, ColumnLike, Column}
+import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -44,6 +44,8 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   }
 
   def as(alias: String) = TableAlias(this, alias)
+
+  def primaryKey: Column[_] = columns.find(_.has(PrimaryKey)).get
 
   def columns = _columns.toList
 
@@ -89,8 +91,10 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 }
 
 object Table {
-  def generateName(c: Class[_]) = {
+  def generateName(c: Class[_]): String = {
     val n = c.getSimpleName
-    "([A-Z])".r.replaceAllIn(n.charAt(0).toLower + n.substring(1, n.length - 1), m => "_" + m.group(0).toLowerCase)
+    "([A-Z])".r.replaceAllIn(
+      n.charAt(0).toLower + n.substring(1, n.length - 1),
+      m => "_" + m.group(0).toLowerCase)
   }
 }

@@ -1,5 +1,7 @@
 package org.scalarelational.h2.trigger
 
+import scala.language.existentials
+
 import org.scalarelational.table.Table
 import org.scalarelational.column.Column
 

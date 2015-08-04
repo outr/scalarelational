@@ -94,7 +94,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       SQLContainer.afterInvoke(table, q)
     }
   }
-  private[scalarelational] final def exec(insert: InsertSingle): Int = {
+  private[scalarelational] final def exec[T](insert: InsertSingle[T]): Int = {
     val table = insert.table
     val i = SQLContainer.beforeInvoke(table, insert)
     try {
@@ -121,7 +121,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       SQLContainer.afterInvoke(table, m)
     }
   }
-  private[scalarelational] final def exec(update: Update): Int = {
+  private[scalarelational] final def exec[T](update: Update[T]): Int = {
     val table = update.table
     val u = SQLContainer.beforeInvoke(table, update)
     try {
@@ -141,10 +141,10 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   }
 
   protected def invoke[E, R](query: Query[E, R]): ResultSet
-  protected def invoke(insert: InsertSingle): Int
+  protected def invoke[T](insert: InsertSingle[T]): Int
   protected def invoke(insert: InsertMultiple): List[Int]
   protected def invoke(merge: Merge): Int
-  protected def invoke(update: Update): Int
+  protected def invoke[T](update: Update[T]): Int
   protected def invoke(delete: Delete): Int
 
   def dispose() = {}

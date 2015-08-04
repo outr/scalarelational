@@ -1,5 +1,7 @@
 package org.scalarelational.table
 
+import scala.language.existentials
+
 import org.scalarelational.column.{ColumnAlias, ColumnLike}
 import org.scalarelational.instruction.Joinable
 

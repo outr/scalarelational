@@ -3,6 +3,7 @@ package org.scalarelational
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.column.property.{IgnoreCase, PrimaryKey, Unique, AutoIncrement}
 import org.scalarelational.table.{Table, LinkingTable}
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**
