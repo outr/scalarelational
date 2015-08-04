@@ -4,12 +4,13 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mysql, versioning)
+  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mysql, mapper, versioning)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
   lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core, core % "test->test")
+  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
   lazy val versioning = project("versioning").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(

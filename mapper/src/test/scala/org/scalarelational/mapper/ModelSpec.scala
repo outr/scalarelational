@@ -1,14 +1,12 @@
-package org.scalarelational
+package org.scalarelational.mapper
 
 import java.sql.Timestamp
 
-import org.scalatest.{Matchers, WordSpec}
-
-import org.scalarelational.extra.typedTable
-import org.scalarelational.column.property.{PrimaryKey, ForeignKey, AutoIncrement}
 import org.scalarelational.column.Column
+import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey}
 import org.scalarelational.model.SQLDatastore
 import org.scalarelational.table.Table
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>

@@ -1,11 +1,9 @@
-package org.scalarelational.extra
+package org.scalarelational.mapper
 
-import scala.reflect.macros._
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.existentials
 import scala.language.experimental.macros
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
-
-import org.scalarelational.mapper.MappedTable
+import scala.reflect.macros._
 
 /**
  * Typed Table allows generation of a Table object automatically from a provided
