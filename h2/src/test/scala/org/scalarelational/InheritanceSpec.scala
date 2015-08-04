@@ -22,8 +22,8 @@ class InheritanceSpec extends WordSpec with Matchers {
 
     "insert rows" in {
       session {
-        insert(Content, Content.title("content")).result should equal (1)
-        insert(Content, Content.title("content2")).result should equal (2)
+        insert(Content.title("content")).result should equal (1)
+        insert(Content.title("content2")).result should equal (2)
       }
     }
 

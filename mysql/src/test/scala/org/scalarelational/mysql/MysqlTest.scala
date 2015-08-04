@@ -13,15 +13,15 @@ object MysqlTest extends App {
       create(suppliers, coffees)
 
       //Create suppliers
-      val acmeId = MySQLTestDataStore$.insert(suppliers, name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
-      val superiorCoffeeId = insert(suppliers, name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+      val acmeId = MySQLTestDataStore$.insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+      val superiorCoffeeId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
       val theHighGroundId = insertInto(suppliers, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
 
       import org.scalarelational.mysql.MySQLTestDataStore$.coffees._
 
       session {
         // Batch insert some coffees
-        insert(coffees, name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
+        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
           and(name("French Roast"), supID(superiorCoffeeId), price(8.99), sales(0), total(0)).
           and(name("Espresso"), supID(theHighGroundId), price(9.99), sales(0), total(0)).
           and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).

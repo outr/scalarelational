@@ -30,7 +30,7 @@ class AsyncSpec extends WordSpec with Matchers {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()
-            insert(users, users.name(s"User $index"), users.age(index)).async.onSuccess {
+            insert(users.name(s"User $index"), users.age(index)).async.onSuccess {
               case v => running.decrementAndGet()
             }
           }

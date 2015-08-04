@@ -25,11 +25,11 @@ class LinkingSpec extends WordSpec with Matchers {
 
     "insert rows" in {
       session {
-        insert(Content, Content.title("content")).result should equal (1)
-        insert(Content, Content.title("content2")).result should equal (2)
+        insert(Content.title("content")).result should equal (1)
+        insert(Content.title("content2")).result should equal (2)
 
-        insert(Tag, Tag.name("tag")).result should equal (1)
-        insert(Tag, Tag.name("tag2")).result should equal (2)
+        insert(Tag.name("tag")).result should equal (1)
+        insert(Tag.name("tag2")).result should equal (2)
 
         insertInto(ContentTagLinking, 1, 2).result should equal (1)
         insertInto(ContentTagLinking, 2, 1).result should equal (2)

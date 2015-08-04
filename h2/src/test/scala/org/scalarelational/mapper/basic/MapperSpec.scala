@@ -24,9 +24,9 @@ class MapperSpec extends WordSpec with Matchers {
         import people._
 
         session {
-          insert(people, name("John"), age(21), surname(Some("Doe"))).
+          insert(name("John"), age(21), surname(Some("Doe"))).
              and(name("Jane"), age(19), surname(Some("Doe"))).result
-          insert(people, name("Baby"), age(21)).result
+          insert(name("Baby"), age(21)).result
         }
       }
     }

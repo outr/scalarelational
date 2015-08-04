@@ -41,7 +41,7 @@ class TriggerSpec extends WordSpec with Matchers {
     }
     "insert a record to fire a trigger" in {
       session {
-        val result = insert(triggerTest, triggerTest.name("Test1")).result
+        val result = insert(triggerTest.name("Test1")).result
         result should equal (1)
       }
     }

@@ -25,7 +25,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     }
     "insert some records" in {
       session {
-        insert(users, users.name("Adam"), users.language("English")).
+        insert(users.name("Adam"), users.language("English")).
            and(users.name("Victor"), users.language("Russian")).result
       }
     }

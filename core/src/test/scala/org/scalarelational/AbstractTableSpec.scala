@@ -61,7 +61,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert a record" in {
       session {
-        val result = insert(test, test.name("John Doe")).result
+        val result = insert(test.name("John Doe")).result
         result should equal (1)
       }
     }
@@ -100,7 +100,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert another record" in {
       session {
-        insert(test, test.name("Jane Doe")).result
+        insert(test.name("Jane Doe")).result
       }
     }
     "query the record back by name" in {
@@ -211,7 +211,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       import test._
 
       session {
-        val future = insert(test, name("Adam")).
+        val future = insert(name("Adam")).
           and(name("Ben")).
           and(name("Chris")).
           and(name("Doug")).
@@ -248,9 +248,9 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import suppliers._
     "insert three suppliers" in {
       session {
-        acmeId = insert(suppliers, name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
-        superiorId = insert(suppliers, name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
-        highGroundId = insert(suppliers, name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).result
+        acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+        superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+        highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).result
         acmeId shouldNot equal(0)
         superiorId shouldNot equal(0)
         highGroundId shouldNot equal(0)
@@ -263,7 +263,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import coffees._
     "insert five coffees" in {
       session {
-        insert(coffees, name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
+        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
           and(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
           and(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
           and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
@@ -392,7 +392,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
     "insert an Orange" in {
       session {
-        insert(fruitColors, color("Orange"), fruit(Fruit("Orange"))).result
+        insert(color("Orange"), fruit(Fruit("Orange"))).result
       }
     }
     "query the Orange back" in {
@@ -428,7 +428,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert a List[String] entry" in {
       session {
-        val idOption = insert(lists, lists.strings(List("One", "Two", "Three")))
+        val idOption = insert(lists.strings(List("One", "Two", "Three")))
         idOption shouldNot equal(None)
         listId = idOption.result
         listId should equal (1)
@@ -446,7 +446,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert a Blob entry" in {
       session {
-        dataId = insert(data, data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
+        dataId = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
         dataId should equal (1)
       }
     }
@@ -465,7 +465,6 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "insert John Doe into combinedUnique" in {
       session {
         insert(
-          combinedUnique,
           combinedUnique.firstName("John"),
           combinedUnique.lastName("Doe")).result should equal (1)
       }
@@ -473,7 +472,6 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "insert Jane Doe into combinedUnique" in {
       session {
         insert(
-          combinedUnique,
           combinedUnique.firstName("Jane"),
           combinedUnique.lastName("Doe")).result should equal (2)
       }
@@ -481,7 +479,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "attempting to insert John Doe again throws a constraint violation" in {
       session {
         intercept[Throwable] {
-          insert(combinedUnique, combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result
+          insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result
           fail()
         }
       }

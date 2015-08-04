@@ -93,7 +93,7 @@ class ModularSpec extends WordSpec with Matchers {
         import users._
         inserting should equal(0)
         inserted should equal(0)
-        insert(users, name("John Doe"), age(21)).result
+        insert(name("John Doe"), age(21)).result
         inserting should equal(1)
         inserted should equal(1)
       }
@@ -130,7 +130,7 @@ class ModularSpec extends WordSpec with Matchers {
         import users._
         inserting should equal(1)
         inserted should equal(1)
-        insert(users, name("Jane Doe"), age(20)).result
+        insert(name("Jane Doe"), age(20)).result
         inserting should equal(2)
         inserted should equal(2)
       }
@@ -181,7 +181,7 @@ class ModularSpec extends WordSpec with Matchers {
     "insert and update record using mixin" in {
       session {
         import users2._
-        insert(users2, name("Jane Doe"), age(20)).result
+        insert(name("Jane Doe"), age(20)).result
 
         val q = select (created, modified) from users2 where id === 1
         val result = q.result.converted.one

@@ -23,8 +23,8 @@ class ExampleSpec extends WordSpec with Matchers {
 
       session {
         // Clean and type-safe inserts
-        insert(suppliers, id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
-        insert(suppliers, id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
+        insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
+        insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
         // Short-hand when using values in order
         insertInto(suppliers, 150, "The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").result
       }
@@ -34,7 +34,7 @@ class ExampleSpec extends WordSpec with Matchers {
 
       session {
         // Batch insert some coffees
-        insert(coffees, name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
+        insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
            and(name("French Roast"), supID(49), price(8.99), sales(0), total(0), rating(Some(0.3))).
            and(name("Espresso"), supID(150), price(9.99), sales(0), total(0), rating(None)).
            and(name("Colombian Decaf"), supID(101), price(8.99), sales(0), total(0), rating(Some(0.2))).

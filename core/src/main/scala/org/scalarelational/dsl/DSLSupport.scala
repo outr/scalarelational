@@ -36,8 +36,8 @@ trait DSLSupport {
     Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7]), (E1, E2, E3, E4, E5, E6, E7)]((e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult[_]](expressions.toVector, converter = DefaultConverter)
-  def insert(table: Table, values: ColumnValue[_]*) = InsertSingle[Int](table, values, identity[Int])
-  def insertInto(table: Table, values: Any*) = insert(table, values.zip(table.columns).map {
+  def insert(values: ColumnValue[_]*) = InsertSingle[Int](values.head.column.table, values, identity[Int])
+  def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)
   }: _*)
   def insertBatch(table: Table, rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(table, rows)
