@@ -15,9 +15,8 @@ import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignK
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-private[scalarelational]
-  abstract class Table(name: String, tableProperties: TableProperty*)
-                      (implicit val datastore: Datastore)
+abstract class Table(name: String, tableProperties: TableProperty*)
+                    (implicit val datastore: Datastore)
   extends Joinable with SQLContainer with DataTypes with TablePropertyContainer {
 
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
