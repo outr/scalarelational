@@ -29,6 +29,6 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
     update where primaryColumn === primaryKey.value
   }
 
-  private[scalarelational] def insertColumnValues[T](values: List[ColumnValue[Any]]): InsertSingle[Ref[MappedType]] =
+  private[scalarelational] def insertColumnValues(values: List[ColumnValue[Any]]): InsertSingle[Ref[MappedType]] =
     InsertSingle[Ref[MappedType]](this, values, Ref[MappedType])
 }
