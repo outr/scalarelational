@@ -5,7 +5,7 @@ import org.scalarelational.op.{Condition, Conditions}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait WhereSupport[S <: WhereSupport[S]] extends SQLStatement {
+trait WhereSupport[+S <: WhereSupport[S]] extends SQLStatement {
   def whereCondition: Condition
 
   def where(condition: Condition): S

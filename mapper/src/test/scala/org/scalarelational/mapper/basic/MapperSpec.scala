@@ -62,7 +62,7 @@ class MapperSpec extends WordSpec with Matchers {
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
         session {
-          val result = people.insert(Person("Ray", 30)).result
+          val result = Person("Ray", 30).insert.result
           result.id should equal(4)
         }
       }
@@ -77,7 +77,7 @@ class MapperSpec extends WordSpec with Matchers {
       }
       "automatically convert a case class to an update" in {
         session {
-          people.update(Person("Jay", 30, None, Some(4))).result
+          Person("Jay", 30, None, Some(4)).update.result
         }
       }
       "query back the updated object" in {
@@ -96,17 +96,17 @@ class MapperSpec extends WordSpec with Matchers {
       "persist records" in {
         session {
           // Insert Suppliers
-          val acmeId = suppliers.insert(Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199")).result
-          val superiorId = suppliers.insert(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460")).result
-          val highGroundId = suppliers.insert(Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966")).result
+          val acmeId = Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199").insert.result
+          val superiorId = Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460").insert.result
+          val highGroundId = Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").insert.result
 
           // Insert Coffees
-          coffees.insert(Coffee("Colombian", Some(acmeId), 7.99, 0, 0)).result
-          coffees.insert(Coffee("French Roast", Some(superiorId), 8.99, 0, 0)).result
-          coffees.insert(Coffee("Espresso", Some(highGroundId), 9.99, 0, 0)).result
-          coffees.insert(Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0)).result
-          coffees.insert(Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0)).result
-          coffees.insert(Coffee("Caffè American", None, 12.99, 0, 0)).result
+          Coffee("Colombian", Some(acmeId), 7.99, 0, 0).insert.result
+          Coffee("French Roast", Some(superiorId), 8.99, 0, 0).insert.result
+          Coffee("Espresso", Some(highGroundId), 9.99, 0, 0).insert.result
+          Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0).insert.result
+          Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0).insert.result
+          Coffee("Caffè American", None, 12.99, 0, 0).insert.result
           // TODO: add batch insert / update support for persist
         }
       }
@@ -121,7 +121,7 @@ class MapperSpec extends WordSpec with Matchers {
       "query back 'Caffè American'" in {
         session {
           import coffees._
-          val query = select(*) from coffees where name === "Caffè American"
+          val query = select (*) from coffees where name === "Caffè American"
           val caffe = query.to[Coffee].result.head()
           caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0, Some(6)))
         }
@@ -163,7 +163,9 @@ class MapperSpec extends WordSpec with Matchers {
   }
 }
 
-case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None) {
+case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None) extends Entity[Person] {
+  def columns = mapTo[Person](Datastore.people)
+
   object Test { // Objects are ignored by mapper
     val value = 42
   }
@@ -177,7 +179,9 @@ case class Supplier(name: String, street: String, city: String, state: String, z
   def columns = mapTo[Supplier](Datastore.suppliers)
 }
 
-case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None)
+case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None) extends Entity[Coffee] {
+  def columns = mapTo[Coffee](Datastore.coffees)
+}
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends MappedTable[Person]("person") {

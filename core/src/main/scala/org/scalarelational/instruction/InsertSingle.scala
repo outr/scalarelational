@@ -6,10 +6,10 @@ import org.scalarelational.column.ColumnValue
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class InsertSingle[ResultType](table: Table,
-                                    values: Seq[ColumnValue[_]],
-                                    mapResult: Int => ResultType
-                                   )
+case class InsertSingle[+ResultType](table: Table,
+                                     values: Seq[ColumnValue[_]],
+                                     mapResult: Int => ResultType
+                                    )
   extends Insert[ResultType] with Instruction[ResultType] {
   lazy val rows = Seq(values)
 

@@ -47,7 +47,7 @@ class AsyncSpec extends WordSpec with Matchers {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()
-            users.insert(AsyncUser(s"User $index", index)).async.onSuccess {
+            AsyncUser(s"User $index", index).insert.async.onSuccess {
               case v => running.decrementAndGet()
             }
           }
@@ -61,6 +61,9 @@ class AsyncSpec extends WordSpec with Matchers {
 }
 
 case class AsyncUser(name: String, age: Int, id: Option[Int] = None)
+  extends Entity[AsyncUser] {
+  def columns = mapTo[AsyncUser](AsyncDatastore.users)
+}
 
 object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
   object users extends MappedTable[AsyncUser]("users") {

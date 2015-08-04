@@ -34,7 +34,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertUsers.zipWithIndex.foreach {
           case (usr, index) => {
-            val result = users.insert(usr).result
+            val result = usr.insert.result
             result.id should equal (index + 1)
           }
         }
@@ -62,7 +62,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       session {
         insertContent.zipWithIndex.foreach {
           case (c, index) => {
-            val result = content.insert(c).result
+            val result = c.insert.result
             result.id should equal (index + 1)
           }
         }
@@ -81,35 +81,47 @@ class PolymorphSpec extends WordSpec with Matchers {
   }
 }
 
-trait User {
+trait User extends BaseEntity[User] {
   def name: String
   def id: Option[Int]
   def withoutId: User
 }
 
-case class UserGuest(name: String, id: Option[Int] = None) extends User {
+case class UserGuest(name: String, id: Option[Int] = None)
+  extends User with Entity[UserGuest] {
+  def columns = mapTo[UserGuest](PolymorphDatastore.users)
+
   val isGuest = true
   def withoutId = copy(id = None)
 }
 
-case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None) extends User {
+case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None)
+  extends User with Entity[UserAdmin] {
+  def columns = mapTo[UserAdmin](PolymorphDatastore.users)
+
   val isGuest = false
   def withoutId = copy(id = None)
 }
 
 // ---
 
-trait Content {
+trait Content extends BaseEntity[Content] {
   def id: Option[Int]
   def withoutId: Content
 }
 
-case class ContentString(string: String, id: Option[Int] = None) extends Content {
+case class ContentString(string: String, id: Option[Int] = None)
+  extends Content with Entity[ContentString] {
+  def columns = mapTo[ContentString](PolymorphDatastore.content)
+
   val isString = true
   def withoutId = copy(id = None)
 }
 
-case class ContentList(entries: List[String], id: Option[Int] = None) extends Content {
+case class ContentList(entries: List[String], id: Option[Int] = None)
+  extends Content with Entity[ContentList] {
+  def columns = mapTo[ContentList](PolymorphDatastore.content)
+
   val isString = false
   def withoutId = copy(id = None)
 }
