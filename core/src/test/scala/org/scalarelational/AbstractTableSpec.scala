@@ -483,11 +483,11 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
       "drop all tables" in {
         session {
-          dropTable(test).result
-          dropTable(suppliers).result
-          dropTable(coffees).result
-          dropTable(names).result
-          dropTable(fruitColors).result
+          dropTable(test, cascade = true).result
+          dropTable(coffees, cascade = true).result
+          dropTable(suppliers, cascade = true).result
+          dropTable(names, cascade = true).result
+          dropTable(fruitColors, cascade = true).result
         }
       }
       "verify no tables exist anymore" in {
@@ -502,8 +502,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
       "drop all tables" in {
         session {
-          dropTable(first).result
-          dropTable(second).result
+          dropTable(first, cascade = true).result
+          dropTable(second, cascade = true).result
         }
       }
       "verify no tables exist anymore" in {
@@ -518,9 +518,9 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
       "drop all tables" in {
         session {
-          dropTable(lists).result
-          dropTable(data).result
-          dropTable(combinedUnique).result
+          dropTable(lists, cascade = true).result
+          dropTable(data, cascade = true).result
+          dropTable(combinedUnique, cascade = true).result
         }
       }
       "verify no tables exist anymore" in {
