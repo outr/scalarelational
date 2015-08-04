@@ -40,9 +40,9 @@ trait DSLSupport {
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)
   }: _*)
-  def insertBatch(table: Table, rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(table, rows)
-  def merge(table: Table, key: Column[_], values: ColumnValue[_]*) = Merge(table, key, values.toList)
-  def update(table: Table, values: ColumnValue[_]*) = Update[Int](table, values.toList, null, identity[Int])
+  def insertBatch(rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(rows.head.head.column.table, rows)
+  def merge(key: Column[_], values: ColumnValue[_]*) = Merge(values.head.column.table, key, values.toList)
+  def update(values: ColumnValue[_]*) = Update[Int](values.head.column.table, values.toList, null, identity[Int])
   def delete(table: Table) = Delete(table)
 }
 

@@ -32,8 +32,10 @@ trait PersistentProperties extends Datastore {
     }
 
     def update(name: String, newValue: String) {
-      val m = merge(persistentProperties, persistentProperties.key,
-        persistentProperties.key(name), persistentProperties.value(newValue))
+      val m = merge(
+        persistentProperties.key,
+        persistentProperties.key(name),
+        persistentProperties.value(newValue))
       m.result
     }
 

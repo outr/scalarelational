@@ -166,7 +166,7 @@ class ModularSpec extends WordSpec with Matchers {
     "updating second record" in {
       session {
         import users._
-        (update(users, name("updated")) where id === 2).result
+        (update(name("updated")) where id === 2).result
       }
     }
     "query back the record expecting a modified date" in {
@@ -186,7 +186,7 @@ class ModularSpec extends WordSpec with Matchers {
         val q = select (created, modified) from users2 where id === 1
         val result = q.result.converted.one
 
-        (update(users2, name("updated")) where id === 1).result
+        (update(name("updated")) where id === 1).result
         val q2 = select (created, modified) from users2 where id === 1
         val result2 = q2.result.converted.one
         result2._2.after(result2._1) should be (true)

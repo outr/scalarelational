@@ -53,7 +53,7 @@ class TriggerSpec extends WordSpec with Matchers {
     }
     "update a record to fire a trigger" in {
       session {
-        exec(update(triggerTest, triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
+        exec(update(triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
       }
     }
     "validate that one update was triggered" in {

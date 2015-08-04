@@ -153,7 +153,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "update 'John Doe' to 'Joe Doe'" in {
       session {
-        val updated = exec(update(test, test.name("Joe Doe")) where (test.name === "John Doe"))
+        val updated = exec(update(test.name("Joe Doe")) where test.name === "John Doe")
         updated should equal(1)
       }
     }
@@ -353,7 +353,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "merge 'John Doe' for an inserted record" in {
       session {
-        merge(names, name, name("John Doe"), age(21)).result
+        merge(name, name("John Doe"), age(21)).result
         val results = queryAll.result.toList
         results.size should equal(1)
         val result = results.head
@@ -363,7 +363,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "merge 'John Doe' for an updated record" in {
       session {
-        merge(names, name, name("John Doe"), age(25)).result
+        merge(name, name("John Doe"), age(25)).result
         val results = queryAll.result.toList
         results.size should equal(1)
         val result = results.head
@@ -373,7 +373,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "merge 'Jane Doe' for an inserted record" in {
       session {
-        merge(names, name, name("Jane Doe"), age(22)).result
+        merge(name, name("Jane Doe"), age(22)).result
         val results = queryAll.result.toList
         results.size should equal(2)
         val jane = results.head
