@@ -1,13 +1,12 @@
 package org.scalarelational.mapper
 
+import org.scalatest.{Matchers, WordSpec}
+
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.datatype.DataType
 import org.scalarelational.h2.{H2Memory, H2Datastore}
 import org.scalarelational.column.property.{Polymorphic, PrimaryKey, AutoIncrement}
 import org.scalarelational.model.Datastore
-import org.scalarelational.table.Table
-
-import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>
@@ -36,7 +35,7 @@ class PolymorphSpec extends WordSpec with Matchers {
         insertUsers.zipWithIndex.foreach {
           case (usr, index) => {
             val result = users.insert(usr).result
-            result.id should equal(index + 1)
+            result.id should equal (index + 1)
           }
         }
       }
@@ -64,7 +63,7 @@ class PolymorphSpec extends WordSpec with Matchers {
         insertContent.zipWithIndex.foreach {
           case (c, index) => {
             val result = content.insert(c).result
-            result.id should equal(index + 1)
+            result.id should equal (index + 1)
           }
         }
       }
@@ -118,14 +117,14 @@ case class ContentList(entries: List[String], id: Option[Int] = None) extends Co
 // ---
 
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
-  object users extends Table[User]("users") {
+  object users extends MappedTable[User]("users") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
   }
 
-  object content extends Table[Content]("content") {
+  object content extends MappedTable[Content]("content") {
     implicit val listStringConverter = new DataType[List[String]] {
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")

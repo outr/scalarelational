@@ -5,7 +5,7 @@ import scala.language.existentials
 import scala.language.experimental.macros
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
-import org.scalarelational.table.Table
+import org.scalarelational.mapper.MappedTable
 
 /**
  * Typed Table allows generation of a Table object automatically from a provided
@@ -17,11 +17,11 @@ import org.scalarelational.table.Table
  */
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 class typedTable[T] extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Table[T] = macro TypedTableGenerator.impl[T]
+  def macroTransform(annottees: Any*): MappedTable[T] = macro TypedTableGenerator.impl[T]
 }
 
 object TypedTableGenerator {
-  def impl[T](c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[Table[T]] = {
+  def impl[T](c: whitebox.Context)(annottees: c.Expr[Any]*): c.Expr[MappedTable[T]] = {
     import c.universe._
 
     val q"""new typedTable[$cls]().macroTransform($a)""" = c.macroApplication
@@ -36,17 +36,18 @@ object TypedTableGenerator {
       q"val $name = column[$returnType]($decoded)"
     })
 
-    def modifiedObject(objectDef: ModuleDef): c.Expr[Table[T]] = {
+    def modifiedObject(objectDef: ModuleDef): c.Expr[MappedTable[T]] = {
       val ModuleDef(_, objectName, template) = objectDef
       val body = template.body.tail     // Drop the init method
       val decoded = objectName.decodedName.toString.toUpperCase
       val ret = q"""
-        object $objectName extends Table($decoded) {
+        import org.scalarelational.mapper.MappedTable
+        object $objectName extends MappedTable[$cls]($decoded) {
           ..$columns
           ..$body
         }
       """
-      c.Expr[Table[T]](ret)
+      c.Expr[MappedTable[T]](ret)
     }
 
     annottees.map(_.tree) match {

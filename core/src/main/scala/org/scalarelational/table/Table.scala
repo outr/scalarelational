@@ -15,8 +15,9 @@ import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignK
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
-                                (implicit val datastore: Datastore)
+private[scalarelational]
+  abstract class Table(name: String, tableProperties: TableProperty*)
+                      (implicit val datastore: Datastore)
   extends Joinable with SQLContainer with DataTypes with TablePropertyContainer {
 
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
@@ -46,8 +47,6 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
   def as(alias: String) = TableAlias(this, alias)
 
   def primaryKey: Column[_] = columns.find(_.has(PrimaryKey)).get
-
-  def ref: ColumnLike[Ref[MappedType]] = RefOption[MappedType](primaryKey)
 
   def columns = _columns.toList
 
@@ -81,30 +80,14 @@ abstract class Table[MappedType](name: String, tableProperties: TableProperty*)
 
   def exists = datastore.doesTableExist(tableName)
 
-  def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
-
-  def by[T](column: Column[T], value: T)
-           (implicit manifest: Manifest[MappedType]) = datastore.session {
-    val q = query where column === value
-    q.result.converted.headOption
-  }
-
-  private[scalarelational] def updateColumnValues(values: List[ColumnValue[Any]]): Update[MappedType] = {
-    val primaryKey = values.find(_.column.has(PrimaryKey))
-      .getOrElse(throw new RuntimeException("Update must have a PrimaryKey value specified to be able to update."))
-    val primaryColumn = primaryKey.column
-    datastore.update(this, values: _*) where primaryColumn === primaryKey.value
-  }
-
-  private[scalarelational] def insertColumnValues[T](values: List[ColumnValue[Any]]): InsertSingle[MappedType] =
-    datastore.insert(this, values: _*)
-
   override def toString = tableName
 }
 
 object Table {
-  def generateName(c: Class[_]) = {
+  def generateName(c: Class[_]): String = {
     val n = c.getSimpleName
-    "([A-Z])".r.replaceAllIn(n.charAt(0).toLower + n.substring(1, n.length - 1), m => "_" + m.group(0).toLowerCase)
+    "([A-Z])".r.replaceAllIn(
+      n.charAt(0).toLower + n.substring(1, n.length - 1),
+      m => "_" + m.group(0).toLowerCase)
   }
 }

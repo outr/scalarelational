@@ -28,8 +28,8 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
-  private var _tables = Map.empty[String, Table[_]]
-  protected[scalarelational] def add(table: Table[_]) = synchronized {
+  private var _tables = Map.empty[String, Table]
+  protected[scalarelational] def add(table: Table) = synchronized {
     _tables += table.tableName.toLowerCase -> table
   }
   def tableByName(name: String) = _tables.get(name.toLowerCase)
@@ -77,7 +77,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
 
   def empty() = jdbcTables.isEmpty
 
-  def create(tables: Table[_]*) = {
+  def create(tables: Table*) = {
     if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
     val sql = ddl(tables.toList)
     sql.result
@@ -103,7 +103,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       SQLContainer.afterInvoke(table, i)
     }
   }
-  private[scalarelational] final def exec[T](insert: InsertMultiple[T]): List[Int] = {
+  private[scalarelational] final def exec(insert: InsertMultiple): List[Int] = {
     val table = insert.table
     val i = SQLContainer.beforeInvoke(table, insert)
     try {
@@ -112,7 +112,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       SQLContainer.afterInvoke(table, i)
     }
   }
-  private[scalarelational] final def exec[T](merge: Merge[T]): Int = {
+  private[scalarelational] final def exec(merge: Merge): Int = {
     val table = merge.table
     val m = SQLContainer.beforeInvoke(table, merge)
     try {
@@ -130,7 +130,7 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       SQLContainer.afterInvoke(table, u)
     }
   }
-  private[scalarelational] final def exec[T](delete: Delete[T]): Int = {
+  private[scalarelational] final def exec(delete: Delete): Int = {
     val table = delete.table
     val d = SQLContainer.beforeInvoke(table, delete)
     try {
@@ -142,10 +142,10 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
 
   protected def invoke[E, R](query: Query[E, R]): ResultSet
   protected def invoke[T](insert: InsertSingle[T]): Int
-  protected def invoke[T](insert: InsertMultiple[T]): List[Int]
-  protected def invoke[T](merge: Merge[T]): Int
+  protected def invoke(insert: InsertMultiple): List[Int]
+  protected def invoke(merge: Merge): Int
   protected def invoke[T](update: Update[T]): Int
-  protected def invoke[T](delete: Delete[T]): Int
+  protected def invoke(delete: Delete): Int
 
   def dispose() = {}
 

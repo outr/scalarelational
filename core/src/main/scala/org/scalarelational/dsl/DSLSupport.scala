@@ -36,14 +36,14 @@ trait DSLSupport {
     Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7]), (E1, E2, E3, E4, E5, E6, E7)]((e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult[_]](expressions.toVector, converter = DefaultConverter)
-  def insert[T](table: Table[T], values: ColumnValue[_]*) = InsertSingle(table, values)
-  def insertInto[T](table: Table[T], values: Any*) = insert(table, values.zip(table.columns).map {
+  def insert(table: Table, values: ColumnValue[_]*) = InsertSingle[Int](table, values, identity[Int])
+  def insertInto(table: Table, values: Any*) = insert(table, values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any]](value)
   }: _*)
-  def insertBatch[T](table: Table[T], rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(table, rows)
-  def merge[T](table: Table[T], key: Column[_], values: ColumnValue[_]*) = Merge(table, key, values.toList)
-  def update[T](table: Table[T], values: ColumnValue[_]*) = Update(table, values.toList)
-  def delete[T](table: Table[T]) = Delete(table)
+  def insertBatch[T](table: Table, rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(table, rows)
+  def merge[T](table: Table, key: Column[_], values: ColumnValue[_]*) = Merge(table, key, values.toList)
+  def update[T](table: Table, values: ColumnValue[_]*) = Update[Int](table, values.toList, null, identity[Int])
+  def delete[T](table: Table) = Delete(table)
 }
 
 object DSLSupport extends DSLSupport {

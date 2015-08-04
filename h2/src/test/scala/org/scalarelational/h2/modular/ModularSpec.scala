@@ -197,7 +197,7 @@ class ModularSpec extends WordSpec with Matchers {
 }
 
 object ModularDatastore extends H2Datastore {
-  object users extends Table[Unit]("users") with ModularSupport {
+  object users extends Table("users") with ModularSupport {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")
     val created = column[Option[Timestamp]]("created")
@@ -207,7 +207,7 @@ object ModularDatastore extends H2Datastore {
 
   // If more than one table should be equipped with `created` and `modified`
   // fields that get updated automatically, then this mixin can be used.
-  trait Timestamps extends ModularSupport { this: Table[_] =>
+  trait Timestamps extends ModularSupport { this: Table =>
     val created  = column[Timestamp]("created")
     val modified = column[Timestamp]("modified")
     val DummyValue = 1
@@ -223,7 +223,7 @@ object ModularDatastore extends H2Datastore {
     }
   }
 
-  object users2 extends Table[Unit]("users2") with Timestamps {
+  object users2 extends Table("users2") with Timestamps {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")
     val id = column[Int]("id", PrimaryKey, AutoIncrement)

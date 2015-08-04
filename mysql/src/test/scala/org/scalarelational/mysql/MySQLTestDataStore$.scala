@@ -1,9 +1,10 @@
 package org.scalarelational.mysql
 
+import org.powerscala.log.Level
+
 import org.scalarelational.column.property.{ColumnLength, PrimaryKey, AutoIncrement, ForeignKey}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.model.SQLLogging
-import org.powerscala.log.Level
 import org.scalarelational.table.Table
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
@@ -14,7 +15,7 @@ case class Coffee(name: String, supID : Option[Int], price: Double, sales: Int, 
 object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test", "user", "password") ) with SQLLogging{
   sqlLogLevel := Level.Info
 
-  object suppliers extends Table[Unit]("SUPPLIERS") {
+  object suppliers extends Table("SUPPLIERS") {
     val name = column[String]("SUP_NAME", ColumnLength(100))
     val street = column[String]("STREET", ColumnLength(100))
     val city = column[String]("CITY", ColumnLength(100))
@@ -23,9 +24,9 @@ object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test"
     val id = column[Int]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 
-  object coffees extends Table[Unit]("COFFEES") {
+  object coffees extends Table("COFFEES") {
     val name = column[String]("COF_NAME", ColumnLength(100))
-    val supID = column[Ref[Unit]]("SUP_ID", new ForeignKey(suppliers.id))
+    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
@@ -33,4 +34,3 @@ object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test"
   }
 
 }
-

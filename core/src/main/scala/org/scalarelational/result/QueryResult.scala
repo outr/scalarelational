@@ -10,7 +10,7 @@ import org.scalarelational.table.Table
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class QueryResult[Result](table: Table[_], values: Vector[ExpressionValue[_]], converter: QueryResult[Result] => Result) {
+case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]], converter: QueryResult[Result] => Result) {
   lazy val converted = converter(this)
 
   def apply() = converted
@@ -41,7 +41,7 @@ case class QueryResult[Result](table: Table[_], values: Vector[ExpressionValue[_
     }.toMap
   }
 
-  def toFieldMapForTable(table: Table[_]) = {
+  def toFieldMapForTable(table: Table) = {
     values.collect {
       case v if v.expression.longName.toLowerCase.startsWith(s"${table.tableName.toLowerCase}.") => {
         val name = v.expression match {

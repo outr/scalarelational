@@ -3,6 +3,7 @@ package org.scalarelational.h2.example
 import org.scalarelational.column.property.{ForeignKey, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
+
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -79,7 +80,7 @@ class ExampleSpec extends WordSpec with Matchers {
 }
 
 object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
-  object suppliers extends Table[Unit]("SUPPLIERS") {
+  object suppliers extends Table("SUPPLIERS") {
     val id = column[Int]("SUP_ID", PrimaryKey)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -88,7 +89,7 @@ object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
     val zip = column[String]("ZIP")
   }
 
-  object coffees extends Table[Unit]("COFFEES") {
+  object coffees extends Table("COFFEES") {
     val name = column[String]("COF_NAME", PrimaryKey)
     val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
     val price = column[Double]("PRICE")

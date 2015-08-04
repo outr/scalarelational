@@ -14,7 +14,7 @@ import org.scalarelational.h2.H2Datastore
  * @author Matt Hicks <matt@outr.com>
  */
 class TriggerInstance extends Trigger with Logging {
-  private var table: Table[_] = _
+  private var table: Table = _
   private var triggerType: TriggerType = _
   private var triggerState: TriggerState = _
   private def datastore = table.datastore.asInstanceOf[H2Datastore]

@@ -17,7 +17,7 @@ object Reflection {
       case position => fullName.substring(position + 1)
     }
 
-  def fieldValues[T: ClassTag](table: Table[_], value: T, strictMapping: Boolean): List[ColumnValue[Any]] = {
+  def fieldValues[T: ClassTag](table: Table, value: T, strictMapping: Boolean): List[ColumnValue[Any]] = {
     val refl = currentMirror.reflect(value)
     val members = refl.symbol.asType.typeSignature.members
     val fields = members.filter(_.asTerm.isVal)

@@ -13,7 +13,7 @@ import org.scalarelational.table.property.{Index, Linking}
 class LinkingTable(name: String,
                    leftColumn: Column[Option[Int]],
                    rightColumn: Column[Option[Int]])
-                  (implicit datastore: Datastore) extends Table[Unit](name, Linking)(datastore) {
+                  (implicit datastore: Datastore) extends Table(name, Linking)(datastore) {
   val left = column[Int](s"${leftColumn.table.tableName}Id", new ForeignKey(leftColumn))
   val right = column[Int](s"${rightColumn.table.tableName}Id", new ForeignKey(rightColumn))
   val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)

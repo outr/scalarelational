@@ -14,7 +14,7 @@ import scala.util.matching.Regex
 trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String
-  def table: Table[_]
+  def table: Table
   def dataType: DataType[T]
   def manifest: Manifest[T]
 

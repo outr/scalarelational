@@ -1,12 +1,13 @@
 package org.scalarelational.h2.existing
 
+import scala.language.reflectiveCalls
+
+import org.scalatest.{Matchers, WordSpec}
+
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.existing.ExistingQuery
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.table.Table
-import org.scalatest.{Matchers, WordSpec}
-
-import scala.language.reflectiveCalls
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -44,7 +45,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
 case class ExistingResult(id: Int, name: String, language: String)
 
 object TestDatastore extends H2Datastore {
-  val users = new Table[Unit]("users") {
+  val users = new Table("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val language = column[String]("language")

@@ -1,12 +1,14 @@
 package org.scalarelational.mapper.gettingstarted
 
+import org.scalatest.{Matchers, WordSpec}
+
 import org.powerscala.enum.{EnumEntry, Enumerated}
+
 import org.scalarelational.datatype.{Id, Ref, EnumDataType}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.table.Table
 import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
+import org.scalarelational.mapper.MappedTable
 import org.scalarelational.result.QueryResult
-import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -14,9 +16,9 @@ import org.scalatest.{Matchers, WordSpec}
 class GettingStartedSpec extends WordSpec with Matchers {
   import GettingStartedDatastore._
 
-  var acmeId: Ref[Supplier] = _
-  var superiorCoffeeId: Ref[Supplier] = _
-  var theHighGroundId: Ref[Supplier] = _
+  var acmeId: Int = _
+  var superiorCoffeeId: Int = _
+  var theHighGroundId: Int = _
 
   "H2 examples" should {
     "Create your Database" in {
@@ -37,20 +39,20 @@ class GettingStartedSpec extends WordSpec with Matchers {
       }
     }
     "Validate Supplier IDs" in {
-      acmeId.id should equal(1)
-      superiorCoffeeId.id should equal(2)
-      theHighGroundId.id should equal(3)
+      acmeId should equal (1)
+      superiorCoffeeId should equal (2)
+      theHighGroundId should equal (3)
     }
     "Batch Insert some Coffees" in {
       import coffees._
 
       session {
         // Batch insert some coffees
-        insert(coffees, name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
-          and(name("French Roast"), supID(superiorCoffeeId), price(8.99), sales(0), total(0)).
-          and(name("Espresso"), supID(theHighGroundId), price(9.99), sales(0), total(0)).
-          and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
-          and(name("French Roast Decaf"), supID(superiorCoffeeId), price(9.99), sales(0), total(0)).result
+        insert(coffees, name("Colombian"), supID(Ref[Supplier](acmeId)), price(7.99), sales(0), total(0)).
+          and(name("French Roast"), supID(Ref[Supplier](superiorCoffeeId)), price(8.99), sales(0), total(0)).
+          and(name("Espresso"), supID(Ref[Supplier](theHighGroundId)), price(9.99), sales(0), total(0)).
+          and(name("Colombian Decaf"), supID(Ref[Supplier](acmeId)), price(8.99), sales(0), total(0)).
+          and(name("French Roast Decaf"), supID(Ref[Supplier](superiorCoffeeId)), price(9.99), sales(0), total(0)).result
       }
     }
     "Query all the Coffees" in {
@@ -148,7 +150,7 @@ object Status extends Enumerated[Status] {
 }
 
 object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_started")) {
-  object suppliers extends Table[Supplier]("SUPPLIERS") {
+  object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
     val name = column[String]("SUP_NAME", Unique)
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -158,7 +160,7 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 
-  object coffees extends Table[Coffee]("COFFEES") {
+  object coffees extends MappedTable[Coffee]("COFFEES") {
     val name = column[String]("COF_NAME", Unique)
     val supID = column[Ref[Supplier]]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")

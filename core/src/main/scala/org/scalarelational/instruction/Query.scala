@@ -15,7 +15,7 @@ import org.scalarelational.column.{ColumnAlias, ColumnLike}
  * @author Matt Hicks <matt@outr.com>
  */
 case class Query[Expressions, Result](expressions: Expressions,
-                                      table: Table[_] = null,
+                                      table: Table = null,
                                       joins: List[Join] = Nil,
                                       whereCondition: Condition = null,
                                       grouping: List[SelectExpression[_]] = Nil,
@@ -34,7 +34,7 @@ case class Query[Expressions, Result](expressions: Expressions,
   def withoutField(expression: SelectExpression[_]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = expressions.filterNot(se => se == expression), converter = DSLSupport.DefaultConverter)
   def clearFields() = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = Vector.empty, converter = DSLSupport.DefaultConverter)
 
-  def from(table: Table[_]) = copy[Expressions, Result](table = table)
+  def from(table: Table) = copy[Expressions, Result](table = table)
   def where(condition: Condition) = copy[Expressions, Result](whereCondition = condition)
 
   def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Expressions, Result](this, joinable, joinType)
@@ -68,7 +68,7 @@ case class Query[Expressions, Result](expressions: Expressions,
     convert[R](f)
   }
 
-  def to[R1, R2](t1: Table[_], t2: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
+  def to[R1, R2](t1: Table, t2: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2]) = {
     val c1: EnhancedClass = manifest1.runtimeClass
     val c2: EnhancedClass = manifest2.runtimeClass
     val f = (r: QueryResult[(R1, R2)]) => {
@@ -79,7 +79,7 @@ case class Query[Expressions, Result](expressions: Expressions,
     convert[(R1, R2)](f)
   }
 
-  def to[R1, R2, R3](t1: Table[_], t2: Table[_], t3: Table[_])(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
+  def to[R1, R2, R3](t1: Table, t2: Table, t3: Table)(implicit manifest1: Manifest[R1], manifest2: Manifest[R2], manifest3: Manifest[R3]) = {
     val c1: EnhancedClass = manifest1.runtimeClass
     val c2: EnhancedClass = manifest2.runtimeClass
     val c3: EnhancedClass = manifest3.runtimeClass

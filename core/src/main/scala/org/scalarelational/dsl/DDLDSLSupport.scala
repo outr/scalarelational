@@ -12,7 +12,7 @@ import org.scalarelational.datatype.{DataTypes, DataType}
 trait DDLDSLSupport extends DataTypes {
   this: DDLSupport =>
 
-  def createTable(table: Table[_]) = ddl(table2Create(table, ifNotExists = false))
+  def createTable(table: Table) = ddl(table2Create(table, ifNotExists = false))
   def createTable(tableName: String) = ddl(CreateTable(tableName))
 
   def createColumn[T](column: Column[T]) = ddl(column2Create(column))
@@ -32,7 +32,7 @@ trait DDLDSLSupport extends DataTypes {
     ddl(ChangeColumnType[T](tableName, columnName, dataType, properties: _*)(manifest))
   }
 
-  def dropTable(table: Table[_]) = ddl(DropTable(table.tableName))
+  def dropTable(table: Table) = ddl(DropTable(table.tableName))
   def dropTable(tableName: String) = ddl(DropTable(tableName))
 
   def dropColumn(column: Column[_]) = ddl(DropColumn(column.table.tableName, column.name))

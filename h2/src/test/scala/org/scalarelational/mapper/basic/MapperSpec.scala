@@ -1,12 +1,11 @@
 package org.scalarelational.mapper.basic
 
+import org.scalatest.{Matchers, WordSpec}
+
 import org.scalarelational.mapper._
-import org.scalarelational.table.Table
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
-
-import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -181,13 +180,14 @@ case class Supplier(name: String, street: String, city: String, state: String, z
 case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
-  object people extends Table[Person]("person") {
+  object people extends MappedTable[Person]("person") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")
     val surname = column[Option[String]]("surname")
   }
-  object suppliers extends Table[Supplier]("SUPPLIERS") {
+
+  object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -195,7 +195,8 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table[Coffee]("COFFEES") {
+
+  object coffees extends MappedTable[Coffee]("COFFEES") {
     val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
     val supId = column[Option[Ref[Supplier]]]("SUP_ID", new ForeignKey(suppliers.id))

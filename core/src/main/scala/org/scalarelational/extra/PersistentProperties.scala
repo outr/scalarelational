@@ -15,7 +15,7 @@ import org.scalarelational.table.Table
  * @author Matt Hicks <matt@outr.com>
  */
 trait PersistentProperties extends Datastore {
-  object persistentProperties extends Table[Unit]("PERSISTENT_PROPERTIES") {
+  object persistentProperties extends Table("PERSISTENT_PROPERTIES") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val key = column[String]("name", Unique)
     val value = column[String]("value")

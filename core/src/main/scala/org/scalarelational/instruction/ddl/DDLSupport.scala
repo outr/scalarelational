@@ -10,10 +10,10 @@ import scala.language.implicitConversions
  * @author Matt Hicks <matt@outr.com>
  */
 trait DDLSupport {
-  def table2Create(table: Table[_], ifNotExists: Boolean = true): CreateTable
+  def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable
   def column2Create[T](column: Column[T]): CreateColumn[T]
 
-  def ddl(tables: List[Table[_]], ifNotExists: Boolean = true): List[CallableInstruction]
+  def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction]
 
   def ddl(create: CreateTable): List[CallableInstruction]
 

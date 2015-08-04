@@ -14,7 +14,7 @@ import org.scalarelational.instruction.CallableInstruction
  * @author Matt Hicks <matt@outr.com>
  */
 trait BasicDDLSupport extends DDLSupport with Datastore {
-  override def table2Create(table: Table[_], ifNotExists: Boolean = true) = {
+  override def table2Create(table: Table, ifNotExists: Boolean = true) = {
     val createColumns = table.columns.map(c => column2Create(c))
     CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties.values.toSeq)
   }
@@ -22,7 +22,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     CreateColumn[T](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)(column.manifest)
   }
 
-  override def ddl(tables: List[Table[_]], ifNotExists: Boolean = true): List[CallableInstruction] = {
+  override def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction] = {
     val b = ListBuffer.empty[CallableInstruction]
 
     tables.foreach {

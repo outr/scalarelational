@@ -22,9 +22,9 @@ import org.scalatest.{Matchers, WordSpec}
  * @author Matt Hicks <matt@outr.com>
  */
 trait AbstractTableSpec extends WordSpec with Matchers {
-  var acmeId: Ref[Unit] = _  // Untyped row reference
-  var superiorId: Ref[Unit] = _
-  var highGroundId: Ref[Unit] = _
+  var acmeId: Int = _
+  var superiorId: Int = _
+  var highGroundId: Int = _
   
   def testDatastore: AbstractTestDatastore
   def testCrossReference: AbstractTestCrossReferenceDatastore
@@ -62,7 +62,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "insert a record" in {
       session {
         val result = insert(test, test.name("John Doe")).result
-        result.id should equal(1)
+        result should equal (1)
       }
     }
     "create a simple query" in {
@@ -278,7 +278,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query joining suppliers" in {
       session {
-        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.ref === supID
+        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID.opt
         val results = query.result.toList
         results.size should equal(5)
         val first = results.head
@@ -299,7 +299,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query the count of coffees for Superior Coffee" in {
       session {
-        val query = select(name.count) from coffees innerJoin suppliers on supID === suppliers.ref where suppliers.name === "Superior Coffee"
+        val query = select(name.count) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
         val results = query.result.toList
         results.size should equal(1)
         val values = results.head
@@ -311,7 +311,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "query with an inner join aliased" in {
       session {
         val s = suppliers as "s"
-        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID === s(suppliers.ref)
+        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID.opt === s(suppliers.id)
         val results = query.result.toList
         results.size should equal(5)
       }
@@ -418,8 +418,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     val ds = specialTypes
     import ds._
 
-    var listId: Ref[Unit] = null
-    var dataId: Ref[Unit] = null
+    var listId = -1
+    var dataId = -1
 
     "create the tables successfully" in {
       session {
@@ -431,7 +431,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         val idOption = insert(lists, lists.strings(List("One", "Two", "Three")))
         idOption shouldNot equal(None)
         listId = idOption.result
-        listId.id should equal(1)
+        listId should equal (1)
       }
     }
     "query a List[String] entry" in {
@@ -440,14 +440,14 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val result = results.head
-        result(lists.id) should equal (Some(listId.id))
+        result(lists.id) should equal (Some(listId))
         result(lists.strings) should equal(List("One", "Two", "Three"))
       }
     }
     "insert a Blob entry" in {
       session {
         dataId = insert(data, data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
-        dataId.id should equal(1)
+        dataId should equal (1)
       }
     }
     "query a Blob entry" in {
@@ -456,7 +456,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         val results = query.result.toList
         results.size should equal(1)
         val result = results.head
-        result(data.id) should equal (Some(dataId.id))
+        result(data.id) should equal (Some(dataId))
         val content = result(data.content)
         val s = IO.copy(content.getBinaryStream)
         s should equal("test using blob")
@@ -464,12 +464,18 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert John Doe into combinedUnique" in {
       session {
-        insert(combinedUnique, combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result.id should equal(1)
+        insert(
+          combinedUnique,
+          combinedUnique.firstName("John"),
+          combinedUnique.lastName("Doe")).result should equal (1)
       }
     }
     "insert Jane Doe into combinedUnique" in {
       session {
-        insert(combinedUnique, combinedUnique.firstName("Jane"), combinedUnique.lastName("Doe")).result.id should equal(2)
+        insert(
+          combinedUnique,
+          combinedUnique.firstName("Jane"),
+          combinedUnique.lastName("Doe")).result should equal (2)
       }
     }
     "attempting to insert John Doe again throws a constraint violation" in {
@@ -484,12 +490,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 }
 
 trait AbstractTestDatastore extends Datastore {
-  object test extends Table[Unit]("test_table") {
+  object test extends Table("test_table") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique, ColumnLength(1024))
     val date = column[Option[Timestamp]]("date")
   }
-  object suppliers extends Table[Unit]("SUPPLIER") {
+  object suppliers extends Table("SUPPLIER") {
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
@@ -497,18 +503,18 @@ trait AbstractTestDatastore extends Datastore {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
   }
-  object coffees extends Table[Unit]("COFFEE") {
+  object coffees extends Table("COFFEE") {
     val name = column[String]("COF_NAME", PrimaryKey)
-    val supID = column[Ref[Unit]]("SUP_ID", new ForeignKey(suppliers.id))
+    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
   }
-  object names extends Table[Unit]("names") {
+  object names extends Table("names") {
     val name = column[String]("name", PrimaryKey, Unique)
     val age = column[Int]("age", Indexed("idxage"))
   }
-  object fruitColors extends Table[Unit]("fruit_colors") {
+  object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
     val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit])
   }
@@ -529,7 +535,7 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 }
 
 trait AbstractSpecialTypesDatastore extends Datastore {
-  object lists extends Table[Unit]("lists") {
+  object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
@@ -541,12 +547,12 @@ trait AbstractSpecialTypesDatastore extends Datastore {
     val strings = column[List[String]]("strings")
   }
 
-  object data extends Table[Unit]("data") {
+  object data extends Table("data") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val content = column[Blob]("content")
   }
 
-  object combinedUnique extends Table[Unit]("combined_unique") {
+  object combinedUnique extends Table("combined_unique") {
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val firstName = column[String]("firstName")
     val lastName = column[String]("lastName")

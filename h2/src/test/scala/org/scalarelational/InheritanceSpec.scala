@@ -4,7 +4,6 @@ import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
 import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
-import org.scalarelational.mapper._
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>
@@ -23,8 +22,8 @@ class InheritanceSpec extends WordSpec with Matchers {
 
     "insert rows" in {
       session {
-        insert(Content, Content.title("content")).result.id should equal (1)
-        insert(Content, Content.title("content2")).result.id should equal (2)
+        insert(Content, Content.title("content")).result should equal (1)
+        insert(Content, Content.title("content2")).result should equal (2)
       }
     }
 
@@ -45,7 +44,7 @@ class InheritanceSpec extends WordSpec with Matchers {
 }
 
 object InheritanceDatastore extends H2Datastore(mode = H2Memory("inheritance_test")) {
-  class BaseTable(table: String) extends Table[Unit](table) {
+  class BaseTable(table: String) extends Table(table) {
     val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
   }
 
