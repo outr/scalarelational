@@ -9,7 +9,7 @@ import org.scalarelational.datatype._
 import org.scalarelational.model.{SQLContainer, Datastore}
 import org.scalarelational.instruction.{InsertSingle, Update, Joinable}
 import org.scalarelational.table.property.TableProperty
-import org.scalarelational.column.{ColumnValue, RefOption, ColumnLike, Column}
+import org.scalarelational.column.{ColumnValue, RefColumn, ColumnLike, Column}
 import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
 
 /**

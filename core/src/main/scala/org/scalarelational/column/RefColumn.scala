@@ -5,7 +5,7 @@ import scala.language.existentials
 import org.scalarelational.table.Table
 import org.scalarelational.datatype.{Ref, DataType}
 
-case class RefOption[T](column: ColumnLike[_]) extends ColumnLike[Ref[T]] {
+case class RefColumn[T](column: ColumnLike[_]) extends ColumnLike[Ref[T]] {
   def name: String = column.name
   def longName: String = column.longName
   def table: Table = column.table

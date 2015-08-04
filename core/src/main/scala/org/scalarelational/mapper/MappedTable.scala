@@ -5,13 +5,13 @@ import org.scalarelational.model.Datastore
 import org.scalarelational.instruction.{InsertSingle, Update}
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.TableProperty
-import org.scalarelational.column.{ColumnValue, RefOption, ColumnLike, Column}
+import org.scalarelational.column.{ColumnValue, RefColumn, ColumnLike, Column}
 import org.scalarelational.column.property.PrimaryKey
 
 abstract class MappedTable[MappedType](name: String, tableProperties: TableProperty*)
                                       (implicit val ds: Datastore)
   extends Table(name, tableProperties: _*)(ds) {
-  def ref: ColumnLike[Ref[MappedType]] = RefOption[MappedType](primaryKey)
+  def ref: ColumnLike[Ref[MappedType]] = RefColumn[MappedType](primaryKey)
 
   def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
 
