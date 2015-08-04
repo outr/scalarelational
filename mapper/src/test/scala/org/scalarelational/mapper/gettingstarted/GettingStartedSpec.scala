@@ -29,7 +29,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Insert some Suppliers" in {
       import suppliers._
 
-      session {
+      transaction {
         // Clean and type-safe inserts
         acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state(Some("CA")), status(Status.Unconfirmed), zip("95199")).result
         superiorCoffeeId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), zip("95460"), status(Status.Unconfirmed)).result
@@ -59,7 +59,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
       import coffees._
 
       session {
-        val results = (select(*) from coffees).result.toVector
+        val results = (select (*) from coffees).result.toVector
         results.length should equal(5)
         check(results(0), "COFFEES(COF_NAME: Colombian, SUP_ID: 1, PRICE: 7.99, SALES: 0, TOTAL: 0, COF_ID: Some(1))")
         check(results(1), "COFFEES(COF_NAME: French Roast, SUP_ID: 2, PRICE: 8.99, SALES: 0, TOTAL: 0, COF_ID: Some(2))")
@@ -75,7 +75,13 @@ class GettingStartedSpec extends WordSpec with Matchers {
     }
     "Query all Coffees filtering and joining with Suppliers" in {
       session {
-        val query = select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID === suppliers.ref where coffees.price < 9.0
+        val query = (
+          select (coffees.name, suppliers.name)
+            from coffees
+            innerJoin suppliers
+            on coffees.supID === suppliers.ref
+            where coffees.price < 9.0
+        )
         val results = query.result.toVector
         results.length should equal(3)
         results(0)() should equal(("Colombian", "Acme, Inc."))
@@ -98,9 +104,9 @@ class GettingStartedSpec extends WordSpec with Matchers {
       session {
         import suppliers._
 
-        val query = select(*) from suppliers where name === "Starbucks"
+        val query = select (*) from suppliers where name === "Starbucks"
         val starbucks = query.to[Supplier].result.head()
-        starbucks should equal(Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled, Some(4)))
+        starbucks should equal (Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled, Some(4)))
       }
     }
     "Query a Supplier back as a tuple" in {
@@ -130,7 +136,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
     }
     "Query 'French Roast' with 'Superior Coffee' for (Coffee, Supplier)" in {
       session {
-        val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on(coffees.supID === suppliers.ref) where(coffees.name === "French Roast")
+        val query = select (coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supID === suppliers.ref) where coffees.name === "French Roast"
         val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
         frenchRoast should equal(Coffee("French Roast", superior.ref, 8.99, 0, 0, Some(2)))
         superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", None, "95460", Status.Unconfirmed, Some(2)))
