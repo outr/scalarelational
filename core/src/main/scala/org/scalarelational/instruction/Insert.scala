@@ -5,7 +5,7 @@ import org.scalarelational.column.ColumnValue
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Insert[T] {
+trait Insert[+T] {
   def rows: Seq[Seq[ColumnValue[_]]]
 
   /**

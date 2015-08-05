@@ -7,7 +7,7 @@ import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.datatype.{Id, Ref, EnumDataType}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
-import org.scalarelational.mapper.MappedTable
+import org.scalarelational.mapper.{Entity, MappedTable}
 import org.scalarelational.result.QueryResult
 
 /**
@@ -96,7 +96,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
     "Persist a new Supplier" in {
       session {
         val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled)
-        val result = suppliers.insert(starbucks).result
+        val result = starbucks.insert.result
         result.id should equal(4)
       }
     }
@@ -176,6 +176,21 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
   }
 }
 
-case class Supplier(name: String, street: String, city: String, state: Option[String], zip: String, status: Status, id: Option[Int] = None) extends Id[Supplier]
+case class Supplier(name: String,
+                    street: String,
+                    city: String,
+                    state: Option[String],
+                    zip: String,
+                    status: Status,
+                    id: Option[Int] = None) extends Entity[Supplier] {
+  def columns = mapTo[Supplier](GettingStartedDatastore.suppliers)
+}
 
-case class Coffee(name: String, supID: Ref[Supplier], price: Double, sales: Int, total: Int, id: Option[Int] = None) extends Id[Coffee]
+case class Coffee(name: String,
+                  supID: Ref[Supplier],
+                  price: Double,
+                  sales: Int,
+                  total: Int,
+                  id: Option[Int] = None) extends Entity[Coffee] {
+  def columns = mapTo[Coffee](GettingStartedDatastore.coffees)
+}

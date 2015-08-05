@@ -250,7 +250,15 @@ Though working directly with columns is easy in ScalaRelational, it's not nearly
 mapper gives us the benefits of an ORM without the pain. First we need a class to map:
 
 ```scala
-case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None)
+case class Supplier(name: String,
+                    street: String,
+                    city: String,
+                    state: String,
+                    zip: String,
+                    status: Status,
+                    id: Option[Int] = None) extends Entity[Supplier] {
+  def columns = mapTo[Supplier](GettingStartedDatastore.suppliers)
+}
 ```
 
 Though all of these fields are in the same order as the table, this is not required to be the case. Mapping takes place
@@ -261,11 +269,9 @@ based on the field name to the column name in the table so order doesn't matter.
 We've create a Supplier case class, but now we need to create an instance and insert it into the database:
 
 ```scala
-import org.scalarelational.mapper._
-
 session {
   val starbucks = Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", "CA", "93966")
-  val id = suppliers.insert(starbucks).result
+  val id = starbucks.insert.result
 }
 ```
 
@@ -278,7 +284,6 @@ noting here that **id** is the database-generated primary key.
 We've successfully inserted our Supplier instance, but now how do we query it back out? It's actually surprisingly easy:
 
 ```scala
-import org.scalarelational.mapper._
 import suppliers._
 
 session {
@@ -341,7 +346,7 @@ val insertUsers = Seq(
   UserAdmin("admin", true)
 )
 
-insertUsers.foreach(users.insert(_).result)
+insertUsers.foreach(_.insert.result)
 ```
 
 To query the table, you will need to evaluate the column which encodes the original type of the object, namely ``isGuest`` in this case. For more complex type hierarchies you may want to use an enumeration instead.

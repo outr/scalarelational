@@ -7,10 +7,10 @@ import org.scalarelational.column.ColumnValue
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class Update[ResultType](table: Table,
-                              values: List[ColumnValue[_]],
-                              whereCondition: Condition = null,
-                              mapResult: Int => ResultType)
+case class Update[+ResultType](table: Table,
+                               values: List[ColumnValue[_]],
+                               whereCondition: Condition = null,
+                               mapResult: Int => ResultType)
   extends WhereSupport[Update[ResultType]] with Instruction[ResultType] {
 
   def where(condition: Condition): Update[ResultType] =
