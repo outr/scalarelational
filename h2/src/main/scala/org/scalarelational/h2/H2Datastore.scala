@@ -32,6 +32,8 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
 
   Class.forName("org.h2.Driver")
 
+  override def typesOnQueries = false     // H2 doesn't support types on queries
+
   val modeProperty = Property[H2ConnectionMode]()
   val dbUsername = Property[String](default = Some("sa"))
   val dbPassword = Property[String](default = Some("sa"))

@@ -1,6 +1,7 @@
 package org.scalarelational.datatype
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.sql.{JDBCType, SQLType}
 
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.model.Datastore
@@ -11,6 +12,8 @@ import org.scalarelational.model.Datastore
  * @author Matt Hicks <matt@outr.com>
  */
 class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
+  override def jdbcType = JDBCType.BINARY
+
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = s"BINARY(${Int.MaxValue})"
 
   def toSQLType(column: ColumnLike[_], value: T) = if (value != null) {

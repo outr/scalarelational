@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.sql.{Blob, Timestamp}
+import java.sql.{JDBCType, SQLType, Blob, Timestamp}
 
 import javax.sql.rowset.serial.SerialBlob
 
@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 import org.powerscala.IO
 
-import org.scalarelational.datatype.{Ref, DataType, ObjectSerializationConverter}
+import org.scalarelational.datatype.{DataTypeGenerators, Ref, DataType, ObjectSerializationConverter}
 import org.scalarelational.model._
 import org.scalarelational.column.property._
 import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
@@ -119,7 +119,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
-          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(null))
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(DataTypeGenerators.option[Int].typed(null)))
         )
         val results = query.result.toList
         results.size should equal (2)
@@ -584,6 +584,7 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
+      override def jdbcType = JDBCType.VARCHAR
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =

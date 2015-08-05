@@ -25,6 +25,14 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   def DefaultVarCharLength = 65535
   def DefaultBinaryLength  = 1000
 
+  /**
+   * Includes type information when setting parameters on a PreparedStatement when true. Some drivers don't support
+   * this functionality.
+   *
+   * Defaults to true.
+   */
+  def typesOnQueries = true
+
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 

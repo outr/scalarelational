@@ -14,7 +14,7 @@ import org.scalarelational.table.{Table, TableAlias}
 import org.scalarelational.fun.SQLFunction
 import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.SelectExpression
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{StringDataType, DataTyped, DataType}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -40,7 +40,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   def describe[E, R](query: Query[E, R]) = {
     val columns = query.asVector.map(expression2SQL).mkString(", ")
 
-    var args = List.empty[Any]
+    var args = List.empty[DataTyped[_]]
 
     // Generate SQL
     val (joins, joinArgs) = joins2SQL(query.joins)
@@ -100,7 +100,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.table
     val columnNames = insert.values.map(_.column.name).mkString(", ")
-    val columnValues = insert.values.map(_.toSQL)
+    val columnValues = insert.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL))
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES ($placeholder)"
     SQLContainer.calling(table, InstructionType.Insert, insertString)
@@ -119,7 +119,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def invoke(merge: Merge) = {
     val table = merge.key.table
     val columnNames = merge.values.map(_.column.name).mkString(", ")
-    val columnValues = merge.values.map(_.toSQL)
+    val columnValues = merge.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL))
     val placeholder = columnValues.map(v => "?").mkString(", ")
     val mergeString = s"MERGE INTO ${table.tableName} ($columnNames) KEY(${merge.key.name}) VALUES($placeholder)"
     SQLContainer.calling(table, InstructionType.Merge, mergeString)
@@ -131,7 +131,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
     val table = insert.rows.head.head.column.table
     val columnNames = insert.rows.head.map(_.column.name).mkString(", ")
-    val columnValues = insert.rows.map(r => r.map(_.toSQL))
+    val columnValues = insert.rows.map(r => r.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL)))
     val placeholder = insert.rows.head.map(v => "?").mkString(", ")
     val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES($placeholder)"
     SQLContainer.calling(table, InstructionType.Insert, insertString)
@@ -148,9 +148,9 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   protected def invoke[T](update: Update[T]): Int = {
-    var args = List.empty[Any]
+    var args = List.empty[DataTyped[_]]
     val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
-    val setArgs = update.values.map(_.toSQL)
+    val setArgs = update.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL))
     args = args ::: setArgs
 
     val (where, whereArgs) = where2SQL(update.whereCondition)
@@ -161,7 +161,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   protected def invoke(delete: Delete) = {
-    var args = List.empty[Any]
+    var args = List.empty[DataTyped[_]]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
@@ -170,27 +170,30 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(sql, args)
   }
 
-  def condition2String(condition: Condition, args: ListBuffer[Any]): String = condition match {
+  def condition2String(condition: Condition, args: ListBuffer[DataTyped[_]]): String = condition match {
     case c: ColumnCondition[_] => {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
     case c: DirectCondition[_] => {
       val conv = c.column.dataType.asInstanceOf[DataType[Any]]
       val op = conv.sqlOperator(c.column, c.value, c.operator)
-      args += conv.toSQLType(c.column, c.value)
+      args += conv.typed(conv.toSQLType(c.column, c.value))
       s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_] => {
-      args += c.pattern
+      args += StringDataType.typed(c.pattern)
       s"${c.column.longName} ${if (c.not) "NOT " else ""}LIKE ?"
     }
     case c: RegexCondition[_] => {
-      args += c.regex.toString()
+      args += StringDataType.typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
     }
     case c: RangeCondition[_] => {
       c.values.foreach {
-        case v => args += c.column.dataType.asInstanceOf[DataType[Any]].toSQLType(c.column, v)
+        case v => {
+          val dataType = c.column.dataType.asInstanceOf[DataType[Any]]
+          args += dataType.typed(dataType.toSQLType(c.column, v))
+        }
       }
       val entries = c.operator match {
         case Operator.Between => c.values.map(v => "?").mkString(" AND ")
@@ -204,8 +207,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  private def joins2SQL(joins: List[Join]): (String, List[Any]) = {
-    val args = ListBuffer.empty[Any]
+  private def joins2SQL(joins: List[Join]): (String, List[DataTyped[_]]) = {
+    val args = ListBuffer.empty[DataTyped[_]]
 
     val b = new StringBuilder
     joins.foreach {
@@ -242,8 +245,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     (b.toString(), args.toList)
   }
 
-  private def where2SQL(condition: Condition): (String, List[Any]) = if (condition != null) {
-    val args = ListBuffer.empty[Any]
+  private def where2SQL(condition: Condition): (String, List[DataTyped[_]]) = if (condition != null) {
+    val args = ListBuffer.empty[DataTyped[_]]
     val sql = condition2String(condition, args)
     if (sql != null && sql.nonEmpty) {
       s" WHERE $sql" -> args.toList

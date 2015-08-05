@@ -2,6 +2,7 @@ package org.scalarelational
 
 import java.sql.{Connection, Statement}
 
+import org.scalarelational.datatype.DataTyped
 import org.scalarelational.model.Datastore
 
 /**
@@ -32,12 +33,16 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     }
   }
 
-  def executeUpdate(sql: String, args: List[Any]) = {
+  def executeUpdate(sql: String, args: List[DataTyped[_]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
     try {
       args.zipWithIndex.foreach {
-        case (value, index) => ps.setObject(index + 1, value)
+        case (arg, index) => if (datastore.typesOnQueries) {
+          ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
+        } else {
+          ps.setObject(index + 1, arg.value)
+        }
       }
       ps.executeUpdate()
     } finally {
@@ -45,23 +50,31 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     }
   }
 
-  def executeInsert(sql: String, args: Seq[Any]) = {
+  def executeInsert(sql: String, args: Seq[DataTyped[_]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
+      case (arg, index) => if (datastore.typesOnQueries) {
+        ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
+      } else {
+        ps.setObject(index + 1, arg.value)
+      }
     }
     ps.executeUpdate()
     ps.getGeneratedKeys
   }
 
-  def executeInsertMultiple(sql: String, rows: Seq[Seq[Any]]) = {
+  def executeInsertMultiple(sql: String, rows: Seq[Seq[DataTyped[_]]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     rows.foreach {
       case args => {
         args.zipWithIndex.foreach {
-          case (value, index) => ps.setObject(index + 1, value)
+          case (arg, index) => if (datastore.typesOnQueries) {
+            ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
+          } else {
+            ps.setObject(index + 1, arg.value)
+          }
         }
         ps.addBatch()
       }
@@ -70,11 +83,15 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
-  def executeQuery(sql: String, args: Seq[Any]) = {
+  def executeQuery(sql: String, args: Seq[DataTyped[_]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
     args.zipWithIndex.foreach {
-      case (value, index) => ps.setObject(index + 1, value)
+      case (typed, index) => if (datastore.typesOnQueries) {
+        ps.setObject(index + 1, typed.value, typed.dataType.jdbcType)
+      } else {
+        ps.setObject(index + 1, typed.value)
+      }
     }
     ps.executeQuery()
   }
