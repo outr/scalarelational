@@ -1,6 +1,6 @@
 package org.scalarelational.datatype
 
-import java.sql.{JDBCType, SQLType, Blob, Timestamp}
+import java.sql.{Timestamp, Blob, Types}
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
@@ -14,7 +14,7 @@ import org.scalarelational.op.Operator
  * @author Matt Hicks <matt@outr.com>
  */
 trait DataType[T] {
-  def jdbcType: SQLType
+  def jdbcType: Int
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer): String
   def sqlOperator(column: ColumnLike[_], value: T, op: Operator): Operator = op
   def toSQLType(column: ColumnLike[_], value: T): Any
@@ -62,7 +62,7 @@ object DataTypeGenerators {
   }
 
   def ref[T]: DataType[Ref[T]] = new DataType[Ref[T]] {
-    override def jdbcType = JDBCType.INTEGER
+    override def jdbcType = Types.INTEGER
     def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
     def toSQLType(column: ColumnLike[_], value: Ref[T]) = value.id
     def fromSQLType(column: ColumnLike[_], value: Any) = new Ref[T](value.asInstanceOf[Int])
@@ -71,56 +71,56 @@ object DataTypeGenerators {
 }
 
 object BooleanDataType extends DataType[Boolean] {
-  override def jdbcType = JDBCType.BOOLEAN
+  override def jdbcType = Types.BOOLEAN
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BOOLEAN"
   def toSQLType(column: ColumnLike[_], value: Boolean) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Boolean]
 }
 
 object IntDataType extends DataType[Int] {
-  override def jdbcType = JDBCType.INTEGER
+  override def jdbcType = Types.INTEGER
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
   def toSQLType(column: ColumnLike[_], value: Int) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Int]
 }
 
 object JavaIntDataType extends DataType[java.lang.Integer] {
-  override def jdbcType = JDBCType.INTEGER
+  override def jdbcType = Types.INTEGER
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
   def toSQLType(column: ColumnLike[_], value: java.lang.Integer) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Integer]
 }
 
 object LongDataType extends DataType[Long] {
-  override def jdbcType = JDBCType.BIGINT
+  override def jdbcType = Types.BIGINT
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BIGINT"
   def toSQLType(column: ColumnLike[_], value: Long) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Long]
 }
 
 object JavaLongDataType extends DataType[java.lang.Long] {
-  override def jdbcType = JDBCType.BIGINT
+  override def jdbcType = Types.BIGINT
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BIGINT"
   def toSQLType(column: ColumnLike[_], value: java.lang.Long) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Long]
 }
 
 object DoubleDataType extends DataType[Double] {
-  override def jdbcType = JDBCType.DOUBLE
+  override def jdbcType = Types.DOUBLE
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "DOUBLE"
   def toSQLType(column: ColumnLike[_], value: Double) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Double]
 }
 
 object JavaDoubleDataType extends DataType[java.lang.Double] {
-  override def jdbcType = JDBCType.DOUBLE
+  override def jdbcType = Types.DOUBLE
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "DOUBLE"
   def toSQLType(column: ColumnLike[_], value: java.lang.Double) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Double]
 }
 
 object BigDecimalDataType extends DataType[BigDecimal] {
-  override def jdbcType = JDBCType.DECIMAL
+  override def jdbcType = Types.DECIMAL
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
     val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
     s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
@@ -130,7 +130,7 @@ object BigDecimalDataType extends DataType[BigDecimal] {
 }
 
 object StringDataType extends DataType[String] {
-  override def jdbcType = JDBCType.VARCHAR
+  override def jdbcType = Types.VARCHAR
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
     val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
         .getOrElse(datastore.DefaultVarCharLength)
@@ -149,7 +149,7 @@ object WrappedStringDataType extends DataType[WrappedString] {
 }
 
 object ByteArrayDataType extends DataType[Array[Byte]] {
-  override def jdbcType = JDBCType.BINARY
+  override def jdbcType = Types.BINARY
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
     val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
@@ -161,21 +161,21 @@ object ByteArrayDataType extends DataType[Array[Byte]] {
 }
 
 object BlobDataType extends DataType[Blob] {
-  override def jdbcType = JDBCType.BLOB
+  override def jdbcType = Types.BLOB
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BLOB"
   def toSQLType(column: ColumnLike[_], value: Blob) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Blob]
 }
 
 object TimestampDataType extends DataType[Timestamp] {
-  override def jdbcType = JDBCType.TIMESTAMP
+  override def jdbcType = Types.TIMESTAMP
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "TIMESTAMP"
   def toSQLType(column: ColumnLike[_], value: Timestamp) = value
   def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Timestamp]
 }
 
 object LongTimestampDataType extends MappedDataType[Long, Timestamp] {
-  override def jdbcType = JDBCType.TIMESTAMP
+  override def jdbcType = Types.TIMESTAMP
   override def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "TIMESTAMP"
   override def toSQLType(column: ColumnLike[_], value: Long) = new Timestamp(value)
   override def fromSQLTyped(column: ColumnLike[_], value: Timestamp) = value.getTime
@@ -188,7 +188,7 @@ class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataT
 
   val length = enumerated.values.maxBy(_.name.length).name.length
 
-  override def jdbcType = JDBCType.VARCHAR
+  override def jdbcType = Types.VARCHAR
   def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = s"VARCHAR($length)"
   def toSQLType(column: ColumnLike[_], value: T) = value.name
   def fromSQLType(column: ColumnLike[_], value: Any) =

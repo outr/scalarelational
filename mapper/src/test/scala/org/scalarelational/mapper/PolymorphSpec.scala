@@ -1,6 +1,6 @@
 package org.scalarelational.mapper
 
-import java.sql.{JDBCType, SQLType}
+import java.sql.Types
 
 import org.scalatest.{Matchers, WordSpec}
 
@@ -18,7 +18,7 @@ class PolymorphSpec extends WordSpec with Matchers {
 
   val insertUsers = Seq(
     UserGuest("guest"),
-    UserAdmin("admin", true)
+    UserAdmin("admin", canDelete = true)
   )
 
   val insertContent = Seq(
@@ -140,7 +140,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
 
   object content extends MappedTable[Content]("content") {
     implicit val listStringConverter = new DataType[List[String]] {
-      override def jdbcType = JDBCType.VARCHAR
+      override def jdbcType = Types.VARCHAR
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =

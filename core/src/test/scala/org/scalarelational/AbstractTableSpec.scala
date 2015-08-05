@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.sql.{JDBCType, SQLType, Blob, Timestamp}
+import java.sql._
 
 import javax.sql.rowset.serial.SerialBlob
 
@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 import org.powerscala.IO
 
-import org.scalarelational.datatype.{DataTypeGenerators, Ref, DataType, ObjectSerializationConverter}
+import org.scalarelational.datatype.{DataTypeGenerators, DataType, ObjectSerializationConverter}
 import org.scalarelational.model._
 import org.scalarelational.column.property._
 import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
@@ -584,7 +584,7 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
     implicit val listStringConverter = new DataType[List[String]] {
-      override def jdbcType = JDBCType.VARCHAR
+      override def jdbcType = Types.VARCHAR
       def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
       def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
       def fromSQLType(column: ColumnLike[_], value: Any) =

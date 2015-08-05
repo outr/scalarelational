@@ -38,11 +38,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     val ps = connection.prepareStatement(sql)
     try {
       args.zipWithIndex.foreach {
-        case (arg, index) => if (datastore.typesOnQueries) {
-          ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
-        } else {
-          ps.setObject(index + 1, arg.value)
-        }
+        case (arg, index) => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
       }
       ps.executeUpdate()
     } finally {
@@ -54,11 +50,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach {
-      case (arg, index) => if (datastore.typesOnQueries) {
-        ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
-      } else {
-        ps.setObject(index + 1, arg.value)
-      }
+      case (arg, index) => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
     }
     ps.executeUpdate()
     ps.getGeneratedKeys
@@ -70,11 +62,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     rows.foreach {
       case args => {
         args.zipWithIndex.foreach {
-          case (arg, index) => if (datastore.typesOnQueries) {
-            ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
-          } else {
-            ps.setObject(index + 1, arg.value)
-          }
+          case (arg, index) => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
         }
         ps.addBatch()
       }
@@ -87,11 +75,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
     args.zipWithIndex.foreach {
-      case (typed, index) => if (datastore.typesOnQueries) {
-        ps.setObject(index + 1, typed.value, typed.dataType.jdbcType)
-      } else {
-        ps.setObject(index + 1, typed.value)
-      }
+      case (typed, index) => ps.setObject(index + 1, typed.value, typed.dataType.jdbcType)
     }
     ps.executeQuery()
   }
