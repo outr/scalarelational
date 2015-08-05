@@ -149,7 +149,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   protected def invoke[T](update: Update[T]): Int = {
     var args = List.empty[DataTyped[_]]
-    val sets = update.values.map(cv => s"${cv.column.longName}=?").mkString(", ")
+    val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
     val setArgs = update.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL))
     args = args ::: setArgs
 
