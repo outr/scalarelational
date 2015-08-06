@@ -18,21 +18,8 @@ import scala.collection.mutable.ListBuffer
 /**
  * @author Robert Djubek <envy1988@gmail.com>
  */
-
-sealed trait PGSsl
-case class PGUseSsl(sslfactory: Option[String] = None, sslfactoryarg: Option[String] = None ) extends PGSsl
-case class PGNoSsl() extends PGSsl
-
-case class PGConfig(host: String,
-                            schema: String,
-                            user: String,
-                            password: String,
-                            port: Int = 5432,
-                            useSsl: PGSsl = PGNoSsl()
-                           )
-
 abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging with SQLLogging {
-  protected def this(pgConfig: PGConfig) = {
+  protected def this(pgConfig: PostgreSQL.Config) = {
     this()
     sqlLogLevel := Level.Warn
     config := pgConfig
@@ -47,7 +34,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
 
   Class.forName("org.postgresql.Driver")
 
-  val config = Property[PGConfig]()
+  val config = Property[PostgreSQL.Config]()
 
   init()
 
@@ -60,18 +47,16 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
   def updateDataSource() = {
     dispose() // Make sure to shut down the previous DataSource if possible
 
-    val source: PGSimpleDataSource = new PGSimpleDataSource()
+    val source = new PGSimpleDataSource()
     source.setPortNumber(config().port)
     source.setServerName(config().host)
     source.setDatabaseName(config().schema)
     source.setUser(config().user)
     source.setPassword(config().password)
-    config().useSsl match {
-      case PGUseSsl(sslfactory, sslfactoryarg) =>
-        source.setSsl(true)
-        sslfactory.foreach {f => source.setSslfactory(f)}
-        sslfactoryarg.foreach {f => source.setSslFactoryArg(f)}
-      case PGNoSsl() =>
+    config().ssl.foreach{s =>
+      source.setSsl(true)
+      s.sslFactory.foreach { source.setSslfactory }
+      s.sslFactoryArg.foreach { source.setSslFactoryArg }
     }
     dataSourceProperty := source
   }
