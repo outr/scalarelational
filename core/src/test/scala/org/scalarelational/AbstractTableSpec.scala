@@ -134,7 +134,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query two records back via regular expression" in {
       session {
-        val query = select(test.id, test.name) from test where test.name * ".*Doe".r
+        val query = select(test.id, test.name) from test where test.name * ".*Doe".r orderBy(test.id asc)
         val results = query.result.toList
         results.size should equal (2)
         val john = results.head
