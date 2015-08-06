@@ -2,13 +2,10 @@ package org.scalarelational.mariadb
 
 import org.scalarelational.extra.HikariSupport
 import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTestCrossReferenceDatastore, AbstractTestDatastore, AbstractTableSpec}
-import org.scalatest.Ignore
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-// TODO: Fix this and then remove the ignore annotation
-@Ignore
 class TableSpec extends AbstractTableSpec {
   override def testDatastore = TestDatastore
   override def testCrossReference = TestCrossReferenceDatastore
