@@ -28,7 +28,15 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
+  /**
+   * True if this database implementation supports merges.
+   */
   def supportsMerge = true
+
+  /**
+   * True if this database implementation supports multiple id responses on batch insert.
+   */
+  def supportsBatchInsertResponse = true
 
   private var _tables = Map.empty[String, Table]
   protected[scalarelational] def add(table: Table) = synchronized {

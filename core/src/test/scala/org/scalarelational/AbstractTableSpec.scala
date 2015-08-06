@@ -232,7 +232,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
           and(name("Xavier")).
           and(name("Yasser")).
           and(name("Zach")).async
-        Await.result(future, 10.seconds) should equal(List(28))       // Unfortunately a feature-limitation of H2 is batch inserts only returns the last id
+        val expected = if (supportsBatchInsertResponse) {
+          List(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28)
+        } else {
+          List(28)    // Unfortunately a feature-limitation of some databases (H2 for example) is batch inserts only returns the last id
+        }
+        Await.result(future, 10.seconds) should equal(expected)
         (select(*) from test).result.toList.length should equal(26)
       }
     }

@@ -37,6 +37,8 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
   val dbPassword = Property[String](default = Some("sa"))
   val trigger = new UnitProcessor[TriggerEvent]("trigger")
 
+  override def supportsBatchInsertResponse = false
+
   private var functions = Set.empty[H2Function]
 
   init()
