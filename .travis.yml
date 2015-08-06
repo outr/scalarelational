@@ -12,3 +12,7 @@ before_script:
   - mysql -e 'create database tablespec;'
   - mysql -e 'create database cross_reference;'
   - mysql -e 'create database special_types;'
+  - psql -c 'create user travis with password "pa";' -U postgres
+  - psql -c 'create database tablespec owner travis;' -U postgres
+  - psql -c 'create database cross_reference owner travis;' -U postgres
+  - psql -c 'create database special_types owner travis;' -U postgres
