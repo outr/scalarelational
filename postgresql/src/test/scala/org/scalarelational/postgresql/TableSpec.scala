@@ -2,12 +2,14 @@ package org.scalarelational.postgresql
 
 import org.scalarelational.extra.HikariSupport
 import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, AbstractTestCrossReferenceDatastore, AbstractTestDatastore}
+import org.scalatest.Ignore
 
 import scala.language.postfixOps
 
 /**
  * @author Robert Djubek <envy1988@gmail.com>
  */
+@Ignore
 class TableSpec extends AbstractTableSpec {
   override def testDatastore = TestDatastore
   override def specialTypes = SpecialTypesDatastore
