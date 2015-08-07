@@ -28,6 +28,9 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
     dataSourceProperty := dataSource
   }
 
+  /* MariaDB does not support the `MERGE INTO` syntax.*/
+  override def supportsMerge = false
+
   Class.forName("com.mysql.jdbc.Driver")
 
   val config = Property[MariaDBConfig]()
