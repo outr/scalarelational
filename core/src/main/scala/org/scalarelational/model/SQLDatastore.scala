@@ -1,9 +1,13 @@
 package org.scalarelational.model
 
 import java.io.File
+
 import javax.sql.DataSource
 
-import org.powerscala.property.Property
+import scala.collection.mutable.ListBuffer
+
+import pl.metastack.metarx.Opt
+
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction
@@ -13,18 +17,15 @@ import org.scalarelational.op._
 import org.scalarelational.table.{Table, TableAlias}
 import org.scalarelational.{SelectExpression, Session}
 
-import scala.collection.mutable.ListBuffer
-
-
 abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
-  protected def this(dataSource: DataSource) = {
+  protected def this(dataSource: DataSource) {
     this()
     dataSourceProperty := dataSource
   }
 
-  val dataSourceProperty = Property[DataSource]()
+  val dataSourceProperty = Opt[DataSource]()
 
-  def dataSource: DataSource = dataSourceProperty()
+  def dataSource: Option[DataSource] = dataSourceProperty.get
 
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_, _] => c.longName

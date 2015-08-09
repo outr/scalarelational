@@ -29,9 +29,8 @@ class TriggerInstance extends Trigger with Logging {
     }
   }
 
-  override def fire(conn: Connection, oldRow: Array[AnyRef], newRow: Array[AnyRef]) = {
-    datastore.trigger.fire(TriggerEvent(table, triggerType, triggerState, oldRow, newRow))
-  }
+  override def fire(conn: Connection, oldRow: Array[AnyRef], newRow: Array[AnyRef]): Unit =
+    datastore.trigger := TriggerEvent(table, triggerType, triggerState, oldRow, newRow)
 
   override def remove() = {}
 

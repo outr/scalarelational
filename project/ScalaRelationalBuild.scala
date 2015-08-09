@@ -6,9 +6,10 @@ object ScalaRelationalBuild extends Build {
 
   lazy val root = Project(
     id = "root",
-    base = file(".")).settings(name := "ScalaRelational", publish := {}
-  ).aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
-  lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
+    base = file(".")
+  ).settings(name := "ScalaRelational", publish := {})
+   .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
+  lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val macros = project("macros").withDependencies(scalaTest).dependsOn(core)
@@ -106,4 +107,5 @@ object Dependencies {
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1206-jdbc42"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
+  val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
 }

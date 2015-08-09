@@ -9,6 +9,7 @@ import org.powerscala.log.Logging
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.{DataType, TypedValue}
+import org.powerscala.log.Logging
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.fun.BasicFunctionTypes
 import org.scalarelational.instruction._
@@ -18,7 +19,6 @@ import org.scalarelational.table.Table
 import org.scalarelational.{PropertyContainer, Session, SessionSupport}
 
 import scala.concurrent.Future
-
 
 trait Datastore
   extends Listenable
@@ -65,7 +65,7 @@ trait Datastore
    */
   def creating(): Unit = {}
 
-  def dataSource: DataSource
+  def dataSource: Option[DataSource]
 
   def jdbcTables(implicit session: Session): Set[String] = {
     val s = session

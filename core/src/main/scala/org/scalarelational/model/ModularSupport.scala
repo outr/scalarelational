@@ -1,8 +1,13 @@
 package org.scalarelational.model
 
+import scala.collection.mutable.ArrayBuffer
+
 import org.powerscala.event.Listenable
 import org.powerscala.event.processor.{ModifiableProcessor, UnitProcessor}
 import org.scalarelational.datatype.DataTypeSupport
+
+import pl.metastack.metarx.Channel
+
 import org.scalarelational.instruction._
 
 /**
@@ -12,18 +17,29 @@ import org.scalarelational.instruction._
  * @author Matt Hicks <matt@outr.com>
  */
 trait ModularSupport extends SQLContainer with Listenable with DataTypeSupport {
-  object handlers {
-    val inserting = new ModifiableProcessor[Insert[_]]("inserting")
-    val merging = new ModifiableProcessor[Merge]("merging")
-    val updating = new ModifiableProcessor[Update[_]]("updating")
-    val deleting = new ModifiableProcessor[Delete]("deleting")
-    val querying = new ModifiableProcessor[Query[_, _]]("querying")
+  class Processor[T] {
+    val functions = ArrayBuffer.empty[T => T]
+    def fire(value: T): T =
+      functions.foldLeft(value) { case (acc, cur) => cur(acc) }
+    def attach(f: T => T): Unit = functions += f
+  }
 
-    val inserted = new UnitProcessor[Insert[_]]("inserted")
-    val merged = new UnitProcessor[Merge]("merged")
-    val updated = new UnitProcessor[Update[_]]("updated")
-    val deleted = new UnitProcessor[Delete]("deleted")
-    val queried = new UnitProcessor[Query[_, _]]("queried")
+  object Processor {
+    def apply[T](): Processor[T] = new Processor[T]
+  }
+
+  object handlers {
+    val inserting = Processor[Insert[_]]()
+    val merging = Processor[Merge]()
+    val updating = Processor[Update[_]]()
+    val deleting = Processor[Delete]()
+    val querying = Processor[Query[_, _]]()
+
+    val inserted = Channel[Insert[_]]()
+    val merged = Channel[Merge]()
+    val updated = Channel[Update[_]]()
+    val deleted = Channel[Delete]()
+    val queried = Channel[Query[_, _]]()
   }
 
   import handlers._
@@ -48,31 +64,31 @@ trait ModularSupport extends SQLContainer with Listenable with DataTypeSupport {
 
   override protected def afterInvoke[E, R](query: Query[E, R]) {
     super.afterInvoke(query)
-    queried.fire(query)
+    queried := query
   }
 
   override protected def afterInvoke[T](insert: InsertSingle[T]) {
     super.afterInvoke(insert)
-    inserted.fire(insert)
+    inserted := insert
   }
 
   override protected def afterInvoke(insert: InsertMultiple) {
     super.afterInvoke(insert)
-    inserted.fire(insert)
+    inserted := insert
   }
 
   override protected def afterInvoke(merge: Merge) {
     super.afterInvoke(merge)
-    merged.fire(merge)
+    merged := merge
   }
 
   override protected def afterInvoke[T](update: Update[T]) {
     super.afterInvoke(update)
-    updated.fire(update)
+    updated := update
   }
 
   override protected def afterInvoke(delete: Delete) {
     super.afterInvoke(delete)
-    deleted.fire(delete)
+    deleted := delete
   }
 }

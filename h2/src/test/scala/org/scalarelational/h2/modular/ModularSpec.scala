@@ -30,57 +30,57 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "connect handlers" in {
-      users.handlers.inserting.on {
+      users.handlers.inserting.attach {
         case evt => {
           inserting += 1
           evt
         }
       }
-      users.handlers.merging.on {
+      users.handlers.merging.attach {
         case evt => {
           merging += 1
           evt
         }
       }
-      users.handlers.updating.on {
+      users.handlers.updating.attach {
         case evt => {
           updating += 1
           evt
         }
       }
-      users.handlers.deleting.on {
+      users.handlers.deleting.attach {
         case evt => {
           deleting += 1
           evt
         }
       }
-      users.handlers.querying.on {
+      users.handlers.querying.attach {
         case evt => {
           querying += 1
           evt
         }
       }
-      users.handlers.inserted.on {
+      users.handlers.inserted.attach {
         case evt => {
           inserted += 1
         }
       }
-      users.handlers.merged.on {
+      users.handlers.merged.attach {
         case evt => {
           merged += 1
         }
       }
-      users.handlers.updated.on {
+      users.handlers.updated.attach {
         case evt => {
           updated += 1
         }
       }
-      users.handlers.deleted.on {
+      users.handlers.deleted.attach {
         case evt => {
           deleted += 1
         }
       }
-      users.handlers.queried.on {
+      users.handlers.queried.attach {
         case evt => {
           queried += 1
         }
@@ -118,7 +118,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "add a special 'created' handler" in {
-      users.handlers.inserting.on {
+      users.handlers.inserting.attach {
         case insert =>
           insert.add(users.created(Some(new Timestamp(System.currentTimeMillis()))))
       }
@@ -156,7 +156,7 @@ class ModularSpec extends WordSpec with Matchers {
        */
       val DummyValue = 1
 
-      users.handlers.updating.on {
+      users.handlers.updating.attach {
         case update =>
           update.add(users.modified(Some(new Timestamp(System.currentTimeMillis() + DummyValue))))
       }
@@ -210,13 +210,13 @@ object ModularDatastore extends H2Datastore {
     val modified = column[Timestamp]("modified")
     val DummyValue = 1
 
-    handlers.inserting.on { insert =>
+    handlers.inserting.attach { insert =>
       insert
         .add(created(new Timestamp(System.currentTimeMillis())))
         .add(modified(new Timestamp(System.currentTimeMillis())))
     }
 
-    handlers.updating.on { update =>
+    handlers.updating.attach { update =>
       update.add(modified(new Timestamp(System.currentTimeMillis() + DummyValue)))
     }
   }
