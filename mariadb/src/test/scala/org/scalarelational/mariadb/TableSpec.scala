@@ -1,8 +1,6 @@
 package org.scalarelational.mariadb
 
-import org.powerscala.log.Level
 import org.scalarelational.extra.HikariSupport
-import org.scalarelational.model.SQLLogging
 import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTestCrossReferenceDatastore, AbstractTestDatastore, AbstractTableSpec}
 import org.scalatest.Ignore
 
@@ -17,8 +15,6 @@ class TableSpec extends AbstractTableSpec {
   override def specialTypes = SpecialTypesDatastore
 }
 
-object TestDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "tablespec", "travis", "")) with AbstractTestDatastore with HikariSupport with SQLLogging {
-  sqlLogLevel := Level.Info
-}
+object TestDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "tablespec", "travis", "")) with AbstractTestDatastore with HikariSupport
 object TestCrossReferenceDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "cross_reference", "travis", "")) with AbstractTestCrossReferenceDatastore
 object SpecialTypesDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "special_types", "travis", "")) with AbstractSpecialTypesDatastore
