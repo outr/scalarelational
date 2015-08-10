@@ -1,4 +1,4 @@
-package org.scalarelational.mysql
+package org.scalarelational.mariadb
 
 import org.powerscala.log.Level
 
@@ -12,7 +12,7 @@ case class Coffee(name: String, supID : Option[Int], price: Double, sales: Int, 
 
 // TODO: remove this as soon as the TableSpec is working
 @Deprecated
-object MySQLTestDataStore$ extends MySQLDatastore(MySQLConfig("localhost","test", "user", "password") ) with SQLLogging{
+object MariaDBTestDataStore$ extends MariaDBDatastore(MariaDBConfig("localhost","test", "user", "password") ) with SQLLogging{
   sqlLogLevel := Level.Info
 
   object suppliers extends Table("SUPPLIERS") {

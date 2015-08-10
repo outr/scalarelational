@@ -1,9 +1,6 @@
-package org.scalarelational.mysql
-
-;
+package org.scalarelational.mariadb
 
 import javax.sql.DataSource
-
 
 import com.mysql.jdbc.jdbc2.optional.{MysqlDataSource}
 import org.powerscala.log.Logging
@@ -13,17 +10,17 @@ import org.scalarelational.model._
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class MySQLConfig(host: String,
-                       schema: String,
-                       user: String,
-                       password: String,
-                       profileSQL: Boolean = false,
-                       port: Int = 3306)
+case class MariaDBConfig(host: String,
+                         schema: String,
+                         user: String,
+                         password: String,
+                         profileSQL: Boolean = false,
+                         port: Int = 3306)
 
-abstract class MySQLDatastore private() extends SQLDatastore with Logging {
-  protected def this(mysqlConfig: MySQLConfig) = {
+abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
+  protected def this(mariadbConfig: MariaDBConfig) = {
     this()
-    config := mysqlConfig
+    config := mariadbConfig
   }
 
   protected def this(dataSource: DataSource) = {
@@ -33,7 +30,7 @@ abstract class MySQLDatastore private() extends SQLDatastore with Logging {
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  val config = Property[MySQLConfig]()
+  val config = Property[MariaDBConfig]()
 
   init()
 

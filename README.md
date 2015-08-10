@@ -10,9 +10,9 @@ making working with your database easier, but this comes at the cost of ineffici
 confusing code mapping. The goal of ScalaRelational is to provide a one-to-one representation of the SQL language in
 Scala and provide performance improvements to working with the database.
 
-Currently H2 and MySQL is tested, but other databases technically are supported though certain functionality may require
-some slight alterations to work properly. One of the goals of ScalaRelational is to be a straight-forward, type-safe framework
-to write SQL queries in Scala with no magic or guesswork of what the resulting SQL will be.
+Currently H2 and MariaDB (version 10.0) is tested, but other databases technically are supported though certain functionality
+may require some slight alterations to work properly. One of the goals of ScalaRelational is to be a straight-forward, type-safe
+framework to write SQL queries in Scala with no magic or guesswork of what the resulting SQL will be.
 
 It is worth mentioning that much of the functionality of this framework was inspired by other database frameworks like
 Slick but there is a great deal of innovation and distinction in ScalaRelational from any other existing framework. This
@@ -30,9 +30,9 @@ The first thing you need to do is add the H2 dependencies to your SBT project:
 libraryDependencies += "org.scalarelational" % "scalarelational-h2" % "1.1.0"
 ```
 
-or for mysql
+or for mariadb
 ```scala
-libraryDependencies += "org.scalarelational" % "scalarelational-mysql" % "1.1.0"
+libraryDependencies += "org.scalarelational" % "scalarelational-mariadb" % "1.1.0"
 ```
 
 

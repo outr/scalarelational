@@ -1,4 +1,4 @@
-package org.scalarelational.mysql
+package org.scalarelational.mariadb
 
 import org.powerscala.log.Level
 import org.scalarelational.extra.HikariSupport
@@ -17,8 +17,8 @@ class TableSpec extends AbstractTableSpec {
   override def specialTypes = SpecialTypesDatastore
 }
 
-object TestDatastore extends MySQLDatastore(MySQLConfig("localhost", "tablespec", "travis", "")) with AbstractTestDatastore with HikariSupport with SQLLogging {
+object TestDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "tablespec", "travis", "")) with AbstractTestDatastore with HikariSupport with SQLLogging {
   sqlLogLevel := Level.Info
 }
-object TestCrossReferenceDatastore extends MySQLDatastore(MySQLConfig("localhost", "cross_reference", "travis", "")) with AbstractTestCrossReferenceDatastore
-object SpecialTypesDatastore extends MySQLDatastore(MySQLConfig("localhost", "special_types", "travis", "")) with AbstractSpecialTypesDatastore
+object TestCrossReferenceDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "cross_reference", "travis", "")) with AbstractTestCrossReferenceDatastore
+object SpecialTypesDatastore extends MariaDBDatastore(MariaDBConfig("localhost", "special_types", "travis", "")) with AbstractSpecialTypesDatastore

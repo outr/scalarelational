@@ -4,12 +4,12 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mysql, postgresql, mapper, versioning)
+  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mariadb, postgresql, mapper, versioning)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
-  lazy val mysql = project("mysql").withDependencies(mysqldatabase).dependsOn(core, core % "test->test")
+  lazy val mariadb = project("mariadb").withDependencies(mariadbdatabase).dependsOn(core, core % "test->test")
   lazy val postgresql = project("postgresql").withDependencies(postgresqldatabase).dependsOn(core, core % "test->test")
     .configs(PGSslTest)
     .settings( inConfig(PGSslTest)(Defaults.testTasks): _*)
@@ -100,7 +100,7 @@ object Dependencies {
   }
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.9"
   val h2database = "com.h2database" % "h2" % "1.4.187"
-  val mysqldatabase = "mysql" % "mysql-connector-java" % "5.1.16"
+  val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.16"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }
