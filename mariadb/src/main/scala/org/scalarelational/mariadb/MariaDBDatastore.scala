@@ -6,6 +6,8 @@ import com.mysql.jdbc.jdbc2.optional.{MysqlDataSource}
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
 import org.scalarelational.model._
+import org.scalarelational.instruction.CallableInstruction
+import org.scalarelational.instruction.ddl.DropTable
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -42,6 +44,12 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
       case evt => updateDataSource() // Update the data source if the mode changes
     }
   }
+
+  override def ddl(drop: DropTable): List[CallableInstruction] =
+    if (drop.cascade) List(CallableInstruction("SET foreign_key_checks = 0;"),
+                           super.ddl(drop).head,
+                           CallableInstruction("SET foreign_key_checks = 1;"))
+    else super.ddl(drop)
 
   def updateDataSource() = {
     dispose() // Make sure to shut down the previous DataSource if possible
