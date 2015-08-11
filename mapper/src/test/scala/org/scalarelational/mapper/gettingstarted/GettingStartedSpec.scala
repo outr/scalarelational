@@ -1,14 +1,12 @@
 package org.scalarelational.mapper.gettingstarted
 
-import org.scalatest.{Matchers, WordSpec}
-
 import org.powerscala.enum.{EnumEntry, Enumerated}
-
-import org.scalarelational.datatype.{Id, Ref, EnumDataType}
+import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
+import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
 import org.scalarelational.mapper.{Entity, MappedTable}
 import org.scalarelational.result.QueryResult
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -91,7 +89,6 @@ class GettingStartedSpec extends WordSpec with Matchers {
     }
   }
   "Mapper Examples" should {
-    import org.scalarelational.mapper._
 
     "Persist a new Supplier" in {
       session {
@@ -162,7 +159,7 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val city = column[String]("CITY")
     val state = column[Option[String]]("STATE")
     val zip = column[String]("ZIP")
-    val status = column[Status]("status", new EnumDataType[Status])
+    val status = column[Status]("status", enum[Status])
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 

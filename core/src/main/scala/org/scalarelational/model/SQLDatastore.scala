@@ -3,18 +3,17 @@ package org.scalarelational.model
 import java.io.File
 import javax.sql.DataSource
 
-import scala.collection.mutable.ListBuffer
-
 import org.powerscala.property.Property
-
-import org.scalarelational.op._
-import org.scalarelational.instruction._
-import org.scalarelational.column.ColumnLike
-import org.scalarelational.table.{Table, TableAlias}
-import org.scalarelational.fun.SQLFunction
-import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.SelectExpression
-import org.scalarelational.datatype.{StringDataType, DataTyped, DataType}
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.datatype.{DataType, StringDataTypeCreator, TypedValue}
+import org.scalarelational.fun.SQLFunction
+import org.scalarelational.instruction._
+import org.scalarelational.instruction.ddl.BasicDDLSupport
+import org.scalarelational.op._
+import org.scalarelational.table.{Table, TableAlias}
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -40,7 +39,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   def describe[E, R](query: Query[E, R]) = {
     val columns = query.asVector.map(expression2SQL).mkString(", ")
 
-    var args = List.empty[DataTyped[_]]
+    var args = List.empty[TypedValue[_]]
 
     // Generate SQL
     val (joins, joinArgs) = joins2SQL(query.joins)
@@ -148,7 +147,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   protected def invoke[T](update: Update[T]): Int = {
-    var args = List.empty[DataTyped[_]]
+    var args = List.empty[TypedValue[_]]
     val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
     val setArgs = update.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any]].typed(cv.toSQL))
     args = args ::: setArgs
@@ -161,7 +160,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   protected def invoke(delete: Delete) = {
-    var args = List.empty[DataTyped[_]]
+    var args = List.empty[TypedValue[_]]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)
     args = args ::: whereArgs
@@ -170,29 +169,29 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(sql, args)
   }
 
-  def condition2String(condition: Condition, args: ListBuffer[DataTyped[_]]): String = condition match {
+  def condition2String(condition: Condition, args: ListBuffer[TypedValue[_]]): String = condition match {
     case c: ColumnCondition[_] => {
       s"${c.column.longName} ${c.operator.symbol} ${c.other.longName}"
     }
     case c: DirectCondition[_] => {
-      val conv = c.column.dataType.asInstanceOf[DataType[Any]]
-      val op = conv.sqlOperator(c.column, c.value, c.operator)
-      args += conv.typed(conv.toSQLType(c.column, c.value))
+      val dataType = c.column.dataType.asInstanceOf[DataType[Any]]
+      val op = dataType.sqlOperator(c.column.asInstanceOf[ColumnLike[Any]], c.value, c.operator)
+      args += dataType.typed(dataType.converter.toSQL(c.column, c.value))
       s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_] => {
-      args += StringDataType.typed(c.pattern)
+      args += StringDataTypeCreator.create().typed(c.pattern)
       s"${c.column.longName} ${if (c.not) "NOT " else ""}LIKE ?"
     }
     case c: RegexCondition[_] => {
-      args += StringDataType.typed(c.regex.toString())
+      args += StringDataTypeCreator.create().typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
     }
     case c: RangeCondition[_] => {
       c.values.foreach {
         case v => {
           val dataType = c.column.dataType.asInstanceOf[DataType[Any]]
-          args += dataType.typed(dataType.toSQLType(c.column, v))
+          args += dataType.typed(dataType.converter.toSQL(c.column, v))
         }
       }
       val entries = c.operator match {
@@ -207,8 +206,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  private def joins2SQL(joins: List[Join]): (String, List[DataTyped[_]]) = {
-    val args = ListBuffer.empty[DataTyped[_]]
+  private def joins2SQL(joins: List[Join]): (String, List[TypedValue[_]]) = {
+    val args = ListBuffer.empty[TypedValue[_]]
 
     val b = new StringBuilder
     joins.foreach {
@@ -245,8 +244,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     (b.toString(), args.toList)
   }
 
-  private def where2SQL(condition: Condition): (String, List[DataTyped[_]]) = if (condition != null) {
-    val args = ListBuffer.empty[DataTyped[_]]
+  private def where2SQL(condition: Condition): (String, List[TypedValue[_]]) = if (condition != null) {
+    val args = ListBuffer.empty[TypedValue[_]]
     val sql = condition2String(condition, args)
     if (sql != null && sql.nonEmpty) {
       s" WHERE $sql" -> args.toList

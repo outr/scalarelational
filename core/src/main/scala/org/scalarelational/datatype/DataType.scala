@@ -1,215 +1,231 @@
 package org.scalarelational.datatype
 
-import java.sql.{Timestamp, Blob, Types}
+import java.sql.{Blob, Timestamp, Types}
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.powerscala.reflect._
 import org.scalarelational.WrappedString
+import org.scalarelational.column.property.{ColumnLength, IgnoreCase, NumericStorage}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
-import org.scalarelational.column.property.{IgnoreCase, ColumnLength, NumericStorage}
 import org.scalarelational.model.Datastore
 import org.scalarelational.op.Operator
+
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait DataType[T] {
-  def jdbcType: Int
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer): String
-  def sqlOperator(column: ColumnLike[_], value: T, op: Operator): Operator = op
-  def toSQLType(column: ColumnLike[_], value: T): Any
-  def fromSQLType(column: ColumnLike[_], value: Any): T
-  def typed(value: T) = DataTyped[T](this, value)
+case class DataType[T](jdbcType: Int,
+                       dbType: DBType,
+                       converter: SQLConversion[T, _] = new IdenticalSQLConversion[T],
+                       sqlOperator: SQLOperator[T] = new DefaultSQLOperator[T]) {
+  def typed(value: T) = TypedValue[T](this, value)
 }
 
-trait MappedDataType[T, S] extends DataType[T] {
-  override def toSQLType(column: ColumnLike[_], value: T): S
-  def fromSQLTyped(column: ColumnLike[_], value: S): T
-
-  override final def fromSQLType(column: ColumnLike[_], value: Any): T = fromSQLTyped(column, value.asInstanceOf[S])
+trait DBType {
+  def apply(datastore: Datastore, properties: ColumnPropertyContainer): String
 }
 
-object DataTypeGenerators {
-  def option[T](implicit dt: DataType[T]): DataType[Option[T]] = new DataType[Option[T]] {
-    override def jdbcType = dt.jdbcType
-
-    def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = dt.sqlType(datastore, properties)
-
-    override def sqlOperator(column: ColumnLike[_], value: Option[T], op: Operator): Operator =
-      (value, op) match {
-        case (None, Operator.Equal) => Operator.Is
-        case (None, Operator.NotEqual) => Operator.IsNot
-        case (None, _) => throw new RuntimeException(s"Operator $op cannot take None (column = $column)")
-        case (Some(t), _) => op
-      }
-
-    def toSQLType(column: ColumnLike[_], value: Option[T]): Any =
-      value match {
-        case None => null
-        case Some(t) => dt.toSQLType(column, t)
-      }
-
-    def fromSQLType(column: ColumnLike[_], value: Any): Option[T] =
-      value match {
-        case null => None
-        case t => Some(dt.fromSQLType(column, t))
-      }
-
-
-    override def equals(obj: scala.Any) = toString == obj.toString
-
-    override def toString = s"OptionDataType($dt)"
-  }
-
-  def ref[T]: DataType[Ref[T]] = new DataType[Ref[T]] {
-    override def jdbcType = Types.INTEGER
-    def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
-    def toSQLType(column: ColumnLike[_], value: Ref[T]) = value.id
-    def fromSQLType(column: ColumnLike[_], value: Any) = new Ref[T](value.asInstanceOf[Int])
-    override def toString = s"RefDataType"
+object DBType {
+  def apply[T](value: String) = new SimpleDBType[T](value)
+  def f[T](f: (Datastore, ColumnPropertyContainer) => String) = new DBType {
+    override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = f(datastore, properties)
   }
 }
 
-object BooleanDataType extends DataType[Boolean] {
-  override def jdbcType = Types.BOOLEAN
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BOOLEAN"
-  def toSQLType(column: ColumnLike[_], value: Boolean) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Boolean]
+class SimpleDBType[T](value: String) extends DBType {
+  def apply(datastore: Datastore, properties: ColumnPropertyContainer) = value
 }
 
-object IntDataType extends DataType[Int] {
-  override def jdbcType = Types.INTEGER
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
-  def toSQLType(column: ColumnLike[_], value: Int) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Int]
+trait SQLOperator[T] {
+  def apply(column: ColumnLike[T], value: T, op: Operator): Operator
 }
 
-object JavaIntDataType extends DataType[java.lang.Integer] {
-  override def jdbcType = Types.INTEGER
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "INTEGER"
-  def toSQLType(column: ColumnLike[_], value: java.lang.Integer) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Integer]
+class DefaultSQLOperator[T] extends SQLOperator[T] {
+  def apply(column: ColumnLike[T], value: T, op: Operator): Operator = op
 }
 
-object LongDataType extends DataType[Long] {
-  override def jdbcType = Types.BIGINT
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BIGINT"
-  def toSQLType(column: ColumnLike[_], value: Long) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Long]
-}
-
-object JavaLongDataType extends DataType[java.lang.Long] {
-  override def jdbcType = Types.BIGINT
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BIGINT"
-  def toSQLType(column: ColumnLike[_], value: java.lang.Long) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Long]
-}
-
-object DoubleDataType extends DataType[Double] {
-  override def jdbcType = Types.DOUBLE
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "DOUBLE"
-  def toSQLType(column: ColumnLike[_], value: Double) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Double]
-}
-
-object JavaDoubleDataType extends DataType[java.lang.Double] {
-  override def jdbcType = Types.DOUBLE
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "DOUBLE"
-  def toSQLType(column: ColumnLike[_], value: java.lang.Double) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[java.lang.Double]
-}
-
-object BigDecimalDataType extends DataType[BigDecimal] {
-  override def jdbcType = Types.DECIMAL
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
-    val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
-    s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
+class OptionSQLOperator[T] extends SQLOperator[Option[T]] {
+  override def apply(column: ColumnLike[Option[T]], value: Option[T], op: Operator): Operator = (value, op) match {
+    case (None, Operator.Equal) => Operator.Is
+    case (None, Operator.NotEqual) => Operator.IsNot
+    case (None, _) => throw new RuntimeException(s"Operator $op cannot take None (column = $column)")
+    case (Some(t), _) => op
   }
-  def toSQLType(column: ColumnLike[_], value: BigDecimal) = value.underlying()
-  def fromSQLType(column: ColumnLike[_], value: Any) = BigDecimal(value.asInstanceOf[java.math.BigDecimal])
 }
 
-object StringDataType extends DataType[String] {
-  override def jdbcType = Types.VARCHAR
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
-    val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
-        .getOrElse(datastore.DefaultVarCharLength)
-    if (properties.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
-    else s"VARCHAR($length)"
+trait SQLConversion[ScalaType, SQLType] {
+  def toSQL(column: ColumnLike[_], value: ScalaType): SQLType
+  def fromSQL(column: ColumnLike[_], value: SQLType): ScalaType
+}
+
+object SQLConversion {
+  def apply[T] = new IdenticalSQLConversion[T]
+  def f[ScalaType, SQLType](to: (ColumnLike[_], ScalaType) => SQLType)(from: (ColumnLike[_], SQLType) => ScalaType) = {
+    new SQLConversion[ScalaType, SQLType] {
+      override def toSQL(column: ColumnLike[_], value: ScalaType): SQLType = to(column, value)
+
+      override def fromSQL(column: ColumnLike[_], value: SQLType): ScalaType = from(column, value)
+    }
   }
-  def toSQLType(column: ColumnLike[_], value: String) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[String]
 }
 
-object WrappedStringDataType extends DataType[WrappedString] {
-  override def jdbcType = StringDataType.jdbcType
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = StringDataType.sqlType(datastore, properties)
-  def toSQLType(column: ColumnLike[_], value: WrappedString) = value.value
-  def fromSQLType(column: ColumnLike[_], value: Any) = column.manifest.runtimeClass.create(Map("value" -> value.asInstanceOf[String]))
+class IdenticalSQLConversion[T] extends SQLConversion[T, T] {
+  override def toSQL(column: ColumnLike[_], value: T): T = value
+
+  override def fromSQL(column: ColumnLike[_], value: T): T = value
 }
 
-object ByteArrayDataType extends DataType[Array[Byte]] {
-  override def jdbcType = Types.BINARY
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = {
-    val length = properties.get[ColumnLength](ColumnLength.Name)
+class OptionSQLConversion[ScalaType, SQLType](underlying: SQLConversion[ScalaType, SQLType]) extends SQLConversion[Option[ScalaType], SQLType] {
+  override def toSQL(column: ColumnLike[_], value: Option[ScalaType]): SQLType = value match {
+    case None => null.asInstanceOf[SQLType]
+    case Some(t) => underlying.toSQL(column, t)
+  }
+
+  override def fromSQL(column: ColumnLike[_], value: SQLType): Option[ScalaType] = value match {
+    case null => None
+    case t => Some(underlying.fromSQL(column, t))
+  }
+}
+
+class RefSQLConversion[T] extends SQLConversion[Ref[T], Int] {
+  override def toSQL(column: ColumnLike[_], value: Ref[T]) = value.id
+  override def fromSQL(column: ColumnLike[_], value: Int) = new Ref[T](value)
+}
+
+trait DataTypeCreator[T] {
+  def create(): DataType[T]
+}
+
+trait MappedDataTypeCreator[ScalaType, SQLType] {
+  def create(): DataType[ScalaType]
+}
+
+object DataTypes {
+  val BigDec = DataType[BigDecimal](Types.DECIMAL, DBType.f {
+    case (datastore, properties) => {
+      val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
+      s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
+    }
+  }, SQLConversion.f[BigDecimal, java.math.BigDecimal] {
+    case (column: ColumnLike[_], value: BigDecimal) => value.underlying()
+  } {
+    case (column: ColumnLike[_], value: java.math.BigDecimal) => BigDecimal(value)
+  })
+  val Boolean = DataType[Boolean](Types.BOOLEAN, DBType("BOOLEAN"))
+  val Blob = DataType[Blob](Types.BLOB, DBType("BLOB"))
+  val ByteArray = DataType[Array[Byte]](Types.BINARY, DBType.f {
+    case (datastore, properties) => {
+      val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
         .getOrElse(datastore.DefaultBinaryLength)
-    s"BINARY($length)"
+      s"BINARY($length)"
+    }
+  })
+  val Double = DataType[Double](Types.DOUBLE, DBType("DOUBLE"))
+  val Int = DataType[Int](Types.INTEGER, DBType("INTEGER"))
+  val Long = DataType[Long](Types.BIGINT, DBType("BIGINT"))
+  val String = DataType[String](Types.VARCHAR, StringDataTypeCreator.StringDBType)
+  val Timestamp = DataType[Timestamp](Types.TIMESTAMP, DBType("TIMESTAMP"))
+  val WrapString = DataType[WrappedString](String.jdbcType, String.dbType, SQLConversion.f[WrappedString, String] {
+    case (column: ColumnLike[_], value: WrappedString) => value.value
+  } {
+    case (column: ColumnLike[_], value: String) => column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
+  })
+
+  val LongTimestamp = DataType[Long](Types.TIMESTAMP, DBType("TIMESTAMP"), SQLConversion.f[Long, Timestamp] {
+    case (column: ColumnLike[_], value: Long) => new Timestamp(value)
+  } {
+    case (column: ColumnLike[_], value: Timestamp) => value.getTime
+  })
+}
+
+object BigDecimalDataTypeCreator extends DataTypeCreator[BigDecimal] {
+  override def create() = DataTypes.BigDec
+}
+object BooleanDataTypeCreator extends DataTypeCreator[Boolean] {
+  override def create() = DataTypes.Boolean
+}
+object BlobDataTypeCreator extends DataTypeCreator[Blob] {
+  override def create() = DataTypes.Blob
+}
+object ByteArrayDataTypeCreator extends DataTypeCreator[Array[Byte]] {
+  override def create() = DataTypes.ByteArray
+}
+object DoubleDataTypeCreator extends DataTypeCreator[Double] {
+  override def create() = DataTypes.Double
+}
+object IntDataTypeCreator extends DataTypeCreator[Int] {
+  override def create() = DataTypes.Int
+}
+object LongDataTypeCreator extends DataTypeCreator[Long] {
+  override def create() = DataTypes.Long
+}
+object StringDataTypeCreator extends DataTypeCreator[String] {
+  object StringDBType extends DBType {
+    override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
+      val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
+        .getOrElse(datastore.DefaultVarCharLength)
+      if (properties.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
+      else s"VARCHAR($length)"
+    }
   }
-  def toSQLType(column: ColumnLike[_], value: Array[Byte]) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Array[Byte]]
+
+  override def create() = DataTypes.String
+}
+object TimestampDataTypeCreator extends DataTypeCreator[Timestamp] {
+  override def create() = DataTypes.Timestamp
+}
+object WrappedStringDataTypeCreator extends DataTypeCreator[WrappedString] {
+  override def create() = DataTypes.WrapString
 }
 
-object BlobDataType extends DataType[Blob] {
-  override def jdbcType = Types.BLOB
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "BLOB"
-  def toSQLType(column: ColumnLike[_], value: Blob) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Blob]
+// Mapped types
+
+object LongTimestampDataTypeCreator extends MappedDataTypeCreator[Long, Timestamp] {
+  override def create() = DataTypes.LongTimestamp
 }
 
-object TimestampDataType extends DataType[Timestamp] {
-  override def jdbcType = Types.TIMESTAMP
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "TIMESTAMP"
-  def toSQLType(column: ColumnLike[_], value: Timestamp) = value
-  def fromSQLType(column: ColumnLike[_], value: Any) = value.asInstanceOf[Timestamp]
-}
+// Special Generic types
 
-object LongTimestampDataType extends MappedDataType[Long, Timestamp] {
-  override def jdbcType = Types.TIMESTAMP
-  override def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "TIMESTAMP"
-  override def toSQLType(column: ColumnLike[_], value: Long) = new Timestamp(value)
-  override def fromSQLTyped(column: ColumnLike[_], value: Timestamp) = value.getTime
-}
-
-class EnumDataType[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataType[T] {
+class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataTypeCreator[T] with SQLConversion[T, String] {
   val enumerated = manifest.runtimeClass.instance
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
     .asInstanceOf[Enumerated[T]]
 
-  val length = enumerated.values.maxBy(_.name.length).name.length
+  val length = math.max(enumerated.values.maxBy(_.name.length).name.length, 128)
 
-  override def jdbcType = Types.VARCHAR
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = s"VARCHAR($length)"
-  def toSQLType(column: ColumnLike[_], value: T) = value.name
-  def fromSQLType(column: ColumnLike[_], value: Any) =
-    enumerated(value.asInstanceOf[String])
+  override def create() = DataType[T](Types.VARCHAR, DBType(s"VARCHAR($length)"), this)
+
+  override def toSQL(column: ColumnLike[_], value: T): String = value.name
+  override def fromSQL(column: ColumnLike[_], value: String): T = enumerated(value)
+}
+class OptionDataTypeCreator[T](dt: DataType[T]) extends DataTypeCreator[Option[T]] {
+  def this()(implicit dtc: DataTypeCreator[T]) = this(dtc.create())
+
+  override def create() = DataType[Option[T]](dt.jdbcType, dt.dbType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
+}
+class RefDataTypeCreator[T] extends DataTypeCreator[Ref[T]] {
+  override def create() = DataType[Ref[T]](Types.INTEGER, DBType("INTEGER"), new RefSQLConversion[T])
 }
 
-trait DataTypes {
-  implicit def booleanDataType = BooleanDataType
-  implicit def intDataType = IntDataType
-  implicit def longDataType = LongDataType
-  implicit def doubleDataType = DoubleDataType
-  implicit def bigDecimalDataType = BigDecimalDataType
-  implicit def stringDataType = StringDataType
-  implicit def wrappedStringDataType = WrappedStringDataType
-  implicit def byteArrayDataType = ByteArrayDataType
-  implicit def blobDataType = BlobDataType
-  implicit def timestampDataType = TimestampDataType
-  implicit def javaIntDataType = JavaIntDataType
-  implicit def javaLongDataType = JavaLongDataType
-  implicit def javaDoubleDataType = JavaDoubleDataType
-  implicit def option[T: DataType] = DataTypeGenerators.option[T]
-  implicit def reference[T] = DataTypeGenerators.ref[T]
-  implicit def longTimestampDataType = LongTimestampDataType
+trait DataTypeSupport {
+  // TODO: eventually convert this to create the DataType instead
+  implicit def bigDecimalTypeCreator = BigDecimalDataTypeCreator
+  implicit def booleanTypeCreator = BooleanDataTypeCreator
+  implicit def blobTypeCreator = BlobDataTypeCreator
+  implicit def byteArrayTypeCreator = ByteArrayDataTypeCreator
+  implicit def doubleTypeCreator = DoubleDataTypeCreator
+  implicit def intTypeCreator = IntDataTypeCreator
+  implicit def longTypeCreator = LongDataTypeCreator
+  implicit def stringTypeCreator = StringDataTypeCreator
+  implicit def timestampTypeCreator = TimestampDataTypeCreator
+  implicit def wrappedStringTypeCreator = WrappedStringDataTypeCreator
+
+  implicit def longTimestampTypeCreator = LongTimestampDataTypeCreator
+
+  implicit def option[T: DataTypeCreator]: DataTypeCreator[Option[T]] = new OptionDataTypeCreator[T]
+  implicit def reference[T]: DataTypeCreator[Ref[T]] = new RefDataTypeCreator[T]
+
+  def enum[T <: EnumEntry](implicit manifest: Manifest[T]): DataTypeCreator[T] = new EnumDataTypeCreator[T]()
 }

@@ -2,22 +2,22 @@ package org.scalarelational.table
 
 import java.lang.reflect.Field
 
-import scala.language.existentials
-import scala.collection.mutable.ListBuffer
-
+import org.scalarelational.column.Column
+import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
-import org.scalarelational.model.{SQLContainer, Datastore}
-import org.scalarelational.instruction.{InsertSingle, Update, Joinable}
+import org.scalarelational.instruction.Joinable
+import org.scalarelational.model.{Datastore, SQLContainer}
 import org.scalarelational.table.property.TableProperty
-import org.scalarelational.column.{ColumnValue, RefColumn, ColumnLike, Column}
-import org.scalarelational.column.property.{PrimaryKey, ColumnProperty, ForeignKey, AutoIncrement}
+
+import scala.collection.mutable.ListBuffer
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 abstract class Table(name: String, tableProperties: TableProperty*)
                     (implicit val datastore: Datastore)
-  extends Joinable with SQLContainer with DataTypes with TablePropertyContainer {
+  extends Joinable with SQLContainer with DataTypeSupport with TablePropertyContainer {
 
   lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
@@ -56,20 +56,20 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit converter: DataType[T], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, converter, manifest, this, properties)
+               (implicit creator: DataTypeCreator[T], manifest: Manifest[T]): Column[T] =
+    new Column[T](name, creator.create(), manifest, this, properties)
 
-  def column[T](name: String, converter: DataType[T], properties: ColumnProperty*)
+  def column[T](name: String, creator: DataTypeCreator[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, converter, manifest, this, properties)
+    new Column[T](name, creator.create(), manifest, this, properties)
 
   def column[T, S](name: String, properties: ColumnProperty*)
-               (implicit converter: MappedDataType[T, S], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, converter, manifest, this, properties)
+               (implicit creator: MappedDataTypeCreator[T, S], manifest: Manifest[T]): Column[T] =
+    new Column[T](name, creator.create(), manifest, this, properties)
 
-  def column[T, S](name: String, converter: MappedDataType[T, S], properties: ColumnProperty*)
+  def column[T, S](name: String, creator: MappedDataTypeCreator[T, S], properties: ColumnProperty*)
                   (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, converter, manifest, this, properties)
+    new Column[T](name, creator.create(), manifest, this, properties)
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
     tpe.getSuperclass match {

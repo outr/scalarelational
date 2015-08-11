@@ -2,13 +2,11 @@ package org.scalarelational.existing
 
 import java.sql.ResultSet
 
-import org.scalarelational.datatype.DataTyped
+import org.powerscala.reflect._
+import org.scalarelational.datatype.TypedValue
+import org.scalarelational.model.Datastore
 
 import scala.annotation.tailrec
-
-import org.powerscala.reflect._
-
-import org.scalarelational.model.Datastore
 
 /**
  * ExistingQuery allows mapping of an existing query to a result result of type R.
@@ -20,7 +18,7 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
   if (!caseClass.isCase) throw new RuntimeException(s"$caseClass is not a case class!")
   private val caseValues = caseClass.caseValues.map(cv => cv.name.toLowerCase -> cv).toMap
 
-  def query(args: List[DataTyped[_]]) = {
+  def query(args: List[TypedValue[_]]) = {
     val namedArgs = args.collect {
       case arg if arg.value.isInstanceOf[NamedArgument] => arg.value.asInstanceOf[NamedArgument]
     }

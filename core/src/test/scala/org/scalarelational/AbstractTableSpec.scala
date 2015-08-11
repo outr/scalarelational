@@ -1,22 +1,20 @@
 package org.scalarelational
 
 import java.sql._
-
 import javax.sql.rowset.serial.SerialBlob
+
+import org.powerscala.IO
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.column.property._
+import org.scalarelational.datatype._
+import org.scalarelational.model._
+import org.scalarelational.table.Table
+import org.scalarelational.table.property.Index
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
-import org.powerscala.IO
-
-import org.scalarelational.datatype.{DataTypeGenerators, DataType, ObjectSerializationConverter}
-import org.scalarelational.model._
-import org.scalarelational.column.property._
-import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
-import org.scalarelational.table.Table
-import org.scalarelational.table.property.Index
-import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -119,7 +117,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
-          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(DataTypeGenerators.option[Int].typed(null)))
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(new OptionDataTypeCreator[Int].create().typed(null)))
         )
         val results = query.result.toList
         results.size should equal (2)
@@ -570,7 +568,7 @@ trait AbstractTestDatastore extends Datastore {
   }
   object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
-    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit])
+    val fruit = column[Fruit]("fruit", new ObjectSerializationDataTypeCreator[Fruit])
   }
 }
 
@@ -590,16 +588,16 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
-    implicit val listStringConverter = new DataType[List[String]] {
-      override def jdbcType = Types.VARCHAR
-      def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
-      def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
-      def fromSQLType(column: ColumnLike[_], value: Any) =
-        value.asInstanceOf[String].split('|').toList
+    object ListConverter extends SQLConversion[List[String], String] {
+      override def toSQL(column: ColumnLike[_], value: List[String]): String = value.mkString("|")
+      override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
+    }
+    implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
+      override def create() = DataType[List[String]](Types.VARCHAR, DBType("VARCHAR(1024)"), ListConverter)
     }
 
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val strings = column[List[String]]("strings")
+    val strings = column[List[String], String]("strings")
   }
 
   object data extends Table("data") {

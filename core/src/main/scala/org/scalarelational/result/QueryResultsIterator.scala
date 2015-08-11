@@ -2,12 +2,12 @@ package org.scalarelational.result
 
 import java.sql.ResultSet
 
-import org.scalarelational.column.{ColumnValue, ColumnLike}
 import org.scalarelational.column.property.Polymorphic
-import org.scalarelational.datatype.DataType
-import org.scalarelational.{ExpressionValue, SelectExpression}
-import org.scalarelational.fun.{SQLFunctionValue, SQLFunction}
+import org.scalarelational.column.{ColumnLike, ColumnValue}
+import org.scalarelational.datatype.{DataType, SQLConversion}
+import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
 import org.scalarelational.instruction.Query
+import org.scalarelational.{ExpressionValue, SelectExpression}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -44,10 +44,10 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
-  protected def columnValue[T](rs: ResultSet, index: Int, c: ColumnLike[_], converter: DataType[T]): T = {
-    val value = rs.getObject(index + 1)
+  protected def columnValue[T](rs: ResultSet, index: Int, c: ColumnLike[_], dataType: DataType[T]): T = {
+    val value = rs.getObject(index + 1).asInstanceOf[T]
     if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
-    else converter.fromSQLType(c, value)
+    else dataType.converter.asInstanceOf[SQLConversion[T, T]].fromSQL(c, value)
   }
 
   protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int): ExpressionValue[T] =

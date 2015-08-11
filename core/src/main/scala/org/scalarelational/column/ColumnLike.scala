@@ -1,10 +1,10 @@
 package org.scalarelational.column
 
-import org.scalarelational.op._
-import org.scalarelational.datatype.{DataType, LongDataType}
-import org.scalarelational.fun.{FunctionType, SQLFunction}
-import org.scalarelational.table.Table
 import org.scalarelational.SelectExpression
+import org.scalarelational.datatype.{DataType, LongDataTypeCreator}
+import org.scalarelational.fun.{FunctionType, SQLFunction}
+import org.scalarelational.op._
+import org.scalarelational.table.Table
 
 import scala.util.matching.Regex
 
@@ -18,7 +18,7 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def dataType: DataType[T]
   def manifest: Manifest[T]
 
-  def sqlType = dataType.sqlType(table.datastore, this)
+  def sqlType = dataType.dbType
 
   def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
     ColumnValue[T](this, value, converterOverride)
@@ -62,7 +62,7 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
 
   def avg = SQLFunction[T](FunctionType.Avg, this, dataType)
-  def count = SQLFunction[Long](FunctionType.Count, this, LongDataType)
+  def count = SQLFunction[Long](FunctionType.Count, this, LongDataTypeCreator.create())
   def min = SQLFunction[T](FunctionType.Min, this, dataType)
   def max = SQLFunction[T](FunctionType.Max, this, dataType)
   def sum = SQLFunction[T](FunctionType.Sum, this, dataType)

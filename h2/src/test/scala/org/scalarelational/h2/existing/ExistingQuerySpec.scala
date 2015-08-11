@@ -1,15 +1,13 @@
 package org.scalarelational.h2.existing
 
-import org.scalarelational.datatype.IntDataType
-
-import scala.language.reflectiveCalls
-
-import org.scalatest.{Matchers, WordSpec}
-
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
+import org.scalarelational.datatype.DataTypes
 import org.scalarelational.existing.ExistingQuery
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.table.Table
+import org.scalatest.{Matchers, WordSpec}
+
+import scala.language.reflectiveCalls
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -33,7 +31,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     }
     "query back a specific result" in {
       session {
-        val results = existingQuery.query(List(IntDataType.typed(2))).toList
+        val results = existingQuery.query(List(DataTypes.Int.typed(2))).toList
         results.length should equal(1)
         val result = results.head
         result.id should equal(2)

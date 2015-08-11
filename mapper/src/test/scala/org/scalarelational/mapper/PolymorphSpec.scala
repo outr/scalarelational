@@ -2,13 +2,11 @@ package org.scalarelational.mapper
 
 import java.sql.Types
 
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.column.property.{AutoIncrement, Polymorphic, PrimaryKey}
+import org.scalarelational.datatype.{DBType, DataType, MappedDataTypeCreator, SQLConversion}
+import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalatest.{Matchers, WordSpec}
-
-import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
-import org.scalarelational.datatype.DataType
-import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.column.property.{Polymorphic, PrimaryKey, AutoIncrement}
-import org.scalarelational.model.Datastore
 
 /**
  * @author Tim Nieradzik <tim@kognit.io>
@@ -139,17 +137,17 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
   }
 
   object content extends MappedTable[Content]("content") {
-    implicit val listStringConverter = new DataType[List[String]] {
-      override def jdbcType = Types.VARCHAR
-      def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
-      def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
-      def fromSQLType(column: ColumnLike[_], value: Any) =
-        value.asInstanceOf[String].split('|').toList
+    object ListConverter extends SQLConversion[List[String], String] {
+      override def toSQL(column: ColumnLike[_], value: List[String]): String = value.mkString("|")
+      override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
+    }
+    implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
+      override def create() = DataType[List[String]](Types.VARCHAR, DBType("VARCHAR(1024)"), ListConverter)
     }
 
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
     val string = column[String]("string", Polymorphic)
-    val entries = column[List[String]]("entries", Polymorphic)
+    val entries = column[List[String], String]("entries", Polymorphic)
     val isString = column[Boolean]("isString")
   }
 }

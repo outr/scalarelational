@@ -1,15 +1,15 @@
 package org.scalarelational.dsl
 
-import org.scalarelational.table.Table
 import org.scalarelational.column.Column
 import org.scalarelational.column.property.ColumnProperty
+import org.scalarelational.datatype.{DataTypeCreator, DataTypeSupport}
 import org.scalarelational.instruction.ddl._
-import org.scalarelational.datatype.{DataTypes, DataType}
+import org.scalarelational.table.Table
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait DDLDSLSupport extends DataTypes {
+trait DDLDSLSupport extends DataTypeSupport {
   this: DDLSupport =>
 
   def createTable(table: Table) = ddl(table2Create(table, ifNotExists = false))
@@ -17,8 +17,8 @@ trait DDLDSLSupport extends DataTypes {
 
   def createColumn[T](column: Column[T]) = ddl(column2Create(column))
   def createColumn[T](tableName: String, columnName: String, columnProperty: ColumnProperty*)
-                     (implicit manifest: Manifest[T], dataType: DataType[T]) = {
-    ddl(CreateColumn[T](tableName, columnName, dataType, columnProperty.toSeq))
+                     (implicit manifest: Manifest[T], dataTypeCreator: DataTypeCreator[T]) = {
+    ddl(CreateColumn[T](tableName, columnName, dataTypeCreator.create(), columnProperty.toSeq))
   }
 
   def renameColumn(tableName: String, oldName: String, newName: String) = {
@@ -28,8 +28,8 @@ trait DDLDSLSupport extends DataTypes {
   def restartColumn(tableName: String, columnName: String, value: Long) = ddl(RestartColumn(tableName, columnName, value))
 
   def changeColumnType[T](tableName: String, columnName: String, properties: ColumnProperty*)
-                         (implicit manifest: Manifest[T], dataType: DataType[T]) = {
-    ddl(ChangeColumnType[T](tableName, columnName, dataType, properties: _*)(manifest))
+                         (implicit manifest: Manifest[T], dataTypeCreator: DataTypeCreator[T]) = {
+    ddl(ChangeColumnType[T](tableName, columnName, dataTypeCreator.create(), properties: _*)(manifest))
   }
 
   def dropTable(table: Table, cascade: Boolean) = ddl(DropTable(table.tableName, cascade))
