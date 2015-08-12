@@ -32,6 +32,9 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
 
   /* MariaDB does not support the `MERGE INTO` syntax.*/
   override def supportsMerge = false
+  /* This is kind of abitrary, but `DataSource.DefaultVarCharLength` does not
+   * work here as it is the row size limit for MariaDB */
+  override def DefaultVarCharLength = 200
 
   Class.forName("com.mysql.jdbc.Driver")
 
