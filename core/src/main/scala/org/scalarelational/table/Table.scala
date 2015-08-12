@@ -25,7 +25,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   implicit def thisTable = this
 
-  private var _columns = ListBuffer.empty[Column[_]]
+  private var _columns = ListBuffer.empty[Column[_, _]]
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
   lazy val primaryKeys = columns.collect {
     case c if c.has(PrimaryKey) => c
@@ -39,39 +39,39 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   props(tableProperties: _*)      // Add properties from constructor
 
-  protected[scalarelational] def addColumn[T](column: Column[T]) = synchronized {
+  protected[scalarelational] def addColumn[T, S](column: Column[T, S]) = synchronized {
     _columns += column
   }
 
   def as(alias: String) = TableAlias(this, alias)
 
-  def primaryKey: Column[_] = columns.find(_.has(PrimaryKey)).get
+  def primaryKey: Column[_, _] = columns.find(_.has(PrimaryKey)).get
 
   def columns = _columns.toList
 
   def * = columns
 
-  def getColumn[T](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T]]]
-  def getColumnByField[T](name: String) = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T]]]
-  def columnsByName[T](names: String*) = names.flatMap(name => getColumn[T](name))
+  def getColumn[T, S](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T, S]]]
+  def getColumnByField[T, S](name: String) = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T, S]]]
+  def columnsByName[T, S](names: String*) = names.flatMap(name => getColumn[T, S](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit creator: DataTypeCreator[T], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, dt(creator.create()), manifest, this, properties)
+               (implicit creator: DataTypeCreator[T, T], manifest: Manifest[T]): Column[T, T] =
+    new Column[T, T](name, dt(creator.create()), manifest, this, properties)
 
-  def column[T](name: String, creator: DataTypeCreator[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, dt(creator.create()), manifest, this, properties)
+  def column[T](name: String, creator: DataTypeCreator[T, T], properties: ColumnProperty*)
+               (implicit manifest: Manifest[T]): Column[T, T] =
+    new Column[T, T](name, dt(creator.create()), manifest, this, properties)
 
-  def column[T, S](name: String, properties: ColumnProperty*)
-               (implicit creator: MappedDataTypeCreator[T, S], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, dt(creator.create()), manifest, this, properties)
+  def typedColumn[T, S](name: String, properties: ColumnProperty*)
+               (implicit creator: DataTypeCreator[T, S], manifest: Manifest[T]): Column[T, S] =
+    new Column[T, S](name, dt(creator.create()), manifest, this, properties)
 
-  def column[T, S](name: String, creator: MappedDataTypeCreator[T, S], properties: ColumnProperty*)
-                  (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, dt(creator.create()), manifest, this, properties)
+  def typedColumn[T, S](name: String, creator: DataTypeCreator[T, S], properties: ColumnProperty*)
+                  (implicit manifest: Manifest[T]): Column[T, S] =
+    new Column[T, S](name, dt(creator.create()), manifest, this, properties)
 
-  private def dt[T](dt: DataType[T]): DataType[T] = datastore.dataTypeProcessor.fire(dt).asInstanceOf[DataType[T]]
+  private def dt[T, S](dt: DataType[T, S]): DataType[T, S] = datastore.dataTypeProcessor.fire(dt).asInstanceOf[DataType[T, S]]
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
     tpe.getSuperclass match {
@@ -80,7 +80,7 @@ abstract class Table(name: String, tableProperties: TableProperty*)
     }
   }
 
-  protected[scalarelational] def fieldName(column: Column[_]) = {
+  protected[scalarelational] def fieldName(column: Column[_, _]) = {
     allFields(getClass).find(f => {
       f.setAccessible(true)
       f.get(this) == column

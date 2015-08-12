@@ -1,9 +1,9 @@
 package org.scalarelational.dsl
 
-import org.scalarelational.column.{Column, ColumnValue}
-import org.scalarelational.result.QueryResult
 import org.scalarelational.SelectExpression
+import org.scalarelational.column.{Column, ColumnValue}
 import org.scalarelational.instruction._
+import org.scalarelational.result.QueryResult
 import org.scalarelational.table.Table
 
 import scala.language.implicitConversions
@@ -36,13 +36,13 @@ trait DSLSupport {
     Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7]), (E1, E2, E3, E4, E5, E6, E7)]((e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult[_]](expressions.toVector, converter = DefaultConverter)
-  def insert(values: ColumnValue[_]*) = InsertSingle[Int](values.head.column.table, values, identity[Int])
+  def insert(values: ColumnValue[_, _]*) = InsertSingle[Int](values.head.column.table, values, identity[Int])
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
-    case (value, column) => column.asInstanceOf[Column[Any]](value)
+    case (value, column) => column.asInstanceOf[Column[Any, Any]](value)
   }: _*)
-  def insertBatch(rows: Seq[Seq[ColumnValue[_]]]) = InsertMultiple(rows.head.head.column.table, rows)
-  def merge(key: Column[_], values: ColumnValue[_]*) = Merge(values.head.column.table, key, values.toList)
-  def update(values: ColumnValue[_]*) = Update[Int](values.head.column.table, values.toList, null, identity[Int])
+  def insertBatch(rows: Seq[Seq[ColumnValue[_, _]]]) = InsertMultiple(rows.head.head.column.table, rows)
+  def merge(key: Column[_, _], values: ColumnValue[_, _]*) = Merge(values.head.column.table, key, values.toList)
+  def update(values: ColumnValue[_, _]*) = Update[Int](values.head.column.table, values.toList, null, identity[Int])
   def delete(table: Table) = Delete(table)
 }
 

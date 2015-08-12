@@ -3,11 +3,11 @@ package org.scalarelational.column
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class ColumnAlias[T](column: ColumnLike[T],
+case class ColumnAlias[T, S](column: ColumnLike[T, S],
                           tableAlias: Option[String],
                           alias: Option[String],
                           as: Option[String]
-                         ) extends ColumnLike[T] {
+                         ) extends ColumnLike[T, S] {
   val name = columnName
   val longName = as match {
     case Some(s) => s"$tableName.$columnName AS [$s]"

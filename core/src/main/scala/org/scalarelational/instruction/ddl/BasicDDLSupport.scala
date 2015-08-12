@@ -17,8 +17,8 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     val createColumns = table.columns.map(c => column2Create(c))
     CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties.values.toSeq)
   }
-  override def column2Create[T](column: Column[T]): CreateColumn[T] = {
-    CreateColumn[T](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)(column.manifest)
+  override def column2Create[T, S](column: Column[T, S]): CreateColumn[T, S] = {
+    CreateColumn[T, S](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)(column.manifest)
   }
 
   override def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction] = {
@@ -89,7 +89,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(b.toString()))
   }
 
-  override def ddl[T](create: CreateColumn[T]): List[CallableInstruction] = {
+  override def ddl[T, S](create: CreateColumn[T, S]): List[CallableInstruction] = {
     val b = new StringBuilder
     b.append(s"ALTER TABLE ${create.tableName} ADD ${columnSQL(create)};")
     List(CallableInstruction(b.toString()))
@@ -103,7 +103,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(b.toString()))
   }
 
-  override def ddl[T](alter: ChangeColumnType[T]): List[CallableInstruction] = {
+  override def ddl[T, S](alter: ChangeColumnType[T, S]): List[CallableInstruction] = {
     val properties = ColumnPropertyContainer[T](alter.properties: _*)(alter.manifest)
     val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} ${alter.dataType.sqlType(this, properties)}"
     List(CallableInstruction(sql))
@@ -165,7 +165,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     List(CallableInstruction(b.toString()))
   }
 
-  protected def columnSQL(create: CreateColumn[_]) = {
+  protected def columnSQL(create: CreateColumn[_, _]) = {
     val b = new StringBuilder
     b.append(create.name)
     b.append(' ')
@@ -177,7 +177,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     b.toString()
   }
 
-  protected def columnSQLType(create: CreateColumn[_]): String = {
+  protected def columnSQLType(create: CreateColumn[_, _]): String = {
     create.dataType.sqlType(this, create)
   }
 

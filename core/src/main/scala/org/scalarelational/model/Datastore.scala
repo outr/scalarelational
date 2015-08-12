@@ -29,9 +29,9 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
    * This processor receives all of those DataTypes before they are assigned to the column allowing modification by
    * database implementations or other customizations of how the datastore interacts with the database.
    */
-  val dataTypeProcessor = new ModifiableProcessor[DataType[_]]("dataTypeProcessor")
-  val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
-  val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
+  val dataTypeProcessor = new ModifiableProcessor[DataType[_, _]]("dataTypeProcessor")
+  val value2SQL = new OptionProcessor[(ColumnLike[_, _], Any), Any]("value2SQL")
+  val sql2Value = new OptionProcessor[(ColumnLike[_, _], Any), Any]("sql2Value")
 
   /**
    * True if this database implementation supports merges.

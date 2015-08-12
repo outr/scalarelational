@@ -1,8 +1,8 @@
 package org.scalarelational.instruction.ddl
 
-import org.scalarelational.table.Table
 import org.scalarelational.column.Column
 import org.scalarelational.instruction.CallableInstruction
+import org.scalarelational.table.Table
 
 import scala.language.implicitConversions
 
@@ -11,13 +11,13 @@ import scala.language.implicitConversions
  */
 trait DDLSupport {
   def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable
-  def column2Create[T](column: Column[T]): CreateColumn[T]
+  def column2Create[T, S](column: Column[T, S]): CreateColumn[T, S]
 
   def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction]
 
   def ddl(create: CreateTable): List[CallableInstruction]
 
-  def ddl[T](create: CreateColumn[T]): List[CallableInstruction]
+  def ddl[T, S](create: CreateColumn[T, S]): List[CallableInstruction]
 
   def ddl(alter: CreateForeignKey): List[CallableInstruction]
 
@@ -27,7 +27,7 @@ trait DDLSupport {
 
   def ddl(alter: RestartColumn): List[CallableInstruction]
 
-  def ddl[T](alter: ChangeColumnType[T]): List[CallableInstruction]
+  def ddl[T, S](alter: ChangeColumnType[T, S]): List[CallableInstruction]
 
   def ddl(drop: DropTable): List[CallableInstruction]
 

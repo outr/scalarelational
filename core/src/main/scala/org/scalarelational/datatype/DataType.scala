@@ -10,17 +10,15 @@ import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.model.Datastore
 import org.scalarelational.op.Operator
 
-import scala.language.existentials
-
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class DataType[T](jdbcType: Int,
+case class DataType[T, S](jdbcType: Int,
                        sqlType: SQLType,
-                       converter: SQLConversion[T, _] = new IdenticalSQLConversion[T],
+                       converter: SQLConversion[T, S],
                        sqlOperator: SQLOperator[T] = new DefaultSQLOperator[T])(implicit manifest: Manifest[T]) {
   def scalaClass = manifest.runtimeClass
-  def typed(value: T) = TypedValue[T](this, value)
+  def typed(value: T) = TypedValue(this, value)
 }
 
 trait SQLType {
@@ -38,7 +36,7 @@ class SimpleSQLType(value: String) extends SQLType {
   def apply(datastore: Datastore, properties: ColumnPropertyContainer) = value
 }
 
-object StringSQLType$ extends SQLType {
+object StringSQLType extends SQLType {
   override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
     val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
       .getOrElse(datastore.DefaultVarCharLength)
@@ -48,15 +46,15 @@ object StringSQLType$ extends SQLType {
 }
 
 trait SQLOperator[T] {
-  def apply(column: ColumnLike[T], value: T, op: Operator): Operator
+  def apply(column: ColumnLike[T, _], value: T, op: Operator): Operator
 }
 
 class DefaultSQLOperator[T] extends SQLOperator[T] {
-  def apply(column: ColumnLike[T], value: T, op: Operator): Operator = op
+  def apply(column: ColumnLike[T, _], value: T, op: Operator): Operator = op
 }
 
 class OptionSQLOperator[T] extends SQLOperator[Option[T]] {
-  override def apply(column: ColumnLike[Option[T]], value: Option[T], op: Operator): Operator = (value, op) match {
+  override def apply(column: ColumnLike[Option[T], _], value: Option[T], op: Operator): Operator = (value, op) match {
     case (None, Operator.Equal) => Operator.Is
     case (None, Operator.NotEqual) => Operator.IsNot
     case (None, _) => throw new RuntimeException(s"Operator $op cannot take None (column = $column)")
@@ -64,47 +62,45 @@ class OptionSQLOperator[T] extends SQLOperator[Option[T]] {
   }
 }
 
-trait SQLConversion[ScalaType, SQLType] {
-  def toSQL(column: ColumnLike[_], value: ScalaType): SQLType
-  def fromSQL(column: ColumnLike[_], value: SQLType): ScalaType
+trait SQLConversion[T, S] {
+  def toSQL(column: ColumnLike[T, S], value: T): S
+  def fromSQL(column: ColumnLike[T, S], value: S): T
 }
 
 object SQLConversion {
-  def apply[T] = new IdenticalSQLConversion[T]
-  def f[ScalaType, SQLType](to: (ColumnLike[_], ScalaType) => SQLType)(from: (ColumnLike[_], SQLType) => ScalaType) = {
-    new SQLConversion[ScalaType, SQLType] {
-      override def toSQL(column: ColumnLike[_], value: ScalaType): SQLType = to(column, value)
+  def identity[T] = new SQLConversion[T, T] {
+    override def toSQL(column: ColumnLike[T, T], value: T): T = value
 
-      override def fromSQL(column: ColumnLike[_], value: SQLType): ScalaType = from(column, value)
+    override def fromSQL(column: ColumnLike[T, T], value: T): T = value
+  }
+  def f[T, S](to: (ColumnLike[T, S], T) => S)(from: (ColumnLike[T, S], S) => T) = {
+    new SQLConversion[T, S] {
+      override def toSQL(column: ColumnLike[T, S], value: T): S = to(column, value)
+
+      override def fromSQL(column: ColumnLike[T, S], value: S): T = from(column, value)
     }
   }
 }
 
-class IdenticalSQLConversion[T] extends SQLConversion[T, T] {
-  override def toSQL(column: ColumnLike[_], value: T): T = value
-
-  override def fromSQL(column: ColumnLike[_], value: T): T = value
-}
-
-class OptionSQLConversion[ScalaType, SQLType](underlying: SQLConversion[ScalaType, SQLType]) extends SQLConversion[Option[ScalaType], SQLType] {
-  override def toSQL(column: ColumnLike[_], value: Option[ScalaType]): SQLType = value match {
-    case None => null.asInstanceOf[SQLType]
-    case Some(t) => underlying.toSQL(column, t)
+class OptionSQLConversion[T, S](underlying: SQLConversion[T, S]) extends SQLConversion[Option[T], S] {
+  override def toSQL(column: ColumnLike[Option[T], S], value: Option[T]): S = value match {
+    case None => null.asInstanceOf[S]
+    case Some(t) => underlying.toSQL(column.asInstanceOf[ColumnLike[T, S]], t)
   }
 
-  override def fromSQL(column: ColumnLike[_], value: SQLType): Option[ScalaType] = value match {
+  override def fromSQL(column: ColumnLike[Option[T], S], value: S): Option[T] = value match {
     case null => None
-    case t => Some(underlying.fromSQL(column, t))
+    case t => Some(underlying.fromSQL(column.asInstanceOf[ColumnLike[T, S]], t))
   }
 }
 
 class RefSQLConversion[T] extends SQLConversion[Ref[T], Int] {
-  override def toSQL(column: ColumnLike[_], value: Ref[T]) = value.id
-  override def fromSQL(column: ColumnLike[_], value: Int) = new Ref[T](value)
+  override def toSQL(column: ColumnLike[Ref[T], Int], value: Ref[T]) = value.id
+  override def fromSQL(column: ColumnLike[Ref[T], Int], value: Int) = new Ref[T](value)
 }
 
-trait DataTypeCreator[T] {
-  def create(): DataType[T]
+trait DataTypeCreator[ScalaType, SQLType] {
+  def create(): DataType[ScalaType, SQLType]
 }
 
 object DataTypeCreator {
@@ -116,89 +112,75 @@ object DataTypeCreator {
   val IntCreator = apply(DataTypes.Int)
   val LongCreator = apply(DataTypes.Long)
   val StringCreator = apply(DataTypes.String)
+  val TimestampCreator = apply(DataTypes.Timestamp)
+  val WrappedStringCreator = apply(DataTypes.WrapString)
+  val LongTimestampCreator = apply(DataTypes.LongTimestamp)
 
-  def apply[T](dataType: DataType[T]) = new DataTypeCreator[T] {
-    override def create(): DataType[T] = dataType
+  def apply[ScalaType, SQLType](dataType: DataType[ScalaType, SQLType]) = new DataTypeCreator[ScalaType, SQLType] {
+    override def create(): DataType[ScalaType, SQLType] = dataType
   }
 }
 
-trait MappedDataTypeCreator[ScalaType, SQLType] {
-  def create(): DataType[ScalaType]
-}
-
 object DataTypes {
-  val BigDec = DataType[BigDecimal](Types.DECIMAL, SQLType.f {
+  val BigDec = DataType[BigDecimal, java.math.BigDecimal](Types.DECIMAL, SQLType.f {
     case (datastore, properties) => {
       val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
       s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
     }
   }, SQLConversion.f[BigDecimal, java.math.BigDecimal] {
-    case (column: ColumnLike[_], value: BigDecimal) => value.underlying()
+    case (column: ColumnLike[BigDecimal, java.math.BigDecimal], value: BigDecimal) => value.underlying()
   } {
-    case (column: ColumnLike[_], value: java.math.BigDecimal) => BigDecimal(value)
+    case (column: ColumnLike[BigDecimal, java.math.BigDecimal], value: java.math.BigDecimal) => BigDecimal(value)
   })
-  val Boolean = DataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
-  val Blob = DataType[Blob](Types.BLOB, SQLType("BLOB"))
-  val ByteArray = DataType[Array[Byte]](Types.BINARY, SQLType.f {
+  val Boolean = DataType[Boolean, Boolean](Types.BOOLEAN, SQLType("BOOLEAN"), SQLConversion.identity)
+  val Blob = DataType[Blob, Blob](Types.BLOB, SQLType("BLOB"), SQLConversion.identity)
+  val ByteArray = DataType[Array[Byte], Array[Byte]](Types.BINARY, SQLType.f {
     case (datastore, properties) => {
       val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
         .getOrElse(datastore.DefaultBinaryLength)
       s"BINARY($length)"
     }
-  })
-  val Double = DataType[Double](Types.DOUBLE, SQLType("DOUBLE"))
-  val Int = DataType[Int](Types.INTEGER, SQLType("INTEGER"))
-  val Long = DataType[Long](Types.BIGINT, SQLType("BIGINT"))
-  val String = DataType[String](Types.VARCHAR, StringSQLType$)
-  val Timestamp = DataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
-  val WrapString = DataType[WrappedString](String.jdbcType, String.sqlType, SQLConversion.f[WrappedString, String] {
-    case (column: ColumnLike[_], value: WrappedString) => value.value
+  }, SQLConversion.identity)
+  val Double = DataType[Double, Double](Types.DOUBLE, SQLType("DOUBLE"), SQLConversion.identity)
+  val Int = DataType[Int, Int](Types.INTEGER, SQLType("INTEGER"), SQLConversion.identity)
+  val Long = DataType[Long, Long](Types.BIGINT, SQLType("BIGINT"), SQLConversion.identity)
+  val String = DataType[String, String](Types.VARCHAR, StringSQLType, SQLConversion.identity)
+  val Timestamp = DataType[Timestamp, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), SQLConversion.identity)
+  val WrapString = DataType[WrappedString, String](String.jdbcType, String.sqlType, SQLConversion.f[WrappedString, String] {
+    case (column: ColumnLike[WrappedString, String], value: WrappedString) => value.value
   } {
-    case (column: ColumnLike[_], value: String) => column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
+    case (column: ColumnLike[WrappedString, String], value: String) => column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
   })
 
-  val LongTimestamp = DataType[Long](Types.TIMESTAMP, SQLType("TIMESTAMP"), SQLConversion.f[Long, Timestamp] {
-    case (column: ColumnLike[_], value: Long) => new Timestamp(value)
+  val LongTimestamp = DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), SQLConversion.f[Long, Timestamp] {
+    case (column: ColumnLike[Long, Timestamp], value: Long) => new Timestamp(value)
   } {
-    case (column: ColumnLike[_], value: Timestamp) => value.getTime
+    case (column: ColumnLike[Long, Timestamp], value: Timestamp) => value.getTime
   })
-}
-
-object TimestampDataTypeCreator extends DataTypeCreator[Timestamp] {
-  override def create() = DataTypes.Timestamp
-}
-object WrappedStringDataTypeCreator extends DataTypeCreator[WrappedString] {
-  override def create() = DataTypes.WrapString
-}
-
-// Mapped types
-
-object LongTimestampDataTypeCreator extends MappedDataTypeCreator[Long, Timestamp] {
-  override def create() = DataTypes.LongTimestamp
 }
 
 // Special Generic types
 
-class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataTypeCreator[T] with SQLConversion[T, String] {
+class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extends DataTypeCreator[T, String] with SQLConversion[T, String] {
   val enumerated = manifest.runtimeClass.instance
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
     .asInstanceOf[Enumerated[T]]
 
   val length = math.max(enumerated.values.maxBy(_.name.length).name.length, 128)
 
-  override def create() = DataType[T](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
+  override def create() = DataType[T, String](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
 
-  override def toSQL(column: ColumnLike[_], value: T): String = value.name
-  override def fromSQL(column: ColumnLike[_], value: String): T = enumerated(value)
+  override def toSQL(column: ColumnLike[T, String], value: T): String = value.name
+  override def fromSQL(column: ColumnLike[T, String], value: String): T = enumerated(value)
 }
-class OptionDataTypeCreator[T](dt: DataType[T])(implicit manifest: Manifest[Option[T]]) extends DataTypeCreator[Option[T]] {
-  def this()(implicit dtc: DataTypeCreator[T], manifest: Manifest[Option[T]]) = this(dtc.create())
+class OptionDataTypeCreator[T, S](dt: DataType[T, S])(implicit manifest: Manifest[Option[T]]) extends DataTypeCreator[Option[T], S] {
+  def this()(implicit dtc: DataTypeCreator[T, S], manifest: Manifest[Option[T]]) = this(dtc.create())
 
-  override def create() = DataType[Option[T]](dt.jdbcType, dt.sqlType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
+  override def create() = DataType[Option[T], S](dt.jdbcType, dt.sqlType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
 }
-class RefDataTypeCreator[T](implicit manifest: Manifest[Ref[T]]) extends DataTypeCreator[Ref[T]] {
-  override def create() = DataType[Ref[T]](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
+class RefDataTypeCreator[T](implicit manifest: Manifest[Ref[T]]) extends DataTypeCreator[Ref[T], Int] {
+  override def create() = DataType[Ref[T], Int](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
 }
 
 trait DataTypeSupport {
@@ -212,13 +194,13 @@ trait DataTypeSupport {
   implicit def intTypeCreator = IntCreator
   implicit def longTypeCreator = LongCreator
   implicit def stringTypeCreator = StringCreator
-  implicit def timestampTypeCreator = TimestampDataTypeCreator
-  implicit def wrappedStringTypeCreator = WrappedStringDataTypeCreator
+  implicit def timestampTypeCreator = TimestampCreator
+  implicit def wrappedStringTypeCreator = WrappedStringCreator
 
-  implicit def longTimestampTypeCreator = LongTimestampDataTypeCreator
+  implicit def longTimestampTypeCreator = LongTimestampCreator
 
-  implicit def option[T: DataTypeCreator](implicit manifest: Manifest[Option[T]]): DataTypeCreator[Option[T]] = new OptionDataTypeCreator[T]
-  implicit def reference[T](implicit manifest: Manifest[Ref[T]]): DataTypeCreator[Ref[T]] = new RefDataTypeCreator[T]
+  implicit def option[T, S](implicit creator: DataTypeCreator[T, S], manifest: Manifest[Option[T]]) = new OptionDataTypeCreator[T, S]
+  implicit def reference[T](implicit manifest: Manifest[Ref[T]]) = new RefDataTypeCreator[T]
 
-  implicit def enum[T <: EnumEntry](implicit manifest: Manifest[T]): DataTypeCreator[T] = new EnumDataTypeCreator[T]()
+  implicit def enum[T <: EnumEntry](implicit manifest: Manifest[T]) = new EnumDataTypeCreator[T]()
 }

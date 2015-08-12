@@ -4,7 +4,7 @@ import java.sql.ResultSet
 
 import org.scalarelational.column.property.Polymorphic
 import org.scalarelational.column.{ColumnLike, ColumnValue}
-import org.scalarelational.datatype.{DataType, SQLConversion}
+import org.scalarelational.datatype.DataType
 import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
 import org.scalarelational.instruction.Query
 import org.scalarelational.{ExpressionValue, SelectExpression}
@@ -44,22 +44,23 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
-  protected def columnValue[T](rs: ResultSet, index: Int, c: ColumnLike[_], dataType: DataType[T]): T = {
-    val value = rs.getObject(index + 1).asInstanceOf[T]
+  protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
+    val value = rs.getObject(index + 1).asInstanceOf[S]
     if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
-    else dataType.converter.asInstanceOf[SQLConversion[T, T]].fromSQL(c, value)
+    else dataType.converter.fromSQL(c, value)
   }
 
-  protected def valueFromExpressions[T](expression: SelectExpression[T], index: Int): ExpressionValue[T] =
+  protected def valueFromExpressions[T, S](expression: SelectExpression[T], index: Int): ExpressionValue[T] =
     expression match {
-      case column: ColumnLike[T] => {
-        val value = columnValue(rs, index, column, column.dataType)
-        ColumnValue(column, value, None)
+      case column: ColumnLike[_, _] => {
+        val c = column.asInstanceOf[ColumnLike[T, S]]
+        val value = columnValue[T, S](rs, index, c, c.dataType)
+        ColumnValue[T, S](c, value, None)
       }
-
-      case function: SQLFunction[T] => {
-        val value = columnValue(rs, index, function.column, function.converter)
-        SQLFunctionValue(function, value)
+      case function: SQLFunction[_, _] => {
+        val f = function.asInstanceOf[SQLFunction[T, S]]
+        val value = columnValue[T, S](rs, index, f.column.asInstanceOf[ColumnLike[T, S]], f.converter)
+        SQLFunctionValue[T, S](f, value)
       }
     }
 

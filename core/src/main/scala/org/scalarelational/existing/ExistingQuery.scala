@@ -18,7 +18,7 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
   if (!caseClass.isCase) throw new RuntimeException(s"$caseClass is not a case class!")
   private val caseValues = caseClass.caseValues.map(cv => cv.name.toLowerCase -> cv).toMap
 
-  def query(args: List[TypedValue[_]]) = {
+  def query(args: List[TypedValue[_, _]]) = {
     val namedArgs = args.collect {
       case arg if arg.value.isInstanceOf[NamedArgument] => arg.value.asInstanceOf[NamedArgument]
     }

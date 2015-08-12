@@ -10,12 +10,12 @@ import org.scalarelational.column.ColumnLike
  *
  * @author Matt Hicks <matt@outr.com>
  */
-class ObjectSerializationDataTypeCreator[T <: AnyRef](implicit manifest: Manifest[T]) extends DataTypeCreator[T] {
-  def create() = DataType[T](Types.BINARY, SQLType(s"BINARY(${Int.MaxValue})"), new ObjectSQLConverter[T])
+class ObjectSerializationDataTypeCreator[T <: AnyRef](implicit manifest: Manifest[T]) extends DataTypeCreator[T, Array[Byte]] {
+  def create() = DataType[T, Array[Byte]](Types.BINARY, SQLType(s"BINARY(${Int.MaxValue})"), new ObjectSQLConverter[T])
 }
 
 class ObjectSQLConverter[T] extends SQLConversion[T, Array[Byte]] {
-  override def toSQL(column: ColumnLike[_], value: T): Array[Byte] = if (value != null) {
+  override def toSQL(column: ColumnLike[T, Array[Byte]], value: T): Array[Byte] = if (value != null) {
     val baos = new ByteArrayOutputStream()
     try {
       val oos = new ObjectOutputStream(baos)
@@ -33,7 +33,7 @@ class ObjectSQLConverter[T] extends SQLConversion[T, Array[Byte]] {
     null
   }
 
-  override def fromSQL(column: ColumnLike[_], value: Array[Byte]): T = value match {
+  override def fromSQL(column: ColumnLike[T, Array[Byte]], value: Array[Byte]): T = value match {
     case null => null.asInstanceOf[T]
     case array: Array[Byte] => {
       val bais = new ByteArrayInputStream(array)

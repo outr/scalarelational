@@ -1,15 +1,14 @@
 package org.scalarelational.instruction
 
-import scala.language.existentials
-
 import org.powerscala.reflect._
-
 import org.scalarelational._
+import org.scalarelational.column.{ColumnAlias, ColumnLike}
 import org.scalarelational.dsl.DSLSupport
 import org.scalarelational.op.Condition
-import org.scalarelational.result.{QueryResultsIterator, QueryResult}
+import org.scalarelational.result.{QueryResult, QueryResultsIterator}
 import org.scalarelational.table.Table
-import org.scalarelational.column.{ColumnAlias, ColumnLike}
+
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -27,7 +26,7 @@ case class Query[Expressions, Result](expressions: Expressions,
                                      (implicit val vectorify: Expressions => Vector[SelectExpression[_]]) extends WhereSupport[Query[Expressions, Result]] with Joinable {
   lazy val asVector = vectorify(expressions)
 
-  def apply[T](column: ColumnLike[T]) = ColumnAlias[T](column, alias, None, None)
+  def apply[T, S](column: ColumnLike[T, S]) = ColumnAlias[T, S](column, alias, None, None)
 
   def fields(expressions: SelectExpression[_]*) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = asVector ++ expressions, converter = DSLSupport.DefaultConverter)
   def fields(expressions: Vector[SelectExpression[_]]) = copy[Vector[SelectExpression[_]], QueryResult[_]](expressions = this.expressions ++ expressions, converter = DSLSupport.DefaultConverter)
