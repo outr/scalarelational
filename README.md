@@ -362,6 +362,27 @@ val x = query.asCase[User] { row =>
 x.result.converted.toList // : List[User]
 ```
 
+## A word about MariaDB/MySQL
+
+This library is tested using MariaDB. MySQL is supported for the most part but
+without any guarantee. MariaDB and MySQL have a row size limit. If you don't
+set a `ColumnLength` for `VARCHAR` (`String`) explicitly, `ColumnLength(200)`
+will be used. Something like the following could be used to override the
+default length:
+
+```scala
+object GettingStartedDatastore extends MariaDBDatastore(config) {
+  override def DefaultVarCharLength = 200
+  object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
+    val name = column[String]("SUP_NAME", Unique)
+    val street = column[String]("STREET")
+    ...
+  }
+```
+
+Please note, that MySQL does not support the clause `CREATE INDEX IF NOT
+EXISTS`.
+
 ## More information
 
 Hopefully this introduction was enough to show the benefits of using ScalaRelational for query building. For more examples
