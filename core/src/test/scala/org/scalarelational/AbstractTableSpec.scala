@@ -545,7 +545,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 trait AbstractTestDatastore extends Datastore {
   object test extends Table("test_table") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", Unique, ColumnLength(1024))
+    val name = column[String]("name", Unique, ColumnLength(200))
     val date = column[Option[Timestamp], Timestamp]("date")
   }
   object suppliers extends Table("SUPPLIER") {
