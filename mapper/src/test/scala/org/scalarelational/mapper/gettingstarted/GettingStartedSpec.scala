@@ -159,7 +159,7 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val city = column[String]("CITY")
     val state = column[Option[String]]("STATE")
     val zip = column[String]("ZIP")
-    val status = column[Status]("status", enum[Status])
+    val status = column[Status]("STATUS")
     val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 

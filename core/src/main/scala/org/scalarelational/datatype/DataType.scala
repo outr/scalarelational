@@ -201,12 +201,12 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extend
   override def toSQL(column: ColumnLike[_], value: T): String = value.name
   override def fromSQL(column: ColumnLike[_], value: String): T = enumerated(value)
 }
-class OptionDataTypeCreator[T](dt: DataType[T]) extends DataTypeCreator[Option[T]] {
-  def this()(implicit dtc: DataTypeCreator[T]) = this(dtc.create())
+class OptionDataTypeCreator[T](dt: DataType[T])(implicit manifest: Manifest[Option[T]]) extends DataTypeCreator[Option[T]] {
+  def this()(implicit dtc: DataTypeCreator[T], manifest: Manifest[Option[T]]) = this(dtc.create())
 
   override def create() = DataType[Option[T]](dt.jdbcType, dt.dbType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
 }
-class RefDataTypeCreator[T] extends DataTypeCreator[Ref[T]] {
+class RefDataTypeCreator[T](implicit manifest: Manifest[Ref[T]]) extends DataTypeCreator[Ref[T]] {
   override def create() = DataType[Ref[T]](Types.INTEGER, DBType("INTEGER"), new RefSQLConversion[T])
 }
 
@@ -225,8 +225,8 @@ trait DataTypeSupport {
 
   implicit def longTimestampTypeCreator = LongTimestampDataTypeCreator
 
-  implicit def option[T: DataTypeCreator]: DataTypeCreator[Option[T]] = new OptionDataTypeCreator[T]
-  implicit def reference[T]: DataTypeCreator[Ref[T]] = new RefDataTypeCreator[T]
+  implicit def option[T: DataTypeCreator](implicit manifest: Manifest[Option[T]]): DataTypeCreator[Option[T]] = new OptionDataTypeCreator[T]
+  implicit def reference[T](implicit manifest: Manifest[Ref[T]]): DataTypeCreator[Ref[T]] = new RefDataTypeCreator[T]
 
-  def enum[T <: EnumEntry](implicit manifest: Manifest[T]): DataTypeCreator[T] = new EnumDataTypeCreator[T]()
+  implicit def enum[T <: EnumEntry](implicit manifest: Manifest[T]): DataTypeCreator[T] = new EnumDataTypeCreator[T]()
 }

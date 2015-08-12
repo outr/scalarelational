@@ -10,7 +10,7 @@ import org.scalarelational.column.ColumnLike
  *
  * @author Matt Hicks <matt@outr.com>
  */
-class ObjectSerializationDataTypeCreator[T <: AnyRef] extends DataTypeCreator[T] {
+class ObjectSerializationDataTypeCreator[T <: AnyRef](implicit manifest: Manifest[T]) extends DataTypeCreator[T] {
   def create() = DataType[T](Types.BINARY, DBType(s"BINARY(${Int.MaxValue})"), new ObjectSQLConverter[T])
 }
 
