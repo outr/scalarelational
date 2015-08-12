@@ -57,19 +57,21 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   def column[T](name: String, properties: ColumnProperty*)
                (implicit creator: DataTypeCreator[T], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, creator.create(), manifest, this, properties)
+    new Column[T](name, dt(creator.create()), manifest, this, properties)
 
   def column[T](name: String, creator: DataTypeCreator[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, creator.create(), manifest, this, properties)
+    new Column[T](name, dt(creator.create()), manifest, this, properties)
 
   def column[T, S](name: String, properties: ColumnProperty*)
                (implicit creator: MappedDataTypeCreator[T, S], manifest: Manifest[T]): Column[T] =
-    new Column[T](name, creator.create(), manifest, this, properties)
+    new Column[T](name, dt(creator.create()), manifest, this, properties)
 
   def column[T, S](name: String, creator: MappedDataTypeCreator[T, S], properties: ColumnProperty*)
                   (implicit manifest: Manifest[T]): Column[T] =
-    new Column[T](name, creator.create(), manifest, this, properties)
+    new Column[T](name, dt(creator.create()), manifest, this, properties)
+
+  private def dt[T](dt: DataType[T]): DataType[T] = datastore.dataTypeProcessor.fire(dt).asInstanceOf[DataType[T]]
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
     tpe.getSuperclass match {

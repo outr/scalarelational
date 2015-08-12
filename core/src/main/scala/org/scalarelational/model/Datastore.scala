@@ -1,20 +1,19 @@
 package org.scalarelational.model
 
 import java.sql.ResultSet
-
 import javax.sql.DataSource
 
 import org.powerscala.event.Listenable
-import org.powerscala.event.processor.OptionProcessor
+import org.powerscala.event.processor.{ModifiableProcessor, OptionProcessor}
 import org.powerscala.log.Logging
-
+import org.scalarelational.SessionSupport
 import org.scalarelational.column.ColumnLike
+import org.scalarelational.datatype.DataType
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
 import org.scalarelational.result.ResultSetIterator
 import org.scalarelational.table.Table
-import org.scalarelational.SessionSupport
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -25,6 +24,12 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
   def DefaultVarCharLength = 65535
   def DefaultBinaryLength  = 1000
 
+  /**
+   * All columns that are created receive a DataType responsible for converting data between Scala and the database.
+   * This processor receives all of those DataTypes before they are assigned to the column allowing modification by
+   * database implementations or other customizations of how the datastore interacts with the database.
+   */
+  val dataTypeProcessor = new ModifiableProcessor[DataType[_]]("dataTypeProcessor")
   val value2SQL = new OptionProcessor[(ColumnLike[_], Any), Any]("value2SQL")
   val sql2Value = new OptionProcessor[(ColumnLike[_], Any), Any]("sql2Value")
 
