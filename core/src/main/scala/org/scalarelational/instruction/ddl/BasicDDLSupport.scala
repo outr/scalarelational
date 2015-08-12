@@ -105,7 +105,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
 
   override def ddl[T](alter: ChangeColumnType[T]): List[CallableInstruction] = {
     val properties = ColumnPropertyContainer[T](alter.properties: _*)(alter.manifest)
-    val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} ${alter.dataType.dbType(this, properties)}"
+    val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} ${alter.dataType.sqlType(this, properties)}"
     List(CallableInstruction(sql))
   }
 
@@ -178,7 +178,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
   }
 
   protected def columnSQLType(create: CreateColumn[_]): String = {
-    create.dataType.dbType(this, create)
+    create.dataType.sqlType(this, create)
   }
 
   protected def columnPropertiesSQL(container: ColumnPropertyContainer): List[String] = {

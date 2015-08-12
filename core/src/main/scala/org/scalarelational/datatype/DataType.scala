@@ -16,29 +16,29 @@ import scala.language.existentials
  * @author Matt Hicks <matt@outr.com>
  */
 case class DataType[T](jdbcType: Int,
-                       dbType: DBType,
+                       sqlType: SQLType,
                        converter: SQLConversion[T, _] = new IdenticalSQLConversion[T],
                        sqlOperator: SQLOperator[T] = new DefaultSQLOperator[T])(implicit manifest: Manifest[T]) {
   def scalaClass = manifest.runtimeClass
   def typed(value: T) = TypedValue[T](this, value)
 }
 
-trait DBType {
+trait SQLType {
   def apply(datastore: Datastore, properties: ColumnPropertyContainer): String
 }
 
-object DBType {
-  def apply(value: String) = new SimpleDBType(value)
-  def f(f: (Datastore, ColumnPropertyContainer) => String) = new DBType {
+object SQLType {
+  def apply(value: String) = new SimpleSQLType(value)
+  def f(f: (Datastore, ColumnPropertyContainer) => String) = new SQLType {
     override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = f(datastore, properties)
   }
 }
 
-class SimpleDBType(value: String) extends DBType {
+class SimpleSQLType(value: String) extends SQLType {
   def apply(datastore: Datastore, properties: ColumnPropertyContainer) = value
 }
 
-object StringDBType extends DBType {
+object StringSQLType$ extends SQLType {
   override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
     val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
       .getOrElse(datastore.DefaultVarCharLength)
@@ -127,7 +127,7 @@ trait MappedDataTypeCreator[ScalaType, SQLType] {
 }
 
 object DataTypes {
-  val BigDec = DataType[BigDecimal](Types.DECIMAL, DBType.f {
+  val BigDec = DataType[BigDecimal](Types.DECIMAL, SQLType.f {
     case (datastore, properties) => {
       val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
       s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
@@ -137,9 +137,9 @@ object DataTypes {
   } {
     case (column: ColumnLike[_], value: java.math.BigDecimal) => BigDecimal(value)
   })
-  val Boolean = DataType[Boolean](Types.BOOLEAN, DBType("BOOLEAN"))
-  val Blob = DataType[Blob](Types.BLOB, DBType("BLOB"))
-  val ByteArray = DataType[Array[Byte]](Types.BINARY, DBType.f {
+  val Boolean = DataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
+  val Blob = DataType[Blob](Types.BLOB, SQLType("BLOB"))
+  val ByteArray = DataType[Array[Byte]](Types.BINARY, SQLType.f {
     case (datastore, properties) => {
       val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
@@ -147,18 +147,18 @@ object DataTypes {
       s"BINARY($length)"
     }
   })
-  val Double = DataType[Double](Types.DOUBLE, DBType("DOUBLE"))
-  val Int = DataType[Int](Types.INTEGER, DBType("INTEGER"))
-  val Long = DataType[Long](Types.BIGINT, DBType("BIGINT"))
-  val String = DataType[String](Types.VARCHAR, StringDBType)
-  val Timestamp = DataType[Timestamp](Types.TIMESTAMP, DBType("TIMESTAMP"))
-  val WrapString = DataType[WrappedString](String.jdbcType, String.dbType, SQLConversion.f[WrappedString, String] {
+  val Double = DataType[Double](Types.DOUBLE, SQLType("DOUBLE"))
+  val Int = DataType[Int](Types.INTEGER, SQLType("INTEGER"))
+  val Long = DataType[Long](Types.BIGINT, SQLType("BIGINT"))
+  val String = DataType[String](Types.VARCHAR, StringSQLType$)
+  val Timestamp = DataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
+  val WrapString = DataType[WrappedString](String.jdbcType, String.sqlType, SQLConversion.f[WrappedString, String] {
     case (column: ColumnLike[_], value: WrappedString) => value.value
   } {
     case (column: ColumnLike[_], value: String) => column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
   })
 
-  val LongTimestamp = DataType[Long](Types.TIMESTAMP, DBType("TIMESTAMP"), SQLConversion.f[Long, Timestamp] {
+  val LongTimestamp = DataType[Long](Types.TIMESTAMP, SQLType("TIMESTAMP"), SQLConversion.f[Long, Timestamp] {
     case (column: ColumnLike[_], value: Long) => new Timestamp(value)
   } {
     case (column: ColumnLike[_], value: Timestamp) => value.getTime
@@ -187,7 +187,7 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extend
 
   val length = math.max(enumerated.values.maxBy(_.name.length).name.length, 128)
 
-  override def create() = DataType[T](Types.VARCHAR, DBType(s"VARCHAR($length)"), this)
+  override def create() = DataType[T](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
 
   override def toSQL(column: ColumnLike[_], value: T): String = value.name
   override def fromSQL(column: ColumnLike[_], value: String): T = enumerated(value)
@@ -195,10 +195,10 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extend
 class OptionDataTypeCreator[T](dt: DataType[T])(implicit manifest: Manifest[Option[T]]) extends DataTypeCreator[Option[T]] {
   def this()(implicit dtc: DataTypeCreator[T], manifest: Manifest[Option[T]]) = this(dtc.create())
 
-  override def create() = DataType[Option[T]](dt.jdbcType, dt.dbType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
+  override def create() = DataType[Option[T]](dt.jdbcType, dt.sqlType, new OptionSQLConversion(dt.converter), new OptionSQLOperator[T])
 }
 class RefDataTypeCreator[T](implicit manifest: Manifest[Ref[T]]) extends DataTypeCreator[Ref[T]] {
-  override def create() = DataType[Ref[T]](Types.INTEGER, DBType("INTEGER"), new RefSQLConversion[T])
+  override def create() = DataType[Ref[T]](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
 }
 
 trait DataTypeSupport {

@@ -4,7 +4,7 @@ import java.sql.Types
 
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.{AutoIncrement, Polymorphic, PrimaryKey}
-import org.scalarelational.datatype.{DBType, DataType, MappedDataTypeCreator, SQLConversion}
+import org.scalarelational.datatype.{DataType, MappedDataTypeCreator, SQLConversion, SQLType}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalatest.{Matchers, WordSpec}
 
@@ -142,7 +142,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
       override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
     }
     implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
-      override def create() = DataType[List[String]](Types.VARCHAR, DBType("VARCHAR(1024)"), ListConverter)
+      override def create() = DataType[List[String]](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
     }
 
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)

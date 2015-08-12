@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.sql._
+import java.sql.{Blob, Timestamp, Types}
 import javax.sql.rowset.serial.SerialBlob
 
 import org.powerscala.IO
@@ -593,7 +593,7 @@ trait AbstractSpecialTypesDatastore extends Datastore {
       override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
     }
     implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
-      override def create() = DataType[List[String]](Types.VARCHAR, DBType("VARCHAR(1024)"), ListConverter)
+      override def create() = DataType[List[String]](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
     }
 
     val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
