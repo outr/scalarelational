@@ -18,7 +18,8 @@ import scala.language.existentials
 case class DataType[T](jdbcType: Int,
                        dbType: DBType,
                        converter: SQLConversion[T, _] = new IdenticalSQLConversion[T],
-                       sqlOperator: SQLOperator[T] = new DefaultSQLOperator[T]) {
+                       sqlOperator: SQLOperator[T] = new DefaultSQLOperator[T])(implicit manifest: Manifest[T]) {
+  def scalaClass = manifest.runtimeClass
   def typed(value: T) = TypedValue[T](this, value)
 }
 
