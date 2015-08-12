@@ -28,14 +28,23 @@ trait DBType {
 }
 
 object DBType {
-  def apply[T](value: String) = new SimpleDBType[T](value)
-  def f[T](f: (Datastore, ColumnPropertyContainer) => String) = new DBType {
+  def apply(value: String) = new SimpleDBType(value)
+  def f(f: (Datastore, ColumnPropertyContainer) => String) = new DBType {
     override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = f(datastore, properties)
   }
 }
 
-class SimpleDBType[T](value: String) extends DBType {
+class SimpleDBType(value: String) extends DBType {
   def apply(datastore: Datastore, properties: ColumnPropertyContainer) = value
+}
+
+object StringDBType extends DBType {
+  override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
+    val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
+      .getOrElse(datastore.DefaultVarCharLength)
+    if (properties.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
+    else s"VARCHAR($length)"
+  }
 }
 
 trait SQLOperator[T] {
@@ -98,6 +107,21 @@ trait DataTypeCreator[T] {
   def create(): DataType[T]
 }
 
+object DataTypeCreator {
+  val BigDecimalCreator = apply(DataTypes.BigDec)
+  val BooleanCreator = apply(DataTypes.Boolean)
+  val BlobCreator = apply(DataTypes.Blob)
+  val ByteArrayCreator = apply(DataTypes.ByteArray)
+  val DoubleCreator = apply(DataTypes.Double)
+  val IntCreator = apply(DataTypes.Int)
+  val LongCreator = apply(DataTypes.Long)
+  val StringCreator = apply(DataTypes.String)
+
+  def apply[T](dataType: DataType[T]) = new DataTypeCreator[T] {
+    override def create(): DataType[T] = dataType
+  }
+}
+
 trait MappedDataTypeCreator[ScalaType, SQLType] {
   def create(): DataType[ScalaType]
 }
@@ -126,7 +150,7 @@ object DataTypes {
   val Double = DataType[Double](Types.DOUBLE, DBType("DOUBLE"))
   val Int = DataType[Int](Types.INTEGER, DBType("INTEGER"))
   val Long = DataType[Long](Types.BIGINT, DBType("BIGINT"))
-  val String = DataType[String](Types.VARCHAR, StringDataTypeCreator.StringDBType)
+  val String = DataType[String](Types.VARCHAR, StringDBType)
   val Timestamp = DataType[Timestamp](Types.TIMESTAMP, DBType("TIMESTAMP"))
   val WrapString = DataType[WrappedString](String.jdbcType, String.dbType, SQLConversion.f[WrappedString, String] {
     case (column: ColumnLike[_], value: WrappedString) => value.value
@@ -141,39 +165,6 @@ object DataTypes {
   })
 }
 
-object BigDecimalDataTypeCreator extends DataTypeCreator[BigDecimal] {
-  override def create() = DataTypes.BigDec
-}
-object BooleanDataTypeCreator extends DataTypeCreator[Boolean] {
-  override def create() = DataTypes.Boolean
-}
-object BlobDataTypeCreator extends DataTypeCreator[Blob] {
-  override def create() = DataTypes.Blob
-}
-object ByteArrayDataTypeCreator extends DataTypeCreator[Array[Byte]] {
-  override def create() = DataTypes.ByteArray
-}
-object DoubleDataTypeCreator extends DataTypeCreator[Double] {
-  override def create() = DataTypes.Double
-}
-object IntDataTypeCreator extends DataTypeCreator[Int] {
-  override def create() = DataTypes.Int
-}
-object LongDataTypeCreator extends DataTypeCreator[Long] {
-  override def create() = DataTypes.Long
-}
-object StringDataTypeCreator extends DataTypeCreator[String] {
-  object StringDBType extends DBType {
-    override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
-      val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
-        .getOrElse(datastore.DefaultVarCharLength)
-      if (properties.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
-      else s"VARCHAR($length)"
-    }
-  }
-
-  override def create() = DataTypes.String
-}
 object TimestampDataTypeCreator extends DataTypeCreator[Timestamp] {
   override def create() = DataTypes.Timestamp
 }
@@ -212,14 +203,15 @@ class RefDataTypeCreator[T](implicit manifest: Manifest[Ref[T]]) extends DataTyp
 
 trait DataTypeSupport {
   // TODO: eventually convert this to create the DataType instead
-  implicit def bigDecimalTypeCreator = BigDecimalDataTypeCreator
-  implicit def booleanTypeCreator = BooleanDataTypeCreator
-  implicit def blobTypeCreator = BlobDataTypeCreator
-  implicit def byteArrayTypeCreator = ByteArrayDataTypeCreator
-  implicit def doubleTypeCreator = DoubleDataTypeCreator
-  implicit def intTypeCreator = IntDataTypeCreator
-  implicit def longTypeCreator = LongDataTypeCreator
-  implicit def stringTypeCreator = StringDataTypeCreator
+  import DataTypeCreator._
+  implicit def bigDecimalTypeCreator = BigDecimalCreator
+  implicit def booleanTypeCreator = BooleanCreator
+  implicit def blobTypeCreator = BlobCreator
+  implicit def byteArrayTypeCreator = ByteArrayCreator
+  implicit def doubleTypeCreator = DoubleCreator
+  implicit def intTypeCreator = IntCreator
+  implicit def longTypeCreator = LongCreator
+  implicit def stringTypeCreator = StringCreator
   implicit def timestampTypeCreator = TimestampDataTypeCreator
   implicit def wrappedStringTypeCreator = WrappedStringDataTypeCreator
 

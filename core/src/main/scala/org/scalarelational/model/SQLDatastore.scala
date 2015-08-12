@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import org.powerscala.property.Property
 import org.scalarelational.SelectExpression
 import org.scalarelational.column.ColumnLike
-import org.scalarelational.datatype.{DataType, StringDataTypeCreator, TypedValue}
+import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.BasicDDLSupport
@@ -180,11 +180,11 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
       s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_] => {
-      args += StringDataTypeCreator.create().typed(c.pattern)
+      args += DataTypes.String.typed(c.pattern)
       s"${c.column.longName} ${if (c.not) "NOT " else ""}LIKE ?"
     }
     case c: RegexCondition[_] => {
-      args += StringDataTypeCreator.create().typed(c.regex.toString())
+      args += DataTypes.String.typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
     }
     case c: RangeCondition[_] => {
