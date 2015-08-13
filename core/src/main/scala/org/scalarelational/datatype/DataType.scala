@@ -16,9 +16,7 @@ import org.scalarelational.op.Operator
 class DataType[T, S](val jdbcType: Int,
                      val sqlType: SQLType,
                      val converter: SQLConversion[T, S],
-                     val sqlOperator: SQLOperator[T, S] = new DefaultSQLOperator[T, S])
-                    (implicit val manifest: Manifest[T]) {
-  def scalaClass = manifest.runtimeClass
+                     val sqlOperator: SQLOperator[T, S] = new DefaultSQLOperator[T, S]) {
   def typed(value: T) = TypedValue(this, value)
 
   def copy(jdbcType: Int = jdbcType,
@@ -32,7 +30,7 @@ class DataType[T, S](val jdbcType: Int,
 class SimpleDataType[T](jdbcType: Int,
                         sqlType: SQLType,
                         converter: SQLConversion[T, T] = SQLConversion.identity[T],
-                        sqlOperator: SQLOperator[T, T] = new DefaultSQLOperator[T, T])(implicit manifest: Manifest[T])
+                        sqlOperator: SQLOperator[T, T] = new DefaultSQLOperator[T, T])
       extends DataType[T, T](jdbcType, sqlType, converter, sqlOperator)
 
 trait SQLType {
@@ -119,7 +117,7 @@ object DataTypes {
     sqlType = dataType.sqlType,
     converter = dataType.converter.asInstanceOf[SQLConversion[T, T]],
     sqlOperator = dataType.sqlOperator.asInstanceOf[SQLOperator[T, T]]
-  )(dataType.manifest)
+  )
 
   val BigDecimalType = simplify(new DataType[BigDecimal, java.math.BigDecimal](Types.DECIMAL, SQLType.f {
     case (datastore, properties) => {
@@ -174,16 +172,14 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extend
   override def fromSQL(column: ColumnLike[T, String], value: String): T = enumerated(value)
 }
 object OptionDataTypeCreator {
-  def create[T, S](dt: DataType[T, S])(implicit manifest: Manifest[Option[T]]) = {
+  def create[T, S](dt: DataType[T, S]) = {
     val conversion = new OptionSQLConversion(dt.converter)
     val operator = new OptionSQLOperator[T, S]
     new DataType[Option[T], S](dt.jdbcType, dt.sqlType, conversion, operator)
   }
 }
 object RefDataTypeCreator {
-  def create[T](implicit manifest: Manifest[Ref[T]]) = {
-    new DataType[Ref[T], Int](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
-  }
+  def create[T] = new DataType[Ref[T], Int](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
 }
 
 trait DataTypeSupport {
@@ -202,10 +198,8 @@ trait DataTypeSupport {
 
   implicit def longTimestampType = LongTimestampType
 
-  implicit def option[T, S](implicit dataType: DataType[T, S], manifest: Manifest[Option[T]]) = {
-    OptionDataTypeCreator.create[T, S](dataType)
-  }
-  implicit def reference[T](implicit manifest: Manifest[Ref[T]]) = RefDataTypeCreator.create[T](manifest)
+  implicit def option[T, S](implicit dataType: DataType[T, S]) = OptionDataTypeCreator.create[T, S](dataType)
+  implicit def reference[T] = RefDataTypeCreator.create[T]
 
   implicit def enum[T <: EnumEntry](implicit manifest: Manifest[T]) = new EnumDataTypeCreator[T].create()
 }

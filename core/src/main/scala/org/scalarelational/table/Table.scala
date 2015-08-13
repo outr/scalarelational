@@ -6,7 +6,7 @@ import org.scalarelational.column.Column
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.Joinable
-import org.scalarelational.model.{Datastore, SQLContainer}
+import org.scalarelational.model.{DataTypeInstance, Datastore, SQLContainer}
 import org.scalarelational.table.property.TableProperty
 
 import scala.collection.mutable.ListBuffer
@@ -57,21 +57,23 @@ abstract class Table(name: String, tableProperties: TableProperty*)
 
   def column[T](name: String, properties: ColumnProperty*)
                (implicit dataType: SimpleDataType[T], manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(dataType), manifest, this, properties)
+    new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties)
 
   def column[T](name: String, dataType: SimpleDataType[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(dataType), manifest, this, properties)
+    new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties)
 
   def column[T, S](name: String, properties: ColumnProperty*)
                (implicit dataType: DataType[T, S], manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(dataType), manifest, this, properties)
+    new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties)
 
   def column[T, S](name: String, dataType: DataType[T, S], properties: ColumnProperty*)
                   (implicit manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(dataType), manifest, this, properties)
+    new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties)
 
-  private def dt[T, S](dt: DataType[T, S]): DataType[T, S] = datastore.dataTypeProcessor.fire(dt).asInstanceOf[DataType[T, S]]
+  private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty], manifest: Manifest[T]): DataType[T, S] = {
+    datastore.dataTypeInstanceProcessor.fire(DataTypeInstance[T, S](dt, properties, manifest)).asInstanceOf[DataTypeInstance[T, S]].dataType
+  }
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
     tpe.getSuperclass match {
