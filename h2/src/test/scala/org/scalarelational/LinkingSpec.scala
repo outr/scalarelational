@@ -1,9 +1,8 @@
 package org.scalarelational
 
+import org.scalarelational.column.property.{AutoIncrement, IgnoreCase, PrimaryKey, Unique}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.column.property.{IgnoreCase, PrimaryKey, Unique, AutoIncrement}
-import org.scalarelational.table.{Table, LinkingTable}
-
+import org.scalarelational.table.{LinkingTable, Table}
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -54,12 +53,12 @@ class LinkingSpec extends WordSpec with Matchers {
 
 object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) {
   object Content extends Table("Content") {
-    val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
+    val id = column[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
     val title = column[String]("title")
   }
 
   object Tag extends Table("Tag") {
-    val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
+    val id = column[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
     val name = column[String]("name", Unique, IgnoreCase)
   }
 

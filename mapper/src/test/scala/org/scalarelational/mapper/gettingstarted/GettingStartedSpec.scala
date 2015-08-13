@@ -157,19 +157,19 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val name = column[String]("SUP_NAME", Unique)
     val street = column[String]("STREET")
     val city = column[String]("CITY")
-    val state = column[Option[String]]("STATE")
+    val state = column[Option[String], String]("STATE")
     val zip = column[String]("ZIP")
-    val status = column[Status]("STATUS")
-    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
+    val status = column[Status, String]("STATUS")
+    val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
     val name = column[String]("COF_NAME", Unique)
-    val supID = column[Ref[Supplier]]("SUP_ID", new ForeignKey(suppliers.id))
+    val supID = column[Ref[Supplier], Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
-    val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
   }
 }
 

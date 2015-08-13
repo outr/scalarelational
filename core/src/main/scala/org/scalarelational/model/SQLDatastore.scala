@@ -180,11 +180,11 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
       s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_, _] => {
-      args += DataTypes.String.typed(c.pattern)
+      args += DataTypes.StringType.typed(c.pattern)
       s"${c.column.longName} ${if (c.not) "NOT " else ""}LIKE ?"
     }
     case c: RegexCondition[_, _] => {
-      args += DataTypes.String.typed(c.regex.toString())
+      args += DataTypes.StringType.typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "NOT " else ""}REGEXP ?"
     }
     case c: RangeCondition[_, _] => {

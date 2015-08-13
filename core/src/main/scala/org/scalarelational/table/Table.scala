@@ -56,20 +56,20 @@ abstract class Table(name: String, tableProperties: TableProperty*)
   def columnsByName[T, S](names: String*) = names.flatMap(name => getColumn[T, S](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit creator: DataTypeCreator[T, T], manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(creator.create()), manifest, this, properties)
+               (implicit dataType: SimpleDataType[T], manifest: Manifest[T]): Column[T, T] =
+    new Column[T, T](name, dt(dataType), manifest, this, properties)
 
-  def column[T](name: String, creator: DataTypeCreator[T, T], properties: ColumnProperty*)
+  def column[T](name: String, dataType: SimpleDataType[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(creator.create()), manifest, this, properties)
+    new Column[T, T](name, dt(dataType), manifest, this, properties)
 
-  def typedColumn[T, S](name: String, properties: ColumnProperty*)
-               (implicit creator: DataTypeCreator[T, S], manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(creator.create()), manifest, this, properties)
+  def column[T, S](name: String, properties: ColumnProperty*)
+               (implicit dataType: DataType[T, S], manifest: Manifest[T]): Column[T, S] =
+    new Column[T, S](name, dt(dataType), manifest, this, properties)
 
-  def typedColumn[T, S](name: String, creator: DataTypeCreator[T, S], properties: ColumnProperty*)
+  def column[T, S](name: String, dataType: DataType[T, S], properties: ColumnProperty*)
                   (implicit manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(creator.create()), manifest, this, properties)
+    new Column[T, S](name, dt(dataType), manifest, this, properties)
 
   private def dt[T, S](dt: DataType[T, S]): DataType[T, S] = datastore.dataTypeProcessor.fire(dt).asInstanceOf[DataType[T, S]]
 

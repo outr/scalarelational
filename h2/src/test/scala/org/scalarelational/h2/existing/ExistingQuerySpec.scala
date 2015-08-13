@@ -31,7 +31,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     }
     "query back a specific result" in {
       session {
-        val results = existingQuery.query(List(DataTypes.Int.typed(2))).toList
+        val results = existingQuery.query(List(DataTypes.IntType.typed(2))).toList
         results.length should equal(1)
         val result = results.head
         result.id should equal(2)

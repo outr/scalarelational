@@ -16,7 +16,7 @@ class LinkingTable(name: String,
                   (implicit datastore: Datastore) extends Table(name, Linking)(datastore) {
   val left = column[Int](s"${leftColumn.table.tableName}Id", new ForeignKey(leftColumn))
   val right = column[Int](s"${rightColumn.table.tableName}Id", new ForeignKey(rightColumn))
-  val id = typedColumn[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
+  val id = column[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
 
   props(Index.unique(s"unique${left.name}${right.name}", left, right))
 }

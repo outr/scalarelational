@@ -4,7 +4,7 @@ import java.sql.Types
 
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.{AutoIncrement, Polymorphic, PrimaryKey}
-import org.scalarelational.datatype.{DataType, MappedDataTypeCreator, SQLConversion, SQLType}
+import org.scalarelational.datatype.{DataType, SQLConversion, SQLType}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalatest.{Matchers, WordSpec}
 
@@ -130,7 +130,7 @@ case class ContentList(entries: List[String], id: Option[Int] = None)
 
 object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
   object users extends MappedTable[User]("users") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
@@ -138,14 +138,12 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
 
   object content extends MappedTable[Content]("content") {
     object ListConverter extends SQLConversion[List[String], String] {
-      override def toSQL(column: ColumnLike[_], value: List[String]): String = value.mkString("|")
-      override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
+      override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
+      override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
     }
-    implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
-      override def create() = DataType[List[String]](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
-    }
+    implicit def listDataType = new DataType[List[String], String](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
 
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val string = column[String]("string", Polymorphic)
     val entries = column[List[String], String]("entries", Polymorphic)
     val isString = column[Boolean]("isString")

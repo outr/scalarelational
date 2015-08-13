@@ -2,12 +2,10 @@ package org.scalarelational.mapper
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.scalatest.{Matchers, WordSpec}
-
 import org.powerscala.concurrent.Time
-
-import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
+import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -67,7 +65,7 @@ case class AsyncUser(name: String, age: Int, id: Option[Int] = None)
 
 object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
   object users extends MappedTable[AsyncUser]("users") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")
   }

@@ -117,7 +117,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
-          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(new OptionDataTypeCreator[Int].create().typed(null)))
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(OptionDataTypeCreator.create[Int, Int](implicitly[SimpleDataType[Int]]).typed(null)))
         )
         val results = query.result.toList
         results.size should equal (2)
@@ -543,12 +543,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
 trait AbstractTestDatastore extends Datastore {
   object test extends Table("test_table") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique, ColumnLength(1024))
-    val date = column[Option[Timestamp]]("date")
+    val date = column[Option[Timestamp], Timestamp]("date")
   }
   object suppliers extends Table("SUPPLIER") {
-    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -568,19 +568,19 @@ trait AbstractTestDatastore extends Datastore {
   }
   object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
-    val fruit = column[Fruit]("fruit", new ObjectSerializationDataTypeCreator[Fruit])
+    val fruit = column[Fruit, Array[Byte]]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
   }
 }
 
 trait AbstractTestCrossReferenceDatastore extends Datastore {
   object first extends Table("first") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val secondId = column[Int]("secondId", new ForeignKey(second.id))
   }
 
   object second extends Table("second") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val value = column[Int]("value")
     val firstId = column[Int]("firstId", new ForeignKey(first.id))
   }
@@ -589,24 +589,22 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
     object ListConverter extends SQLConversion[List[String], String] {
-      override def toSQL(column: ColumnLike[_], value: List[String]): String = value.mkString("|")
-      override def fromSQL(column: ColumnLike[_], value: String): List[String] = value.split('|').toList
+      override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
+      override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
     }
-    implicit object ListDataTypeCreator extends MappedDataTypeCreator[List[String], String] {
-      override def create() = DataType[List[String]](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
-    }
+    implicit def listDataType = new DataType[List[String], String](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
 
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val strings = column[List[String], String]("strings")
   }
 
   object data extends Table("data") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val content = column[Blob]("content")
   }
 
   object combinedUnique extends Table("combined_unique") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val firstName = column[String]("firstName")
     val lastName = column[String]("lastName")
 

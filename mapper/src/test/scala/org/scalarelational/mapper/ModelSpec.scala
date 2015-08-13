@@ -67,7 +67,7 @@ class ModelSpec extends WordSpec with Matchers {
         person.columns.size should equal(4)
       }
       "have id: Option[Int] as the first column" in {
-        val c: Column[_] = person.columns.head
+        val c: Column[_, _] = person.columns.head
         c.name should equal("ID")
         c.fieldName should equal("id")
         c.classType should equal(classOf[Option[_]])
@@ -75,7 +75,7 @@ class ModelSpec extends WordSpec with Matchers {
         c.has(PrimaryKey) should equal(true)
       }
       "have name: String as the second column" in {
-        val c: Column[_] = person.columns.tail.head
+        val c: Column[_, _] = person.columns.tail.head
         c.name should equal("NAME")
         c.fieldName should equal("name")
         c.classType should equal(classOf[String])
@@ -83,13 +83,13 @@ class ModelSpec extends WordSpec with Matchers {
         c.has(PrimaryKey) should equal(false)
       }
       "have age: Int as the third column" in {
-        val c: Column[_] = person.columns.tail.tail.head
+        val c: Column[_, _] = person.columns.tail.tail.head
         c.name should equal("AGE")
         c.fieldName should equal("age")
         c.classType should equal(classOf[Int])
       }
       "have created: Timestamp as the fourth column" in {
-        val c: Column[_] = person.columns.tail.tail.tail.head
+        val c: Column[_, _] = person.columns.tail.tail.tail.head
         c.name should equal("created")
         c.fieldName should equal("created")
         c.classType should equal(classOf[Timestamp])
@@ -115,10 +115,17 @@ object ModelDatastore extends SQLDatastore {
     val name = column[String]("name")
     val t1Fk = column[Int]("t1Fk", new ForeignKey(t1.id))
   }
-  @typedTable[Person] object person {
-    id.props(AutoIncrement, PrimaryKey)         // TODO: fix this getting dropped
+  object person extends Table("PERSON") {
+    val id = column[Option[Int], Int]("ID", AutoIncrement, PrimaryKey)
+    val name = column[String]("NAME")
+    val age = column[Int]("AGE")
     val created = column[Timestamp]("created")
   }
+  // TODO: fix @typedTable to properly create: val id = column[Option[Int], Int]
+  /*@typedTable[Person] object person {
+    id.props(AutoIncrement, PrimaryKey)
+    val created = column[Timestamp]("created")
+  }*/
 }
 
 case class Person(id: Option[Int], name: String, age: Int)

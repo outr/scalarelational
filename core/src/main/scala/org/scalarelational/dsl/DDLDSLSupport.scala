@@ -2,7 +2,7 @@ package org.scalarelational.dsl
 
 import org.scalarelational.column.Column
 import org.scalarelational.column.property.ColumnProperty
-import org.scalarelational.datatype.{DataTypeCreator, DataTypeSupport}
+import org.scalarelational.datatype.{DataType, DataTypeSupport, SimpleDataType}
 import org.scalarelational.instruction.ddl._
 import org.scalarelational.table.Table
 
@@ -17,8 +17,12 @@ trait DDLDSLSupport extends DataTypeSupport {
 
   def createColumn[T, S](column: Column[T, S]) = ddl(column2Create(column))
   def createColumn[T, S](tableName: String, columnName: String, columnProperty: ColumnProperty*)
-                     (implicit manifest: Manifest[T], dataTypeCreator: DataTypeCreator[T, S]) = {
-    ddl(CreateColumn[T, S](tableName, columnName, dataTypeCreator.create(), columnProperty.toSeq))
+                     (implicit manifest: Manifest[T], dataType: DataType[T, S]) = {
+    ddl(CreateColumn[T, S](tableName, columnName, dataType, columnProperty.toSeq))
+  }
+  def createColumn[T](tableName: String, columnName: String, columnProperty: ColumnProperty*)
+                        (implicit manifest: Manifest[T], dataType: SimpleDataType[T]) = {
+    ddl(CreateColumn[T, T](tableName, columnName, dataType, columnProperty.toSeq))
   }
 
   def renameColumn(tableName: String, oldName: String, newName: String) = {
@@ -28,8 +32,8 @@ trait DDLDSLSupport extends DataTypeSupport {
   def restartColumn(tableName: String, columnName: String, value: Long) = ddl(RestartColumn(tableName, columnName, value))
 
   def changeColumnType[T, S](tableName: String, columnName: String, properties: ColumnProperty*)
-                         (implicit manifest: Manifest[T], dataTypeCreator: DataTypeCreator[T, S]) = {
-    ddl(ChangeColumnType[T, S](tableName, columnName, dataTypeCreator.create(), properties: _*)(manifest))
+                         (implicit manifest: Manifest[T], dataType: DataType[T, S]) = {
+    ddl(ChangeColumnType[T, S](tableName, columnName, dataType, properties: _*)(manifest))
   }
 
   def dropTable(table: Table, cascade: Boolean) = ddl(DropTable(table.tableName, cascade))
