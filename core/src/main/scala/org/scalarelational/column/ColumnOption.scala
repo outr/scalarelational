@@ -1,6 +1,7 @@
 package org.scalarelational.column
 
-import org.scalarelational.datatype.{DataType, OptionDataTypeCreator}
+import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.create.OptionDataTypeCreator
 import org.scalarelational.table.Table
 
 case class ColumnOption[T, S](column: ColumnLike[T, S]) extends ColumnLike[Option[T], S] {

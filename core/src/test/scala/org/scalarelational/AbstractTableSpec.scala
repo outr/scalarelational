@@ -7,6 +7,7 @@ import org.powerscala.IO
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property._
 import org.scalarelational.datatype._
+import org.scalarelational.datatype.create.OptionDataTypeCreator
 import org.scalarelational.model._
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.Index
