@@ -1,22 +1,21 @@
 package org.scalarelational.fun
 
-import scala.language.existentials
-
 import org.powerscala.enum.{EnumEntry, Enumerated}
-
 import org.scalarelational.SelectExpression
-import org.scalarelational.datatype.DataType
 import org.scalarelational.column.ColumnLike
+import org.scalarelational.datatype.DataType
+
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class SQLFunction[T](functionType: FunctionType,
-                          column: ColumnLike[_],
-                          converter: DataType[T],
+case class SQLFunction[T, S](functionType: FunctionType,
+                          column: ColumnLike[_, _],
+                          converter: DataType[T, S],
                           alias: Option[String] = None) extends SelectExpression[T] {
   override def longName = alias.getOrElse(column.longName)
-  def as(alias: String) = copy[T](alias = Some(alias))
+  def as(alias: String) = copy[T, S](alias = Some(alias))
 }
 
 sealed abstract class FunctionType(val sql: String) extends EnumEntry

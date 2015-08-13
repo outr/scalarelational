@@ -1,22 +1,21 @@
 package org.scalarelational
 
-import java.sql._
-
+import java.sql.{Blob, Timestamp, Types}
 import javax.sql.rowset.serial.SerialBlob
+
+import org.powerscala.IO
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.column.property._
+import org.scalarelational.datatype._
+import org.scalarelational.datatype.create.OptionDataTypeCreator
+import org.scalarelational.model._
+import org.scalarelational.table.Table
+import org.scalarelational.table.property.Index
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
-import org.powerscala.IO
-
-import org.scalarelational.datatype.{DataTypeGenerators, DataType, ObjectSerializationConverter}
-import org.scalarelational.model._
-import org.scalarelational.column.property._
-import org.scalarelational.column.{ColumnPropertyContainer, ColumnLike}
-import org.scalarelational.table.Table
-import org.scalarelational.table.property.Index
-import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -119,7 +118,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
-          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(DataTypeGenerators.option[Int].typed(null)))
+          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(OptionDataTypeCreator.create[Int, Int](implicitly[SimpleDataType[Int]]).typed(null)))
         )
         val results = query.result.toList
         results.size should equal (2)
@@ -545,12 +544,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 
 trait AbstractTestDatastore extends Datastore {
   object test extends Table("test_table") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique, ColumnLength(1024))
-    val date = column[Option[Timestamp]]("date")
+    val date = column[Option[Timestamp], Timestamp]("date")
   }
   object suppliers extends Table("SUPPLIER") {
-    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -570,19 +569,19 @@ trait AbstractTestDatastore extends Datastore {
   }
   object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
-    val fruit = column[Fruit]("fruit", new ObjectSerializationConverter[Fruit])
+    val fruit = column[Fruit, Array[Byte]]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
   }
 }
 
 trait AbstractTestCrossReferenceDatastore extends Datastore {
   object first extends Table("first") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val secondId = column[Int]("secondId", new ForeignKey(second.id))
   }
 
   object second extends Table("second") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val value = column[Int]("value")
     val firstId = column[Int]("firstId", new ForeignKey(first.id))
   }
@@ -590,25 +589,23 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
-    implicit val listStringConverter = new DataType[List[String]] {
-      override def jdbcType = Types.VARCHAR
-      def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = "VARCHAR(1024)"
-      def toSQLType(column: ColumnLike[_], value: List[String]) = value.mkString("|")
-      def fromSQLType(column: ColumnLike[_], value: Any) =
-        value.asInstanceOf[String].split('|').toList
+    object ListConverter extends SQLConversion[List[String], String] {
+      override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
+      override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
     }
+    implicit def listDataType = new DataType[List[String], String](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
 
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
-    val strings = column[List[String]]("strings")
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
+    val strings = column[List[String], String]("strings")
   }
 
   object data extends Table("data") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val content = column[Blob]("content")
   }
 
   object combinedUnique extends Table("combined_unique") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val firstName = column[String]("firstName")
     val lastName = column[String]("lastName")
 

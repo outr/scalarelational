@@ -3,20 +3,21 @@ package org.scalarelational.datatype
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.sql.Types
 
-import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
-import org.scalarelational.model.Datastore
+import org.scalarelational.column.ColumnLike
 
 /**
  * ObjectSerializationConverter stores any arbitrary serializable object as a Array[Byte].
  *
  * @author Matt Hicks <matt@outr.com>
  */
-class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
-  override def jdbcType = Types.BINARY
+object ObjectSerializationDataTypeCreator {
+  def create[T <: AnyRef](implicit manifest: Manifest[T]) = {
+    new DataType[T, Array[Byte]](Types.BINARY, SQLType(s"BINARY(${Int.MaxValue})"), new ObjectSQLConverter[T])
+  }
+}
 
-  def sqlType(datastore: Datastore, properties: ColumnPropertyContainer) = s"BINARY(${Int.MaxValue})"
-
-  def toSQLType(column: ColumnLike[_], value: T) = if (value != null) {
+class ObjectSQLConverter[T] extends SQLConversion[T, Array[Byte]] {
+  override def toSQL(column: ColumnLike[T, Array[Byte]], value: T): Array[Byte] = if (value != null) {
     val baos = new ByteArrayOutputStream()
     try {
       val oos = new ObjectOutputStream(baos)
@@ -34,7 +35,7 @@ class ObjectSerializationConverter[T <: AnyRef] extends DataType[T] {
     null
   }
 
-  def fromSQLType(column: ColumnLike[_], value: Any) = value match {
+  override def fromSQL(column: ColumnLike[T, Array[Byte]], value: Array[Byte]): T = value match {
     case null => null.asInstanceOf[T]
     case array: Array[Byte] => {
       val bais = new ByteArrayInputStream(array)

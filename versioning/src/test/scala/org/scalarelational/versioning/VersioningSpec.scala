@@ -1,7 +1,7 @@
 package org.scalarelational.versioning
 
-import org.scalarelational.h2.{H2Memory, H2Datastore}
-import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
+import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
@@ -146,7 +146,7 @@ object Upgrade4 extends UpgradableVersion {
     createTable("test2").
       and(createColumn[Int]("test2", "id", PrimaryKey, AutoIncrement)).
       and(createColumn[String]("test2", "name")).
-      and(createColumn[Option[Int]]("test2", "age")).result
+      and(createColumn[Option[Int], Int]("test2", "age")).result
   }
 }
 

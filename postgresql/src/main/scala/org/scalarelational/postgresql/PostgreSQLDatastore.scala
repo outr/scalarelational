@@ -72,16 +72,16 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     b.toList
   }
 
-  override protected def columnSQLType(create: CreateColumn[_]) =
+  override protected def columnSQLType(create: CreateColumn[_, _]) =
     if (create.has(AutoIncrement)) {
       "SERIAL"
-    } else if (create.dataType == doubleDataType) {
+    } else if (create.dataType == DataTypes.DoubleType) {
       "DOUBLE PRECISION"
 //    } else if (create.dataType == byteArrayDataType) { //Not sure if this isn't tested or works without?
 //      "BYTEA"
-    } else if (create.dataType.isInstanceOf[ObjectSerializationConverter[_]]) {
+    } else if (create.dataType.converter.isInstanceOf[ObjectSQLConverter[_]]) {
       "BYTEA"
-    } else if (create.dataType == blobDataType) {
+    } else if (create.dataType == DataTypes.BlobType) {
       "BYTEA"
     } else {
       super.columnSQLType(create)
@@ -120,9 +120,9 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def condition2String(condition: Condition, args: ListBuffer[DataTyped[_]]): String = condition match {
-    case c: RegexCondition[_] => {
-      args += StringDataType.typed(c.regex.toString())
+  override def condition2String(condition: Condition, args: ListBuffer[TypedValue[_, _]]): String = condition match {
+    case c: RegexCondition[_, _] => {
+      args += DataTypes.StringType.typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "!~ " else ""}~ ?"
     }
     case _ => super.condition2String(condition, args)

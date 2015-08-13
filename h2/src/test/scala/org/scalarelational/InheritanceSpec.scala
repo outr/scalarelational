@@ -1,8 +1,8 @@
 package org.scalarelational
 
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
-import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -45,7 +45,7 @@ class InheritanceSpec extends WordSpec with Matchers {
 
 object InheritanceDatastore extends H2Datastore(mode = H2Memory("inheritance_test")) {
   class BaseTable(table: String) extends Table(table) {
-    val id = column[Option[Int]]("id", AutoIncrement, PrimaryKey)
+    val id = column[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
   }
 
   object Content extends BaseTable("Content") {

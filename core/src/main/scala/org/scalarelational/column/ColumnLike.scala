@@ -1,33 +1,33 @@
 package org.scalarelational.column
 
-import org.scalarelational.op._
-import org.scalarelational.datatype.{DataType, LongDataType}
-import org.scalarelational.fun.{FunctionType, SQLFunction}
-import org.scalarelational.table.Table
 import org.scalarelational.SelectExpression
+import org.scalarelational.datatype.{DataType, DataTypes}
+import org.scalarelational.fun.{FunctionType, SQLFunction}
+import org.scalarelational.op._
+import org.scalarelational.table.Table
 
 import scala.util.matching.Regex
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
+trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String
   def table: Table
-  def dataType: DataType[T]
+  def dataType: DataType[T, S]
   def manifest: Manifest[T]
 
-  def sqlType = dataType.sqlType(table.datastore, this)
+  def sqlType = dataType.sqlType
 
-  def apply(value: T, converterOverride: Option[DataType[T]] = None): ColumnValue[T] =
-    ColumnValue[T](this, value, converterOverride)
+  def apply(value: T, converterOverride: Option[DataType[T, S]] = None): ColumnValue[T, S] =
+    ColumnValue[T, S](this, value, converterOverride)
 
-  def opt: ColumnLike[Option[T]] = ColumnOption(this)
+  def opt: ColumnLike[Option[T], S] = ColumnOption(this)
 
   def value(v: Any): T = {
     val toConvert = v match {
-      case cv: ColumnValue[_] => cv.toSQL
+      case cv: ColumnValue[_, _] => cv.toSQL
       case _ => v
     }
 
@@ -59,11 +59,11 @@ trait ColumnLike[T] extends SelectExpression[T] with ColumnPropertyContainer {
   def notRegex(regex: Regex) = RegexCondition(this, regex, not = true)
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
-  def ===(column: ColumnLike[T]) = ColumnCondition(this, Operator.Equal, column)
+  def ===(column: ColumnLike[T, S]) = ColumnCondition(this, Operator.Equal, column)
 
-  def avg = SQLFunction[T](FunctionType.Avg, this, dataType)
-  def count = SQLFunction[Long](FunctionType.Count, this, LongDataType)
-  def min = SQLFunction[T](FunctionType.Min, this, dataType)
-  def max = SQLFunction[T](FunctionType.Max, this, dataType)
-  def sum = SQLFunction[T](FunctionType.Sum, this, dataType)
+  def avg = SQLFunction[T, S](FunctionType.Avg, this, dataType)
+  def count = SQLFunction[Long, Long](FunctionType.Count, this, DataTypes.LongType)
+  def min = SQLFunction[T, S](FunctionType.Min, this, dataType)
+  def max = SQLFunction[T, S](FunctionType.Max, this, dataType)
+  def sum = SQLFunction[T, S](FunctionType.Sum, this, dataType)
 }

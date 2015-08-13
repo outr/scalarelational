@@ -1,11 +1,11 @@
 package org.scalarelational.mapper
 
-import scala.reflect.macros._
-import scala.annotation.compileTimeOnly
-import scala.language.experimental.macros
-
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.table.Table
+
+import scala.annotation.compileTimeOnly
+import scala.language.experimental.macros
+import scala.reflect.macros._
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -20,7 +20,7 @@ object Mapped {
 
   def mapTo[T](c: blackbox.Context)
               (table: c.Expr[Table])
-              (implicit t: c.WeakTypeTag[T]): c.Expr[List[ColumnValue[Any]]] = {
+              (implicit t: c.WeakTypeTag[T]): c.Expr[List[ColumnValue[Any, Any]]] = {
     import c.universe._
 
     val members = weakTypeOf[T].decls
@@ -34,8 +34,8 @@ object Mapped {
 
     val listTree = q"List(..$columns)"
     val listTreeCast =
-      q"$listTree.asInstanceOf[List[org.scalarelational.column.ColumnValue[Any]]]"
+      q"$listTree.asInstanceOf[List[org.scalarelational.column.ColumnValue[Any, Any]]]"
 
-    c.Expr[List[ColumnValue[Any]]](listTreeCast)
+    c.Expr[List[ColumnValue[Any, Any]]](listTreeCast)
   }
 }

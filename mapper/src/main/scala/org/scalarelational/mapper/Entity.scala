@@ -1,10 +1,10 @@
 package org.scalarelational.mapper
 
-import scala.language.experimental.macros
-
 import org.scalarelational.column.ColumnValue
-import org.scalarelational.datatype.{Ref, Id}
+import org.scalarelational.datatype.{Id, Ref}
 import org.scalarelational.instruction.{InsertSingle, Update}
+
+import scala.language.experimental.macros
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -15,11 +15,10 @@ trait BaseEntity[Mapped] {
 }
 
 trait Entity[Mapped] extends Id[Mapped] {
-  // TODO We cannot use MappedTable[T] because it would need to be co-variant
-  def mapTo[T <: Entity[T]](table: MappedTable[_]): List[ColumnValue[Any]] =
+  def mapTo[T <: Entity[T]](table: MappedTable[_]): List[ColumnValue[Any, Any]] =
     macro Mapped.mapTo[T]
 
-  def columns: List[ColumnValue[Any]]
+  def columns: List[ColumnValue[Any, Any]]
 
   def insert: InsertSingle[Ref[Mapped]] = {
     val values = columns

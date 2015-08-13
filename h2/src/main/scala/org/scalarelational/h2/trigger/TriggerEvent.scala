@@ -1,15 +1,15 @@
 package org.scalarelational.h2.trigger
 
-import scala.language.existentials
-
-import org.scalarelational.table.Table
 import org.scalarelational.column.Column
+import org.scalarelational.table.Table
+
+import scala.language.existentials
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 case class TriggerEvent(table: Table, triggerType: TriggerType, state: TriggerState, oldRow: Array[AnyRef], newRow: Array[AnyRef]) {
-  def apply[T](column: Column[T], array: Array[AnyRef] = defaultArray) = column.dataType.fromSQLType(column, defaultArray(column.index))
+  def apply[T, S](column: Column[T, S], array: Array[AnyRef] = defaultArray) = column.dataType.converter.fromSQL(column, defaultArray(column.index).asInstanceOf[S])
 
   def defaultArray = if (triggerType == TriggerType.Delete) {
     oldRow

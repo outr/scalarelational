@@ -1,11 +1,10 @@
 package org.scalarelational.mapper.basic
 
-import org.scalatest.{Matchers, WordSpec}
-
-import org.scalarelational.mapper._
+import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.column.property.{PrimaryKey, Unique, ForeignKey, AutoIncrement}
+import org.scalarelational.mapper._
+import org.scalatest.{Matchers, WordSpec}
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -185,14 +184,14 @@ case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sal
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends MappedTable[Person]("person") {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")
-    val surname = column[Option[String]]("surname")
+    val surname = column[Option[String], String]("surname")
   }
 
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
-    val id = column[Option[Int]]("SUP_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("SUP_NAME")
     val street = column[String]("STREET")
     val city = column[String]("CITY")
@@ -201,9 +200,9 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
-    val id = column[Option[Int]]("COF_ID", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", Unique)
-    val supId = column[Option[Ref[Supplier]]]("SUP_ID", new ForeignKey(suppliers.id))
+    val supId = column[Option[Ref[Supplier]], Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")

@@ -2,7 +2,7 @@ package org.scalarelational
 
 import java.sql.{Connection, Statement}
 
-import org.scalarelational.datatype.DataTyped
+import org.scalarelational.datatype.TypedValue
 import org.scalarelational.model.Datastore
 
 /**
@@ -33,7 +33,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     }
   }
 
-  def executeUpdate(sql: String, args: List[DataTyped[_]]) = {
+  def executeUpdate(sql: String, args: List[TypedValue[_, _]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
     try {
@@ -46,7 +46,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     }
   }
 
-  def executeInsert(sql: String, args: Seq[DataTyped[_]]) = {
+  def executeInsert(sql: String, args: Seq[TypedValue[_, _]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach {
@@ -56,7 +56,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
-  def executeInsertMultiple(sql: String, rows: Seq[Seq[DataTyped[_]]]) = {
+  def executeInsertMultiple(sql: String, rows: Seq[Seq[TypedValue[_, _]]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     rows.foreach {
@@ -71,7 +71,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
-  def executeQuery(sql: String, args: Seq[DataTyped[_]]) = {
+  def executeQuery(sql: String, args: Seq[TypedValue[_, _]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
     args.zipWithIndex.foreach {

@@ -1,9 +1,8 @@
 package org.scalarelational.h2
 
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.h2.trigger.TriggerType
 import org.scalarelational.table.Table
-import org.scalarelational.column.property.{PrimaryKey, AutoIncrement}
-
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -90,7 +89,7 @@ class TriggerSpec extends WordSpec with Matchers {
 
 object TriggerTestDatastore extends H2Datastore(mode = H2Memory("trigger_test")) {
   object triggerTest extends Table("trigger_test", Triggers.All) {
-    val id = column[Option[Int]]("id", PrimaryKey, AutoIncrement)
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
   }
 }

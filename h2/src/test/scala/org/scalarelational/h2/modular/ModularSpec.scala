@@ -200,8 +200,8 @@ object ModularDatastore extends H2Datastore {
   object users extends Table("users") with ModularSupport {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")
-    val created = column[Option[Timestamp]]("created")
-    val modified = column[Option[Timestamp]]("modified")
+    val created = column[Option[Timestamp], Timestamp]("created")
+    val modified = column[Option[Timestamp], Timestamp]("modified")
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
   }
 

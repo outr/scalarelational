@@ -1,8 +1,8 @@
 package org.scalarelational.model
 
 import org.powerscala.event.Listenable
-import org.powerscala.event.processor.{UnitProcessor, ModifiableProcessor}
-import org.scalarelational.datatype.DataTypes
+import org.powerscala.event.processor.{ModifiableProcessor, UnitProcessor}
+import org.scalarelational.datatype.DataTypeSupport
 import org.scalarelational.instruction._
 
 /**
@@ -11,7 +11,7 @@ import org.scalarelational.instruction._
  *
  * @author Matt Hicks <matt@outr.com>
  */
-trait ModularSupport extends SQLContainer with Listenable with DataTypes {
+trait ModularSupport extends SQLContainer with Listenable with DataTypeSupport {
   object handlers {
     val inserting = new ModifiableProcessor[Insert[_]]("inserting")
     val merging = new ModifiableProcessor[Merge]("merging")
