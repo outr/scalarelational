@@ -72,7 +72,8 @@ abstract class Table(name: String, tableProperties: TableProperty*)
     new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties)
 
   private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty], manifest: Manifest[T]): DataType[T, S] = {
-    datastore.dataTypeInstanceProcessor.fire(DataTypeInstance[T, S](dt, properties, manifest)).asInstanceOf[DataTypeInstance[T, S]].dataType
+    val instance = DataTypeInstance[Any, Any](dt.asInstanceOf[DataType[Any, Any]], properties, manifest.asInstanceOf[Manifest[Any]])
+    datastore.dataTypeInstanceProcessor.fire(instance).asInstanceOf[DataType[T, S]]
   }
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
