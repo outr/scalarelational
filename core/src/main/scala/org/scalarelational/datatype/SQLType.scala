@@ -13,9 +13,6 @@ trait SQLType {
 
 object SQLType {
   def apply(value: String) = new SimpleSQLType(value)
-  def f(f: (Datastore, ColumnPropertyContainer) => String) = new SQLType {
-    override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = f(datastore, properties)
-  }
 }
 
 class SimpleSQLType(value: String) extends SQLType {

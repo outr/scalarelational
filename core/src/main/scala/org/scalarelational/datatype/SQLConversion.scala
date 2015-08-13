@@ -16,13 +16,6 @@ object SQLConversion {
 
     override def fromSQL(column: ColumnLike[T, T], value: T): T = value
   }
-  def f[T, S](to: (ColumnLike[T, S], T) => S)(from: (ColumnLike[T, S], S) => T) = {
-    new SQLConversion[T, S] {
-      override def toSQL(column: ColumnLike[T, S], value: T): S = to(column, value)
-
-      override def fromSQL(column: ColumnLike[T, S], value: S): T = from(column, value)
-    }
-  }
 }
 
 class OptionSQLConversion[T, S](underlying: SQLConversion[T, S]) extends SQLConversion[Option[T], S] {
