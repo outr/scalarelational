@@ -1,11 +1,15 @@
 package org.scalarelational.mariadb
 
+import java.sql.Types
 import javax.sql.DataSource
+import javax.sql.rowset.serial.SerialBlob
 
 import com.mysql.jdbc.jdbc2.optional.{MysqlDataSource}
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
 import org.scalarelational.model._
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.datatype.SQLConversion
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 
@@ -35,6 +39,17 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
   /* This is kind of abitrary, but `DataSource.DefaultVarCharLength` does not
    * work here as it is the row size limit for MariaDB */
   override def DefaultVarCharLength = 200
+
+  dataTypeInstanceProcessor.on { instance =>
+    if (instance.dataType.jdbcType == Types.BLOB) {
+      instance.dataType.copy(converter = new SQLConversion[SerialBlob, Array[Byte]] {
+        override def toSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: SerialBlob) = value.getBytes(1, value.length.asInstanceOf[Int])
+        override def fromSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: Array[Byte]) = new SerialBlob(value)
+      }.asInstanceOf[SQLConversion[Any, Any]])
+    } else {
+      instance.dataType
+    }
+  }
 
   Class.forName("com.mysql.jdbc.Driver")
 
