@@ -134,7 +134,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query two records back via regular expression" in {
       session {
-        val query = select(test.id, test.name) from test where test.name * ".*Doe".r
+        val query = select(test.id, test.name) from test where test.name * ".*Doe".r orderBy(test.id asc)
         val results = query.result.toList
         results.size should equal (2)
         val john = results.head
@@ -545,7 +545,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
 trait AbstractTestDatastore extends Datastore {
   object test extends Table("test_table") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
-    val name = column[String]("name", Unique, ColumnLength(1024))
+    val name = column[String]("name", Unique, ColumnLength(200))
     val date = column[Option[Timestamp], Timestamp]("date")
   }
   object suppliers extends Table("SUPPLIER") {
@@ -569,7 +569,7 @@ trait AbstractTestDatastore extends Datastore {
   }
   object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
-    val fruit = column[Fruit, Array[Byte]]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
+    val fruit = column[Fruit, Blob]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
   }
 }
 

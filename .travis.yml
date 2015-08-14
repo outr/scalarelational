@@ -5,6 +5,7 @@ scala:
 jdk:
   - oraclejdk8
 addons:
+  mariadb: "10.0"
   postgresql: "9.3"
 before_script:
   - mkdir -p $HOME/.sbt/launchers/0.13.8/
