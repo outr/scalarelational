@@ -569,7 +569,7 @@ trait AbstractTestDatastore extends Datastore {
   }
   object fruitColors extends Table("fruit_colors") {
     val color = column[String]("color")
-    val fruit = column[Fruit, Array[Byte]]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
+    val fruit = column[Fruit, Blob]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
   }
 }
 

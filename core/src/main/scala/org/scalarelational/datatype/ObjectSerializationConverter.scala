@@ -1,53 +1,47 @@
 package org.scalarelational.datatype
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.sql.Types
+import java.io.{ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.sql.{Types, Blob}
+import javax.sql.rowset.serial.SerialBlob
 
 import org.scalarelational.column.ColumnLike
 
 /**
- * ObjectSerializationConverter stores any arbitrary serializable object as a Array[Byte].
+ * ObjectSerializationConverter stores any arbitrary serializable object as a Blob.
  *
  * @author Matt Hicks <matt@outr.com>
  */
 object ObjectSerializationDataTypeCreator {
   def create[T <: AnyRef](implicit manifest: Manifest[T]) = {
-    new DataType[T, Array[Byte]](Types.BINARY, SQLType(s"BINARY(${Int.MaxValue})"), new ObjectSQLConverter[T])
+    new DataType[T, Blob](Types.BLOB, SQLType("BLOB"), new ObjectSQLConverter[T])
   }
 }
 
-class ObjectSQLConverter[T] extends SQLConversion[T, Array[Byte]] {
-  override def toSQL(column: ColumnLike[T, Array[Byte]], value: T): Array[Byte] = if (value != null) {
+class ObjectSQLConverter[T] extends SQLConversion[T, Blob] {
+  override def toSQL(column: ColumnLike[T, Blob], value: T): Blob = {
     val baos = new ByteArrayOutputStream()
     try {
       val oos = new ObjectOutputStream(baos)
       try {
         oos.writeObject(value)
         oos.flush()
-        baos.toByteArray
+        new SerialBlob(baos.toByteArray)
       } finally {
         oos.close()
       }
     } finally {
       baos.close()
     }
-  } else {
-    null
   }
 
-  override def fromSQL(column: ColumnLike[T, Array[Byte]], value: Array[Byte]): T = value match {
+  override def fromSQL(column: ColumnLike[T, Blob], value: Blob): T = value match {
     case null => null.asInstanceOf[T]
-    case array: Array[Byte] => {
-      val bais = new ByteArrayInputStream(array)
+    case blob: Blob => {
+      val ois = new ObjectInputStream(blob.getBinaryStream())
       try {
-        val ois = new ObjectInputStream(bais)
-        try {
-          ois.readObject().asInstanceOf[T]
-        } finally {
-          ois.close()
-        }
+        ois.readObject().asInstanceOf[T]
       } finally {
-        bais.close()
+        ois.close()
       }
     }
   }
