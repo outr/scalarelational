@@ -1,17 +1,17 @@
 package org.scalarelational.mariadb
 
-import java.sql.{Types, Blob}
+import java.sql.{Blob, Types}
 import javax.sql.DataSource
 import javax.sql.rowset.serial.SerialBlob
 
-import com.mysql.jdbc.jdbc2.optional.{MysqlDataSource}
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
-import org.scalarelational.model._
 import org.scalarelational.column.ColumnLike
-import org.scalarelational.datatype.{DataType, SQLConversion, ObjectSQLConverter}
+import org.scalarelational.datatype.{ObjectSQLConverter, SQLConversion}
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
+import org.scalarelational.model._
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -41,8 +41,8 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
   override def DefaultVarCharLength = 200
 
   dataTypeInstanceProcessor.on { instance =>
-    instance.dataType match {
-      case DataType(Types.BLOB, _, c, _) if c.isInstanceOf[ObjectSQLConverter[_]] => {
+    instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
+      case c: ObjectSQLConverter[_] => {
         instance.dataType.copy(converter = new SQLConversion[Any, Array[Byte]] {
           override def toSQL(column: ColumnLike[Any, Array[Byte]], value: Any) = {
             val anyColumn = column.asInstanceOf[ColumnLike[Any, Any]]
@@ -56,7 +56,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
           }
         }.asInstanceOf[SQLConversion[Any, Any]])
       }
-      case DataType(Types.BLOB, _, _, _) => {
+      case _ if instance.dataType.jdbcType == Types.BLOB => {
         instance.dataType.copy(converter = new SQLConversion[SerialBlob, Array[Byte]] {
           override def toSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: SerialBlob) = value.getBytes(1, value.length.asInstanceOf[Int])
           override def fromSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: Array[Byte]) = new SerialBlob(value)

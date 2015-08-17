@@ -9,7 +9,7 @@ import org.scalarelational.datatype.create.{EnumDataTypeCreator, OptionDataTypeC
 trait DataTypeSupport {
   import DataTypes._
 
-  implicit def bigDecimalType = BigDecimal
+  implicit def bigDecimalType = BigDecimalType
   implicit def booleanType = BooleanType
   implicit def blobType = BlobType
   implicit def byteArrayType = ByteArrayType
