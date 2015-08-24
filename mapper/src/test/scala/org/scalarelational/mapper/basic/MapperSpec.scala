@@ -57,6 +57,13 @@ class MapperSpec extends WordSpec with Matchers {
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
+      "automatically map a subset of columns to a case class" in {
+        session {
+          val query = select(*) from people where name === "Jane"
+          val jane = query.to[PartialPerson].result.head()
+          jane should equal(PartialPerson("Jane", Some(2)))
+        }
+      }
     }
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
@@ -168,6 +175,10 @@ case class Person(name: String, age: Int, surname: Option[String] = None, id: Op
   object Test { // Objects are ignored by mapper
     val value = 42
   }
+}
+
+case class PartialPerson(name: String, id: Option[Int] = None) extends Entity[PartialPerson] {
+  def columns = mapTo[PartialPerson](Datastore.people)
 }
 
 case class Name(value: String)
