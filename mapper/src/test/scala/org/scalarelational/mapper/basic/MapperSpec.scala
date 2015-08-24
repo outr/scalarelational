@@ -1,5 +1,7 @@
 package org.scalarelational.mapper.basic
 
+import org.h2.jdbc.JdbcSQLException
+
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
@@ -61,7 +63,7 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val query = select(*) from people where name === "Jane"
           val jane = query.to[PartialPerson].result.head()
-          jane should equal(PartialPerson("Jane", Some(2)))
+          jane should equal(PartialPerson("Jane", 19, Some(2)))
         }
       }
     }
@@ -70,6 +72,19 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val result = Person("Ray", 30).insert.result
           result.id should equal(4)
+        }
+      }
+      "automatically convert a case class with a subset of optional columns to an insert" in {
+        session {
+          val result = PartialPerson("Ray2", 30).insert.result
+          result.id should equal(5)
+        }
+      }
+      "don't convert a case class with missing non-optional columns to an insert" in {
+        session {
+          intercept[JdbcSQLException] {
+            PartialPersonWithoutAge("Ray3").insert.result
+          }
         }
       }
       "query back the inserted object" in {
@@ -177,8 +192,12 @@ case class Person(name: String, age: Int, surname: Option[String] = None, id: Op
   }
 }
 
-case class PartialPerson(name: String, id: Option[Int] = None) extends Entity[PartialPerson] {
+case class PartialPerson(name: String, age: Int, id: Option[Int] = None) extends Entity[PartialPerson] {
   def columns = mapTo[PartialPerson](Datastore.people)
+}
+
+case class PartialPersonWithoutAge(name: String, id: Option[Int] = None) extends Entity[PartialPersonWithoutAge] {
+  def columns = mapTo[PartialPersonWithoutAge](Datastore.people)
 }
 
 case class Name(value: String)
