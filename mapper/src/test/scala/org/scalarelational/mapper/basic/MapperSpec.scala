@@ -159,6 +159,23 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
     }
+    "deleting" should {
+      import people._
+
+      "find and delete Jane Doe" in {
+        session {
+          val query = select(*) from people where name === "Jane"
+          val jane = query.to[Person].result.head()
+          jane.delete.result
+        }
+      }
+      "no longer find Jane Doe" in {
+        session {
+          val query = select(*) from people where name === "Jane"
+          query.to[Person].result.converted.headOption should equal(None)
+        }
+      }
+    }
   }
 }
 

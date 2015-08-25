@@ -1,8 +1,8 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.column.ColumnValue
+import org.scalarelational.column.{Column, ColumnValue}
 import org.scalarelational.datatype.{Id, Ref}
-import org.scalarelational.instruction.{InsertSingle, Update}
+import org.scalarelational.instruction.{Delete, InsertSingle, Update}
 
 import scala.language.experimental.macros
 
@@ -19,6 +19,14 @@ trait Entity[Mapped] extends Id[Mapped] {
     macro Mapped.mapTo[T]
 
   def columns: List[ColumnValue[Any, Any]]
+
+  def delete: Delete = if (id.nonEmpty) {
+    val table = columns.head.column.table
+    val primaryKey = table.primaryKey.asInstanceOf[Column[Option[Int], Int]]
+    table.datastore.delete(table) where primaryKey === id
+  } else {
+    throw new RuntimeException("Cannot delete un-persisted entity.")
+  }
 
   def insert: InsertSingle[Ref[Mapped]] = {
     val values = columns
