@@ -16,7 +16,6 @@ trait HikariSupport extends SQLDatastore {
         val config = new HikariConfig()
         config.setDataSource(ds)
         val hikari = new HikariDataSource(config)
-        hikari.suspendPool()
         dataSourceProperty := hikari
       }
     }
