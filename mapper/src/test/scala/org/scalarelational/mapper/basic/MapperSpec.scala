@@ -1,7 +1,6 @@
 package org.scalarelational.mapper.basic
 
 import org.h2.jdbc.JdbcSQLException
-
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
@@ -122,13 +121,12 @@ class MapperSpec extends WordSpec with Matchers {
           val highGroundId = Supplier("The High Ground", "100 Coffee Lane", "Meadows", "CA", "93966").insert.result
 
           // Insert Coffees
-          Coffee("Colombian", Some(acmeId), 7.99, 0, 0).insert.result
-          Coffee("French Roast", Some(superiorId), 8.99, 0, 0).insert.result
-          Coffee("Espresso", Some(highGroundId), 9.99, 0, 0).insert.result
-          Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0).insert.result
-          Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0).insert.result
-          Coffee("Caffè American", None, 12.99, 0, 0).insert.result
-          // TODO: add batch insert / update support for persist
+          Coffee("Colombian", Some(acmeId), 7.99, 0, 0).insert.
+            and(Coffee("French Roast", Some(superiorId), 8.99, 0, 0).insert).
+            and(Coffee("Espresso", Some(highGroundId), 9.99, 0, 0).insert).
+            and(Coffee("Colombian Decaf", Some(acmeId), 8.99, 0, 0).insert).
+            and(Coffee("French Roast Decaf", Some(superiorId), 9.99, 0, 0).insert).
+            and(Coffee("Caffè American", None, 12.99, 0, 0).insert).result
         }
       }
       "query back 'French Roast' with 'Superior Coffee'" in {

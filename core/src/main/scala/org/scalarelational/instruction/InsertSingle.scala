@@ -18,6 +18,9 @@ case class InsertSingle[+ResultType](table: Table,
   def and(nextRow: ColumnValue[_, _]*): InsertMultiple =
     InsertMultiple(table, Seq(values, nextRow))
 
+  def and(insert: InsertSingle[_]): InsertMultiple =
+    InsertMultiple(table, Seq(values, insert.values))
+
   override def add(value: ColumnValue[_, _]): InsertSingle[ResultType] = {
     val filtered = values.filterNot(_.column == value.column)
     copy(values = value :: filtered.toList)
