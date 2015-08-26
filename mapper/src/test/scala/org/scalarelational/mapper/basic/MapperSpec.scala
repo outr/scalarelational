@@ -150,6 +150,39 @@ class MapperSpec extends WordSpec with Matchers {
           coffees.by(coffees.id, Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
+      "query multiple with left join" in {
+        session {
+          val query = (
+            select
+              (coffees.* ::: suppliers.*)
+            from
+              coffees
+            leftJoin
+              suppliers
+            on
+              coffees.supId === suppliers.ref.opt
+            orderBy
+              coffees.id.asc
+          )
+          val results = query.to[Coffee, Supplier](coffees, suppliers).result.converted.toVector
+          // TODO: use Option[Supplier]:
+//          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
+          results.length should equal(6)
+          check(results.head, "Colombian", "Acme, Inc.")
+          check(results(1), "French Roast", "Superior Coffee")
+          check(results(2), "Espresso", "The High Ground")
+          check(results(3), "Colombian Decaf", "Acme, Inc.")
+          check(results(4), "French Roast Decaf", "Superior Coffee")
+          check(results(5), "Caffè American", null)
+
+          def check(t: (Coffee, Supplier), coffeeName: String, supplierName: String) = t match {
+            case (coffee, supplier) => {
+              coffee.name should equal(coffeeName)
+              supplier.name should equal(supplierName)
+            }
+          }
+        }
+      }
     }
     "working with @mapped Macro Annotation" should {
       val s = Supplier("Supplier Name", "Supplier Street", "Supplier City", "Supplier State", "Supplier Zip")
