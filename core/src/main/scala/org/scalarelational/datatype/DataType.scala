@@ -7,7 +7,7 @@ class DataType[T, S](val jdbcType: Int,
                      val sqlType: SQLType,
                      val converter: SQLConversion[T, S],
                      val sqlOperator: SQLOperator[T, S] = new DefaultSQLOperator[T, S]) {
-  def typed(value: T) = TypedValue(this, value)
+  def typed(value: T) = new TypedValue(this, value)
 
   def copy(jdbcType: Int = jdbcType,
            sqlType: SQLType = sqlType,

@@ -7,12 +7,12 @@ import org.scalarelational.table.Table
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-private[scalarelational] class Column[T, S](val name: String,
-                                         val dataType: DataType[T, S],
-                                         val manifest: Manifest[T],
-                                         val table: Table,
-                                         val props: Seq[ColumnProperty]
-                                        ) extends ColumnLike[T, S] {
+class Column[T, S] private[scalarelational](val name: String,
+                                            val dataType: DataType[T, S],
+                                            val manifest: Manifest[T],
+                                            val table: Table,
+                                            val props: Seq[ColumnProperty]
+                                           ) extends ColumnLike[T, S] {
   table.addColumn(this)     // Add this column to the table
   this.props(props: _*)
 

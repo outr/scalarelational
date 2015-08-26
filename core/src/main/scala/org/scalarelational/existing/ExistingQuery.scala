@@ -3,7 +3,7 @@ package org.scalarelational.existing
 import java.sql.ResultSet
 
 import org.powerscala.reflect._
-import org.scalarelational.datatype.TypedValue
+import org.scalarelational.datatype.{DataTypes, TypedValue}
 import org.scalarelational.model.Datastore
 
 import scala.annotation.tailrec
@@ -51,4 +51,4 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
   }
 }
 
-case class NamedArgument(key: String, value: String)
+class NamedArgument(val key: String, value: String) extends TypedValue[String, String](DataTypes.StringType, value)

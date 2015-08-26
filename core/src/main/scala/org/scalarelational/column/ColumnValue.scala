@@ -1,7 +1,7 @@
 package org.scalarelational.column
 
 import org.scalarelational.ExpressionValue
-import org.scalarelational.datatype.{DataType, TypedValue}
+import org.scalarelational.datatype.DataType
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -26,8 +26,6 @@ class ColumnValue[T, S] private(val column: ColumnLike[T, S],
     case cv: ColumnValue[_, _] => cv.column == column && cv.value == value
     case _ => false
   }
-
-  def typed = TypedValue[T, S](column.dataType, value)
 }
 
 object ColumnValue {
