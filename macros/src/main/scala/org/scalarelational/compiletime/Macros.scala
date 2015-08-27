@@ -66,6 +66,7 @@ object Macros {
   }
 
   private def type2Instance[T](c: blackbox.Context)(tpe: c.universe.Type, table: c.Expr[Table]) = {
+    import c.universe._
     val members = tpe.decls
     val fields = members.filter(_.asTerm.isVal)
     val args = fields.map { field =>
