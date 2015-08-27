@@ -52,6 +52,20 @@ object Macros {
     }
 
     val tpe = weakTypeOf[R]
+    val instance = type2Instance[R](c)(tpe, table)
+
+    val conv = q"""
+       val converter = new org.scalarelational.instruction.ResultConverter[$r] {
+         def apply(result: org.scalarelational.result.QueryResult[$r]): $r = {
+           $instance
+         }
+       }
+       $query.convert[$r](converter)
+    """
+    c.Expr[Query[Vector[SelectExpression[_]], R]](conv)
+  }
+
+  private def type2Instance[T](c: blackbox.Context)(tpe: c.universe.Type, table: c.Expr[Table]) = {
     val members = tpe.decls
     val fields = members.filter(_.asTerm.isVal)
     val args = fields.map { field =>
@@ -59,16 +73,7 @@ object Macros {
       q"result($table.$name)"
     }
     val companion = tpe.typeSymbol.companion
-
-    val conv = q"""
-       val converter = new org.scalarelational.instruction.ResultConverter[$r] {
-         def apply(result: org.scalarelational.result.QueryResult[$r]): $r = {
-           $companion(..$args)
-         }
-       }
-       $query.convert[$r](converter)
-    """
-    c.Expr[Query[Vector[SelectExpression[_]], R]](conv)
+    q"$companion(..$args)"
   }
 
   /*def converter2[R1, R2](c: blackbox.Context)
