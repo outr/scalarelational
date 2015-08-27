@@ -1,9 +1,11 @@
 package org.scalarelational.mapper.basic
 
 import org.h2.jdbc.JdbcSQLException
+import org.scalarelational.SelectExpression
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.instruction.Query
 import org.scalarelational.mapper._
 import org.scalatest.{Matchers, WordSpec}
 
@@ -264,6 +266,8 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val name = column[String]("name")
     val age = column[Int]("age")
     val surname = column[Option[String], String]("surname")
+
+    override def query = q.to[Person]
   }
 
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
@@ -273,6 +277,8 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val city = column[String]("CITY")
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
+
+    override def query = q.to[Supplier]
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
@@ -282,5 +288,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
+
+    override def query = q.to[Coffee]
   }
 }

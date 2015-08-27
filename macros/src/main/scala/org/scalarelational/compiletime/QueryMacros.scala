@@ -20,6 +20,7 @@ object QueryMacros {
       case Apply(_, List(qry)) => qry
     }
 
+    println(q"$query.table.getClass")
     val instance = typeWrapper[R](c)(weakTypeOf[R], c.Expr[Table](q"$query.table"))
 
     val conv = q"""
