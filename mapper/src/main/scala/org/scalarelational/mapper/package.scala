@@ -12,7 +12,7 @@ import scala.reflect.runtime.universe._
  */
 package object mapper {
   implicit class MapperQuery[Expressions, Result](query: Query[Expressions, Result]) {
-    def to[R](table: Table): Query[Vector[SelectExpression[_]], R] =
+    def to[R]: Query[Vector[SelectExpression[_]], R] =
       macro QueryMacros.to1[R]
 
     def to[R1, R2](table1: Table, table2: Table): Query[Vector[SelectExpression[_]], (R1, R2)] =
