@@ -13,7 +13,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   extends Table(name, tableProperties: _*)(ds) {
   def ref: ColumnLike[Ref[MappedType], Int] = RefColumn[MappedType](primaryKey.asInstanceOf[ColumnLike[MappedType, Int]])
 
-  def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
+  def query = q.to[MappedType](this)
 
   def by[T, S](column: Column[T, S], value: T)
            (implicit manifest: Manifest[MappedType]) = datastore.session {

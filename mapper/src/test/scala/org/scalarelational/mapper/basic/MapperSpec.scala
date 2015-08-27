@@ -164,7 +164,7 @@ class MapperSpec extends WordSpec with Matchers {
             orderBy
               coffees.id.asc
           )
-          val results = query.macroTo[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
+          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
           results.length should equal(6)
           check(results.head, "Colombian", Some("Acme, Inc."))
           check(results(1), "French Roast", Some("Superior Coffee"))
