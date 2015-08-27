@@ -43,9 +43,11 @@ object Macros {
   }
 
   def to[R](c: blackbox.Context)
-           (query: c.Expr[Query[Vector[SelectExpression[_]], _]], table: c.Expr[Table])
+           (table: c.Expr[Table])
            (implicit r: c.WeakTypeTag[R]): c.Expr[Query[Vector[SelectExpression[_]], R]] = {
     import c.universe._
+
+    val query = c.prefix.tree
 
     val tpe = weakTypeOf[R]
     val members = tpe.decls

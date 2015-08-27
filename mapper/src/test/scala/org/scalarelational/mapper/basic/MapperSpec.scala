@@ -169,7 +169,7 @@ class MapperSpec extends WordSpec with Matchers {
 //          val results = query.macroTo[Coffee, Option[Supplier]](coffees, suppliers) //.result.converted.toVector
 //          val results = query.macroConverter[Coffee, Option[Supplier]](coffees, suppliers) //.result.converted.toVector
 //          val results = query.macroConverter[Coffee](coffees) //.result.converted.toVector
-          val results = macroTo[Coffee](query, coffees)
+          val results = query.macroTo[Coffee](coffees)
           println(s"Results: $results")
 //          results.length should equal(6)
 //          check(results.head, "Colombian", "Acme, Inc.")

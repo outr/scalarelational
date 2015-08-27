@@ -18,8 +18,8 @@ package object mapper {
 
 //    def macroConverter[R](table: Table): ResultConverter[R] = macro Macros.converter1[R]
 //    def macroConverter[R1, R2](table1: Table, table2: Table): ResultConverter[(R1, R2)] = macro Macros.converter2[R1, R2]
-  }
 
-  def macroTo[R](query: Query[Vector[SelectExpression[_]], _], table: Table): Query[Vector[SelectExpression[_]], R] =
+  def macroTo[R](table: Table): Query[Vector[SelectExpression[_]], R] =
     macro Macros.to[R]
+  }
 }
