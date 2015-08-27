@@ -4,10 +4,11 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, h2, mariadb, postgresql, mapper, versioning)
+  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
+  lazy val macros = project("macros").withDependencies(scalaTest).dependsOn(core)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
   lazy val mariadb = project("mariadb").withDependencies(mariadbdatabase).dependsOn(core, core % "test->test")
   lazy val postgresql = project("postgresql").withDependencies(postgresqldatabase).dependsOn(core, core % "test->test")
@@ -20,10 +21,8 @@ object ScalaRelationalBuild extends Build {
   def pgRegFilter(name: String): Boolean = (name endsWith "Spec") && !pgSslFilter(name)
   def pgSslFilter(name: String):Boolean = name endsWith "SslSpec"
 
-  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
+  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, macros, h2 % "test->test")
   lazy val versioning = project("versioning").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
-
-
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",

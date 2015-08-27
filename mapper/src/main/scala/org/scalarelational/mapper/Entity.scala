@@ -3,6 +3,7 @@ package org.scalarelational.mapper
 import org.scalarelational.column.{Column, ColumnValue}
 import org.scalarelational.datatype.{Id, Ref}
 import org.scalarelational.instruction.{Delete, InsertSingle, Update}
+import org.scalarelational.compiletime.Macros
 
 import scala.language.experimental.macros
 
@@ -16,7 +17,7 @@ trait BaseEntity[Mapped] {
 
 trait Entity[Mapped] extends Id[Mapped] {
   def mapTo[T <: Entity[T]](table: MappedTable[_]): List[ColumnValue[Any, Any]] =
-    macro Mapped.mapTo[T]
+    macro Macros.mapTo[T]
 
   def columns: List[ColumnValue[Any, Any]]
 

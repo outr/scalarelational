@@ -164,23 +164,27 @@ class MapperSpec extends WordSpec with Matchers {
             orderBy
               coffees.id.asc
           )
-          val results = query.to[Coffee, Supplier](coffees, suppliers).result.converted.toVector
+//          val results = query.to[Coffee, Supplier](coffees, suppliers).result.converted.toVector
           // TODO: use Option[Supplier]:
-//          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
-          results.length should equal(6)
-          check(results.head, "Colombian", "Acme, Inc.")
-          check(results(1), "French Roast", "Superior Coffee")
-          check(results(2), "Espresso", "The High Ground")
-          check(results(3), "Colombian Decaf", "Acme, Inc.")
-          check(results(4), "French Roast Decaf", "Superior Coffee")
-          check(results(5), "Caffè American", null)
-
-          def check(t: (Coffee, Supplier), coffeeName: String, supplierName: String) = t match {
-            case (coffee, supplier) => {
-              coffee.name should equal(coffeeName)
-              supplier.name should equal(supplierName)
-            }
-          }
+//          val results = query.macroTo[Coffee, Option[Supplier]](coffees, suppliers) //.result.converted.toVector
+//          val results = query.macroConverter[Coffee, Option[Supplier]](coffees, suppliers) //.result.converted.toVector
+//          val results = query.macroConverter[Coffee](coffees) //.result.converted.toVector
+          val results = macroTo[Coffee](query, coffees)
+          println(s"Results: $results")
+//          results.length should equal(6)
+//          check(results.head, "Colombian", "Acme, Inc.")
+//          check(results(1), "French Roast", "Superior Coffee")
+//          check(results(2), "Espresso", "The High Ground")
+//          check(results(3), "Colombian Decaf", "Acme, Inc.")
+//          check(results(4), "French Roast Decaf", "Superior Coffee")
+//          check(results(5), "Caffè American", null)
+//
+//          def check(t: (Coffee, Supplier), coffeeName: String, supplierName: String) = t match {
+//            case (coffee, supplier) => {
+//              coffee.name should equal(coffeeName)
+//              supplier.name should equal(supplierName)
+//            }
+//          }
         }
       }
     }

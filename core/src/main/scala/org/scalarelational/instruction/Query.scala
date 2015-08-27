@@ -98,3 +98,5 @@ case class Query[Expressions, Result](expressions: Expressions,
     }
   }
 }
+
+trait ResultConverter[Result] extends ((QueryResult[Result]) => Result)
