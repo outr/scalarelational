@@ -134,6 +134,8 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
     val name = column[String]("name")
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
+
+    override def query = q.to[User]
   }
 
   object content extends MappedTable[Content]("content") {
@@ -147,5 +149,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
     val string = column[String]("string", Polymorphic)
     val entries = column[List[String], String]("entries", Polymorphic)
     val isString = column[Boolean]("isString")
+
+    override def query = q.to[Content]
   }
 }

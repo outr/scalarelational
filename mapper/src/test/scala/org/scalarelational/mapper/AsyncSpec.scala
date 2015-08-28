@@ -68,5 +68,7 @@ object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
     val age = column[Int]("age")
+
+    override def query = q.to[AsyncUser]
   }
 }

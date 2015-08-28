@@ -13,6 +13,7 @@ import scala.reflect.macros.blackbox
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object QueryMacros {
   def to1[R](c: blackbox.Context)
+            (table: c.Expr[Table])
             (implicit r: c.WeakTypeTag[R]): c.Expr[Query[Vector[SelectExpression[_]], R]] = {
     import c.universe._
 
@@ -20,8 +21,7 @@ object QueryMacros {
       case Apply(_, List(qry)) => qry
     }
 
-    println(q"$query.table.getClass")
-    val instance = typeWrapper[R](c)(weakTypeOf[R], c.Expr[Table](q"$query.table"))
+    val instance = typeWrapper[R](c)(weakTypeOf[R], table)
 
     val conv = q"""
        val converter = new org.scalarelational.instruction.ResultConverter[$r] {
@@ -106,7 +106,7 @@ object QueryMacros {
       val name = TermName(Macros.simpleName(field.fullName))
       q"result.has($table.$name)"
     }
-    q"List(..$args).find(b => b).nonEmpty"
+    q"Set(..$args).contains(true)"
   }
 
   private def type2Instance[T](c: blackbox.Context)(tpe: c.universe.Type, table: c.Expr[Table]) = {

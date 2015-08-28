@@ -1,18 +1,27 @@
 package org.scalarelational
 
-import org.scalarelational.instruction.{Query, ResultConverter}
-import org.scalarelational.compiletime.{QueryMacros, Macros}
+import org.powerscala.reflect._
+import org.scalarelational.compiletime.QueryMacros
+import org.scalarelational.instruction.Query
+import org.scalarelational.result.QueryResult
 import org.scalarelational.table.Table
 
 import scala.language.experimental.macros
-import scala.reflect.runtime.universe._
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 package object mapper {
   implicit class MapperQuery[Expressions, Result](query: Query[Expressions, Result]) {
-    def to[R]: Query[Vector[SelectExpression[_]], R] =
+    def to[R](implicit manifest: Manifest[R]) = {
+      val clazz: EnhancedClass = manifest.runtimeClass
+      val f = (r: QueryResult[R]) => {
+        clazz.create[R](r.toFieldMap)
+      }
+      query.convert[R](f)
+    }
+
+    def toMacro[R](table: Table): Query[Vector[SelectExpression[_]], R] =
       macro QueryMacros.to1[R]
 
     def to[R1, R2](table1: Table, table2: Table): Query[Vector[SelectExpression[_]], (R1, R2)] =

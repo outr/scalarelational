@@ -1,11 +1,9 @@
 package org.scalarelational.mapper.basic
 
 import org.h2.jdbc.JdbcSQLException
-import org.scalarelational.SelectExpression
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.instruction.Query
 import org.scalarelational.mapper._
 import org.scalatest.{Matchers, WordSpec}
 
@@ -57,6 +55,13 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           val query = select(*) from people where name === "Jane"
           val jane = query.to[Person].result.head()
+          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
+        }
+      }
+      "automatically map to a case class with Macro" in {
+        session {
+          val query = select(*) from people where name === "Jane"
+          val jane = query.toMacro[Person](people).result.head()
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
