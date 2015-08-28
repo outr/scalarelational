@@ -8,7 +8,7 @@ import org.powerscala.event.{EventState, Listenable}
 import org.powerscala.log.Logging
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.ColumnProperty
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{DataType, TypedValue}
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
@@ -99,7 +99,15 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
     sql.result
   }
 
-  def describe[E, R](query: Query[E, R]): (String, List[Any])
+  /**
+   * Converts the `Query` to a SQL `String` and a `List` of arguments.
+   *
+   * @param query to describe
+   * @tparam E expressions
+   * @tparam R result
+   * @return (String, List[TypedValue[_, _])
+   */
+  def describe[E, R](query: Query[E, R]): (String, List[TypedValue[_, _]])
 
   private[scalarelational] final def exec[E, R](query: Query[E, R]): ResultSet = {
     val table = query.table

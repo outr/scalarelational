@@ -31,9 +31,9 @@ object DataTypes {
 
     override def fromSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: math.BigDecimal) = BigDecimal(value)
   }))
-  val BooleanType = new SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
-  val BlobType = new SimpleDataType[Blob](Types.BLOB, SQLType("BLOB"))
-  val ByteArrayType = new SimpleDataType[Array[Byte]](Types.BINARY, new SQLType {
+  object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
+  object BlobType extends SimpleDataType[Blob](Types.BLOB, SQLType("BLOB"))
+  object ByteArrayType extends SimpleDataType[Array[Byte]](Types.BINARY, new SQLType {
     override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
       val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
@@ -41,18 +41,18 @@ object DataTypes {
       s"BINARY($length)"
     }
   }, SQLConversion.identity)
-  val DoubleType = new SimpleDataType[Double](Types.DOUBLE, SQLType("DOUBLE"))
-  val IntType = new SimpleDataType[Int](Types.INTEGER, SQLType("INTEGER"))
-  val LongType = new SimpleDataType[Long](Types.BIGINT, SQLType("BIGINT"))
-  val StringType = new SimpleDataType[String](Types.VARCHAR, StringSQLType)
-  val TimestampType = new SimpleDataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
+  object DoubleType extends SimpleDataType[Double](Types.DOUBLE, SQLType("DOUBLE"))
+  object IntType extends SimpleDataType[Int](Types.INTEGER, SQLType("INTEGER"))
+  object LongType extends SimpleDataType[Long](Types.BIGINT, SQLType("BIGINT"))
+  object StringType extends SimpleDataType[String](Types.VARCHAR, StringSQLType)
+  object TimestampType extends SimpleDataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
   val WrappedStringType = simplify(new DataType[WrappedString, String](StringType.jdbcType, StringType.sqlType, new SQLConversion[WrappedString, String] {
     override def toSQL(column: ColumnLike[WrappedString, String], value: WrappedString) = value.value
 
     override def fromSQL(column: ColumnLike[WrappedString, String], value: String) = column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
   }))
 
-  val LongTimestampType = new DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
+  object LongTimestampType extends DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
     override def toSQL(column: ColumnLike[Long, Timestamp], value: Long) = new Timestamp(value)
 
     override def fromSQL(column: ColumnLike[Long, Timestamp], value: Timestamp) = value.getTime

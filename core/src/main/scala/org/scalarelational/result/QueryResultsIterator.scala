@@ -47,7 +47,11 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
     val value = rs.getObject(index + 1).asInstanceOf[S]
     if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
-    else dataType.converter.fromSQL(c, value)
+    else try {
+      dataType.converter.fromSQL(c, value)
+    } catch {
+      case t: Throwable => throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
+    }
   }
 
   protected def valueFromExpressions[T, S](expression: SelectExpression[T], index: Int): ExpressionValue[T] =

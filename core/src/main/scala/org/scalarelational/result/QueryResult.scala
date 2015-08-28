@@ -16,8 +16,8 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
   def apply() = converted
 
   def get[T, S](column: Column[T, S]) = values.collectFirst {
-    case cv: ColumnValue[_, _] if cv.column == column => cv.value.asInstanceOf[T]
-  }
+    case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
+  }.flatten
 
   def apply[T, S](column: Column[T, S]) = {
     get[T, S](column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
@@ -25,7 +25,7 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
 
   def has[T, S](column: Column[T, S]) = {
     val value = get[T, S](column)
-    value.nonEmpty && value.get != null && value.get != None
+    value.nonEmpty && value.get != None
   }
 
   def apply[T, S](function: SQLFunction[T, S]) = values.collectFirst {
