@@ -1,9 +1,10 @@
 package org.scalarelational.mapper
 
+import org.scalarelational.SelectExpression
 import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue, RefColumn}
 import org.scalarelational.datatype._
-import org.scalarelational.instruction.{InsertSingle, Update}
+import org.scalarelational.instruction.{Query, InsertSingle, Update}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.TableProperty
@@ -13,7 +14,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   extends Table(name, tableProperties: _*)(ds) {
   def ref: ColumnLike[Ref[MappedType], Int] = RefColumn[MappedType](primaryKey.asInstanceOf[ColumnLike[MappedType, Int]])
 
-  def query(implicit manifest: Manifest[MappedType]) = q.to[MappedType](manifest)
+  def query: Query[Vector[SelectExpression[_]], MappedType]
 
   def by[T, S](column: Column[T, S], value: T)
            (implicit manifest: Manifest[MappedType]) = datastore.session {

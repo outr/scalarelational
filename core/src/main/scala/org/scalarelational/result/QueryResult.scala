@@ -14,9 +14,19 @@ case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]],
   lazy val converted = converter(this)
 
   def apply() = converted
-  def apply[T, S](column: Column[T, S]) = values.collectFirst {
+
+  def get[T, S](column: Column[T, S]) = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column == column => cv.value.asInstanceOf[T]
-  }.getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
+  }
+
+  def apply[T, S](column: Column[T, S]) = {
+    get[T, S](column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
+  }
+
+  def has[T, S](column: Column[T, S]) = {
+    val value = get[T, S](column)
+    value.nonEmpty && value.get != null && value.get != None
+  }
 
   def apply[T, S](function: SQLFunction[T, S]) = values.collectFirst {
     case fv: SQLFunctionValue[_, _] if function.alias.nonEmpty && fv.function.alias == function.alias => fv.value.asInstanceOf[T]

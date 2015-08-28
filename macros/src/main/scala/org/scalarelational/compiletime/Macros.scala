@@ -1,17 +1,16 @@
-package org.scalarelational.mapper
+package org.scalarelational.compiletime
 
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.table.Table
 
 import scala.annotation.compileTimeOnly
-import scala.language.experimental.macros
-import scala.reflect.macros._
+import scala.reflect.macros.blackbox
 
 /**
  * @author Matt Hicks <matt@outr.com>
  */
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
-object Mapped {
+object Macros {
   def simpleName(fullName: String) =
     fullName.lastIndexOf('.') match {
       case -1       => fullName

@@ -58,6 +58,13 @@ class MapperSpec extends WordSpec with Matchers {
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
+      "automatically map to a case class with Macro" in {
+        session {
+          val query = select(*) from people where name === "Jane"
+          val jane = query.toMacro[Person](people).result.head()
+          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
+        }
+      }
       "automatically map a subset of columns to a case class" in {
         session {
           val query = select(*) from people where name === "Jane"
@@ -164,21 +171,19 @@ class MapperSpec extends WordSpec with Matchers {
             orderBy
               coffees.id.asc
           )
-          val results = query.to[Coffee, Supplier](coffees, suppliers).result.converted.toVector
-          // TODO: use Option[Supplier]:
-//          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
+          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
           results.length should equal(6)
-          check(results.head, "Colombian", "Acme, Inc.")
-          check(results(1), "French Roast", "Superior Coffee")
-          check(results(2), "Espresso", "The High Ground")
-          check(results(3), "Colombian Decaf", "Acme, Inc.")
-          check(results(4), "French Roast Decaf", "Superior Coffee")
-          check(results(5), "Caffè American", null)
+          check(results.head, "Colombian", Some("Acme, Inc."))
+          check(results(1), "French Roast", Some("Superior Coffee"))
+          check(results(2), "Espresso", Some("The High Ground"))
+          check(results(3), "Colombian Decaf", Some("Acme, Inc."))
+          check(results(4), "French Roast Decaf", Some("Superior Coffee"))
+          check(results(5), "Caffè American", None)
 
-          def check(t: (Coffee, Supplier), coffeeName: String, supplierName: String) = t match {
+          def check(t: (Coffee, Option[Supplier]), coffeeName: String, supplierName: Option[String]) = t match {
             case (coffee, supplier) => {
               coffee.name should equal(coffeeName)
-              supplier.name should equal(supplierName)
+              supplier.map(_.name) should equal(supplierName)
             }
           }
         }
@@ -266,6 +271,8 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val name = column[String]("name")
     val age = column[Int]("age")
     val surname = column[Option[String], String]("surname")
+
+    override def query = q.to[Person]
   }
 
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
@@ -275,6 +282,8 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val city = column[String]("CITY")
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
+
+    override def query = q.to[Supplier]
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
@@ -284,5 +293,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
+
+    override def query = q.to[Coffee]
   }
 }

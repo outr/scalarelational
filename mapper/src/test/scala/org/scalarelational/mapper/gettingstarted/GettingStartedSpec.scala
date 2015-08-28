@@ -4,7 +4,7 @@ import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
-import org.scalarelational.mapper.{Entity, MappedTable}
+import org.scalarelational.mapper._
 import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
 
@@ -57,7 +57,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
       import coffees._
 
       session {
-        val results = (select (*) from coffees).result.toVector
+        val results = (select(*) from coffees).result.toVector
         results.length should equal(5)
         check(results(0), "COFFEES(COF_NAME: Colombian, SUP_ID: 1, PRICE: 7.99, SALES: 0, TOTAL: 0, COF_ID: Some(1))")
         check(results(1), "COFFEES(COF_NAME: French Roast, SUP_ID: 2, PRICE: 8.99, SALES: 0, TOTAL: 0, COF_ID: Some(2))")
@@ -69,6 +69,17 @@ class GettingStartedSpec extends WordSpec with Matchers {
       def check(result: QueryResult[_], expected: String) = {
         val s = result.toString
         s should equal(expected)
+      }
+    }
+    "Query all the Coffees explicitly" in {
+      import GettingStartedDatastore.{coffees => c}
+
+      session {
+        val query = select (c.name, c.supID, c.price, c.sales, c.total) from coffees
+
+        query.result.converted.map {
+          case (name, supID, price, sales, total) => s"$name  $supID  $price  $sales  $total"
+        }.mkString("\n")
       }
     }
     "Query all Coffees filtering and joining with Suppliers" in {
@@ -161,6 +172,8 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val zip = column[String]("ZIP")
     val status = column[Status, String]("STATUS")
     val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
+
+    override def query = q.to[Supplier]
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
@@ -170,6 +183,8 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
     val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
+
+    override def query = q.to[Coffee]
   }
 }
 

@@ -1,4 +1,4 @@
-package org.scalarelational
+package org.scalarelational.mapper
 
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
@@ -37,7 +37,7 @@ class InheritanceSpec extends WordSpec with Matchers {
     "query content with mapper" in {
       session {
         val query = Content.q from Content where Content.id === Some(2)
-        query.to[Content].result.converted.head should equal (Content("content2", Some(2)))
+        query.to[InheritanceDatastore.Content].result.converted.head should equal (Content("content2", Some(2)))
       }
     }
   }
