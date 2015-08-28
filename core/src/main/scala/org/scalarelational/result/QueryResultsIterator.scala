@@ -2,7 +2,6 @@ package org.scalarelational.result
 
 import java.sql.ResultSet
 
-import org.scalarelational.column.property.Polymorphic
 import org.scalarelational.column.{ColumnLike, ColumnValue}
 import org.scalarelational.datatype.DataType
 import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
@@ -46,8 +45,9 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
     val value = rs.getObject(index + 1).asInstanceOf[S]
-    if ((c.has(Polymorphic) && !c.isOptional) && value == null) null.asInstanceOf[T]
-    else try {
+    if (!c.isOptional && value == null) {
+      null.asInstanceOf[T]
+    } else try {
       dataType.converter.fromSQL(c, value)
     } catch {
       case t: Throwable => throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
