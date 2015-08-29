@@ -1,7 +1,6 @@
 package org.scalarelational.versioning
 
 import org.scalarelational.extra.PersistentProperties
-import org.scalarelational.model.Datastore
 
 /**
  * @author Matt Hicks <matt@outr.com>
@@ -23,7 +22,10 @@ trait VersioningSupport extends PersistentProperties {
     info("Checking for Database Upgrades...")
 
     session {
-      val latestVersion = upgrades.keys.toList.max
+      val latestVersion = upgrades.keys.toList match {
+        case Nil => 0
+        case keys => keys.max
+      }
 
       if (version() == 0 && persistence.get("databaseVersion").isEmpty) {
         info(s"New database created. Setting version to latest (version $latestVersion) without running upgrades.")
