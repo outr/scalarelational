@@ -20,10 +20,10 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
 
   def query(args: List[TypedValue[_, _]]) = {
     val namedArgs = args.collect {
-      case arg if arg.value.isInstanceOf[NamedArgument] => arg.value.asInstanceOf[NamedArgument]
+      case arg if arg.isInstanceOf[NamedArgument] => arg.asInstanceOf[NamedArgument]
     }
     val query = applyNamed(queryString, namedArgs)
-    val results = datastore.session.executeQuery(query, args.filterNot(a => a.value.isInstanceOf[NamedArgument]))
+    val results = datastore.session.executeQuery(query, args.filterNot(a => a.isInstanceOf[NamedArgument]))
     new Iterator[R] {
       def hasNext = results.next()
       def next() = result2R(results)
@@ -51,4 +51,6 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
   }
 }
 
-class NamedArgument(val key: String, value: String) extends TypedValue[String, String](DataTypes.StringType, value)
+class NamedArgument(val key: String, value: String) extends TypedValue[String, String](DataTypes.StringType, value) {
+  override def toString = s"NamedArgument($key = $value)"
+}

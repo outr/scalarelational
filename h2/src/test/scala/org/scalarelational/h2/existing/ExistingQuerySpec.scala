@@ -2,7 +2,7 @@ package org.scalarelational.h2.existing
 
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.datatype.DataTypes
-import org.scalarelational.existing.ExistingQuery
+import org.scalarelational.existing.{ExistingQuery, NamedArgument}
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
@@ -16,8 +16,10 @@ class ExistingQuerySpec extends WordSpec with Matchers {
   import TestDatastore._
 
   "ExistingQuery" should {
-    val queryString = "SELECT id, name, language FROM users WHERE id = ?"
-    val existingQuery = new ExistingQuery[ExistingResult](TestDatastore, queryString)
+    val queryString1 = "SELECT id, name, language FROM users WHERE id = ?"
+    val queryString2 = "SELECT id, name, language FROM users WHERE id = :id"
+    val existingQuery1 = new ExistingQuery[ExistingResult](TestDatastore, queryString1)
+    val existingQuery2 = new ExistingQuery[ExistingResult](TestDatastore, queryString2)
     "create the database" in {
       session {
         create(users)
@@ -31,12 +33,22 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     }
     "query back a specific result" in {
       session {
-        val results = existingQuery.query(List(DataTypes.IntType.typed(2))).toList
+        val results = existingQuery1.query(List(DataTypes.IntType.typed(2))).toList
         results.length should equal(1)
         val result = results.head
         result.id should equal(2)
         result.name should equal("Victor")
         result.language should equal("Russian")
+      }
+    }
+    "query back a specific result with a NamedArgument" in {
+      session {
+        val results = existingQuery2.query(List(new NamedArgument("id", "1"))).toList
+        results.length should equal(1)
+        val result = results.head
+        result.id should equal(1)
+        result.name should equal("Adam")
+        result.language should equal("English")
       }
     }
   }
