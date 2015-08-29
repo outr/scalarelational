@@ -21,7 +21,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     CreateColumn[T, S](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)(column.manifest)
   }
 
-  override def ddl(tables: List[Table], ifNotExists: Boolean = true): List[CallableInstruction] = {
+  override def ddl(tables: List[Table], ifNotExists: Boolean = false): List[CallableInstruction] = {
     val b = ListBuffer.empty[CallableInstruction]
 
     tables.foreach {
@@ -47,7 +47,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
         table.columns.foreach {
           case column => column.get[Indexed](Indexed.name) match {
             case Some(index) => {
-              b ++= ddl(CreateIndex(table.tableName, index.indexName, List(column.name)))
+              b ++= ddl(CreateIndex(table.tableName, index.indexName, List(column.name), ifNotExists = false))
             }
             case None => // No index of this column
           }

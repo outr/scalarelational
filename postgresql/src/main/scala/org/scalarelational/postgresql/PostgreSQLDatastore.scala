@@ -1,5 +1,6 @@
 package org.scalarelational.postgresql
 
+import java.sql.Types
 import javax.sql.DataSource
 
 import org.postgresql.ds.PGSimpleDataSource
@@ -35,6 +36,15 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
   Class.forName("org.postgresql.Driver")
 
   val config = Property[PostgreSQL.Config]()
+
+  dataTypeInstanceProcessor.on { instance =>
+    instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
+      case _ if instance.dataType.jdbcType == Types.BLOB => {
+        instance.dataType.copy(sqlType = SQLType("BYTEA"))
+      }
+      case _ => instance.dataType
+    }
+  }
 
   init()
 
