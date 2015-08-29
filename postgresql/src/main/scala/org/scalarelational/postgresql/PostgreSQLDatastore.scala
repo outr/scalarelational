@@ -5,12 +5,12 @@ import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import org.powerscala.log.{Level, Logging}
 import org.powerscala.property.Property
-import org.scalarelational.column.ColumnPropertyContainer
 import org.scalarelational.column.property.{AutoIncrement, Polymorphic, Unique}
+import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.ddl.CreateColumn
 import org.scalarelational.model._
-import org.scalarelational.op.{Condition, RegexCondition}
+import org.scalarelational.op.{Condition, DirectCondition, Operator, RegexCondition}
 import org.scalarelational.result.ResultSetIterator
 
 import scala.collection.mutable.ListBuffer
@@ -124,6 +124,14 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     case c: RegexCondition[_, _] => {
       args += DataTypes.StringType.typed(c.regex.toString())
       s"${c.column.longName} ${if (c.not) "!~ " else ""}~ ?"
+    }
+    case c: DirectCondition[_, _] => {
+      val dataType = c.column.dataType.asInstanceOf[DataType[Any, Any]]
+      val op = dataType.sqlOperator(c.column.asInstanceOf[ColumnLike[Any, Any]], c.value, c.operator)
+      op match {
+        case Operator.Is | Operator.IsNot => s"${c.column.longName} ${op.symbol} NULL"
+        case _ => super.condition2String(condition, args)
+      }
     }
     case _ => super.condition2String(condition, args)
   }

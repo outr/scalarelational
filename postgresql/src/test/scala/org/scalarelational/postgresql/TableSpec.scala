@@ -14,6 +14,8 @@ class TableSpec extends AbstractTableSpec {
   override def testDatastore = TestDatastore
   override def specialTypes = SpecialTypesDatastore
   override def testCrossReference = TestCrossReferenceDatastore
+
+  override protected def expectedNotNone = ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT NULL", Nil)
 }
 
 object TestDatastore extends PostgreSQLDatastore(PostgreSQL.Config("localhost", "tablespec", "travis", "pa")) with AbstractTestDatastore with HikariSupport

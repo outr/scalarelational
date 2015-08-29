@@ -29,6 +29,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
   def testCrossReference: AbstractTestCrossReferenceDatastore
   def specialTypes: AbstractSpecialTypesDatastore
 
+  protected def expectedNotNone: (String, Seq[TypedValue[_, _]]) = ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(OptionDataTypeCreator.create[Int, Int](DataTypes.IntType).typed(null)))
+
   "test" should {
     val ds = testDatastore
     import ds._
@@ -118,7 +120,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
-          ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(OptionDataTypeCreator.create[Int, Int](implicitly[SimpleDataType[Int]]).typed(null)))
+          expectedNotNone
         )
         val results = query.result.toList
         results.size should equal (2)
@@ -392,7 +394,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import fruitColors._
 
     "insert an Orange" in {
-      session {
+      transaction {
         insert(color("Orange"), fruit(Fruit("Orange"))).result
       }
     }
@@ -557,6 +559,7 @@ trait AbstractTestDatastore extends Datastore {
     val zip = column[String]("ZIP")
   }
   object coffees extends Table("COFFEE") {
+    val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", PrimaryKey)
     val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
