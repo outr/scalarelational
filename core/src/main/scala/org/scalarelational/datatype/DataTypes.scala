@@ -32,7 +32,7 @@ object DataTypes {
     override def fromSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: math.BigDecimal) = BigDecimal(value)
   }))
   object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
-  object BlobType extends SimpleDataType[Blob](Types.BLOB, SQLType("BLOB"))
+  object BlobType extends SimpleDataType[Blob](Types.BLOB, new BlobSQLType("BLOB"))
   object ByteArrayType extends SimpleDataType[Array[Byte]](Types.BINARY, new SQLType {
     override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
       val length = properties.get[ColumnLength](ColumnLength.Name)

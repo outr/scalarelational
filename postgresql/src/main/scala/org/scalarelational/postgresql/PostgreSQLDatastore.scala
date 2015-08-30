@@ -40,7 +40,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
   dataTypeInstanceProcessor.on { instance =>
     instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
       case _ if instance.dataType.jdbcType == Types.BLOB => {
-        instance.dataType.copy(sqlType = SQLType("BYTEA"))
+        instance.dataType.copy(sqlType = new BlobSQLType("BYTEA"))
       }
       case _ => instance.dataType
     }
@@ -87,12 +87,6 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
       "SERIAL"
     } else if (create.dataType == DataTypes.DoubleType) {
       "DOUBLE PRECISION"
-//    } else if (create.dataType == byteArrayDataType) { //Not sure if this isn't tested or works without?
-//      "BYTEA"
-    } else if (create.dataType.converter.isInstanceOf[ObjectSQLConverter[_]]) {
-      "BYTEA"
-    } else if (create.dataType == DataTypes.BlobType) {
-      "BYTEA"
     } else {
       super.columnSQLType(create)
     }
@@ -130,19 +124,22 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def condition2String(condition: Condition, args: ListBuffer[TypedValue[_, _]]): String = condition match {
-    case c: RegexCondition[_, _] => {
-      args += DataTypes.StringType.typed(c.regex.toString())
-      s"${c.column.longName} ${if (c.not) "!~ " else ""}~ ?"
-    }
-    case c: DirectCondition[_, _] => {
-      val dataType = c.column.dataType.asInstanceOf[DataType[Any, Any]]
-      val op = dataType.sqlOperator(c.column.asInstanceOf[ColumnLike[Any, Any]], c.value, c.operator)
-      op match {
-        case Operator.Is | Operator.IsNot => s"${c.column.longName} ${op.symbol} NULL"
-        case _ => super.condition2String(condition, args)
+  override def condition2String(condition: Condition,
+                                args: ListBuffer[TypedValue[_, _]]): String =
+    condition match {
+      case c: RegexCondition[_, _] => {
+        args += DataTypes.StringType.typed(c.regex.toString())
+        s"${c.column.longName} ${if (c.not) "!~ " else ""}~ ?"
       }
+
+      case c: DirectCondition[_, _] => {
+        val dataType = c.column.dataType.asInstanceOf[DataType[Any, Any]]
+        val op = dataType.sqlOperator(c.column.asInstanceOf[ColumnLike[Any, Any]], c.value, c.operator)
+        op match {
+          case Operator.Is | Operator.IsNot => s"${c.column.longName} ${op.symbol} NULL"
+          case _ => super.condition2String(condition, args)
+        }
+      }
+      case _ => super.condition2String(condition, args)
     }
-    case _ => super.condition2String(condition, args)
-  }
 }
