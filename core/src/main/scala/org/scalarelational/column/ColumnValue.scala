@@ -16,7 +16,7 @@ class ColumnValue[T, S] private(val column: ColumnLike[T, S],
     } catch {
       case t: Throwable =>
         val sourceClass = column.manifest.runtimeClass
-        val targetClass = value.getClass
+        val targetClass = if (value != null) value.getClass else null
         throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (table = ${column.table}, column = $column, value = $value)", t)
     }
 

@@ -20,7 +20,7 @@ object SQLConversion {
 
 class OptionSQLConversion[T, S](underlying: SQLConversion[T, S]) extends SQLConversion[Option[T], S] {
   override def toSQL(column: ColumnLike[Option[T], S], value: Option[T]): S = value match {
-    case None => null.asInstanceOf[S]
+    case None | null => null.asInstanceOf[S]
     case Some(t) => underlying.toSQL(column.asInstanceOf[ColumnLike[T, S]], t)
   }
 
