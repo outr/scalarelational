@@ -13,7 +13,7 @@ import org.scalarelational.column.ColumnLike
  */
 object ObjectSerializationDataTypeCreator {
   def create[T <: AnyRef](implicit manifest: Manifest[T]) = {
-    new DataType[T, Blob](Types.BLOB, SQLType("BLOB"), new ObjectSQLConverter[T])
+    new DataType[T, Blob](Types.BLOB, new BlobSQLType("BLOB"), new ObjectSQLConverter[T])
   }
 }
 
@@ -34,15 +34,12 @@ class ObjectSQLConverter[T] extends SQLConversion[T, Blob] {
     }
   }
 
-  override def fromSQL(column: ColumnLike[T, Blob], value: Blob): T = value match {
-    case null => null.asInstanceOf[T]
-    case blob: Blob => {
-      val ois = new ObjectInputStream(blob.getBinaryStream())
-      try {
-        ois.readObject().asInstanceOf[T]
-      } finally {
-        ois.close()
-      }
+  override def fromSQL(column: ColumnLike[T, Blob], value: Blob): T = {
+    val ois = new ObjectInputStream(value.getBinaryStream)
+    try {
+      ois.readObject().asInstanceOf[T]
+    } finally {
+      ois.close()
     }
   }
 }

@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.sql.{Connection, Statement}
+import java.sql.{Blob, Connection, Statement}
 
 import org.scalarelational.datatype.TypedValue
 import org.scalarelational.model.Datastore
@@ -49,8 +49,11 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   def executeInsert(sql: String, args: Seq[TypedValue[_, _]]) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-    args.zipWithIndex.foreach {
-      case (arg, index) => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
+    args.zipWithIndex.foreach { case (arg, index) =>
+      arg.value match {
+        case b: Blob => ps.setBinaryStream(index + 1, b.getBinaryStream)
+        case _ => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
+      }
     }
     ps.executeUpdate()
     ps.getGeneratedKeys

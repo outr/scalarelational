@@ -571,6 +571,7 @@ trait AbstractTestDatastore extends Datastore {
     val age = column[Int]("age", Indexed("idxage"))
   }
   object fruitColors extends Table("fruit_colors") {
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val color = column[String]("color")
     val fruit = column[Fruit, Blob]("fruit", ObjectSerializationDataTypeCreator.create[Fruit])
   }

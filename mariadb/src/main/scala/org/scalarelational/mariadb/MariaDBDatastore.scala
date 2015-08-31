@@ -40,32 +40,6 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
    * work here as it is the row size limit for MariaDB */
   override def DefaultVarCharLength = 200
 
-  dataTypeInstanceProcessor.on { instance =>
-    instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
-      case c: ObjectSQLConverter[_] => {
-        instance.dataType.copy(converter = new SQLConversion[Any, Array[Byte]] {
-          override def toSQL(column: ColumnLike[Any, Array[Byte]], value: Any) = {
-            val anyColumn = column.asInstanceOf[ColumnLike[Any, Any]]
-            val blob = instance.dataType.converter.toSQL(anyColumn, value).asInstanceOf[Blob]
-            blob.getBytes(1, blob.length.asInstanceOf[Int])
-          }
-          override def fromSQL(column: ColumnLike[Any, Array[Byte]], value: Array[Byte]) = {
-            val blob = new SerialBlob(value)
-            val anyColumn = column.asInstanceOf[ColumnLike[Any, Any]]
-            instance.dataType.converter.fromSQL(anyColumn, blob)
-          }
-        }.asInstanceOf[SQLConversion[Any, Any]])
-      }
-      case _ if instance.dataType.jdbcType == Types.BLOB => {
-        instance.dataType.copy(converter = new SQLConversion[SerialBlob, Array[Byte]] {
-          override def toSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: SerialBlob) = value.getBytes(1, value.length.asInstanceOf[Int])
-          override def fromSQL(column: ColumnLike[SerialBlob, Array[Byte]], value: Array[Byte]) = new SerialBlob(value)
-        }.asInstanceOf[SQLConversion[Any, Any]])
-      }
-      case _ => instance.dataType
-    }
-  }
-
   Class.forName("com.mysql.jdbc.Driver")
 
   val config = Property[MariaDBConfig]()

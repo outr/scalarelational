@@ -1,9 +1,11 @@
 package org.scalarelational.result
 
+import java.io.{InputStream, ByteArrayOutputStream}
 import java.sql.ResultSet
+import javax.sql.rowset.serial.SerialBlob
 
 import org.scalarelational.column.{ColumnLike, ColumnValue}
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{BlobSQLType, DataType}
 import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
 import org.scalarelational.instruction.Query
 import org.scalarelational.{ExpressionValue, SelectExpression}
@@ -43,12 +45,33 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
+  private def readInputStream(in: InputStream): ByteArrayOutputStream = {
+    val out = new ByteArrayOutputStream()
+    val buffer = new Array[Byte](1024)
+    while (true) {
+      in.read(buffer) match {
+        case -1 => return out
+        case read => out.write(buffer, 0, read)
+      }
+    }
+    out
+  }
+
   protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
-    val value = rs.getObject(index + 1).asInstanceOf[S]
+    val value =
+      dataType.sqlType match {
+        case t: BlobSQLType =>
+          val binaryStream = rs.getBinaryStream(index + 1)
+          val byteArrayStream = readInputStream(binaryStream)
+          new SerialBlob(byteArrayStream.toByteArray)
+
+        case _ => rs.getObject(index + 1)
+      }
+
     if (!c.isOptional && value == null) {
       null.asInstanceOf[T]
     } else try {
-      dataType.converter.fromSQL(c, value)
+      dataType.converter.fromSQL(c, value.asInstanceOf[S])
     } catch {
       case t: Throwable => throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
     }

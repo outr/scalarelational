@@ -27,3 +27,5 @@ object StringSQLType extends SQLType {
     else s"VARCHAR($length)"
   }
 }
+
+class BlobSQLType(value: String) extends SimpleSQLType(value)

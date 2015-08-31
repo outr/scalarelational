@@ -106,7 +106,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val resultSet = session.executeInsert(insertString, columnValues)
     try {
       if (resultSet.next()) {
-        resultSet.getInt(1)
+        resultSet.getInt(1)  // TODO This restricts the PKs on PostgreSQL to integers
       } else {
         -1
       }
