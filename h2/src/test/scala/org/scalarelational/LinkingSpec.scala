@@ -2,6 +2,7 @@ package org.scalarelational
 
 import org.scalarelational.column.property.{AutoIncrement, IgnoreCase, PrimaryKey, Unique}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.model.SQLLogging
 import org.scalarelational.table.{LinkingTable, Table}
 import org.scalatest.{Matchers, WordSpec}
 
@@ -26,12 +27,15 @@ class LinkingSpec extends WordSpec with Matchers {
       session {
         insert(Content.title("content")).result should equal (1)
         insert(Content.title("content2")).result should equal (2)
+        insert(Content.title("content3")).result should equal (3)
 
         insert(Tag.name("tag")).result should equal (1)
         insert(Tag.name("tag2")).result should equal (2)
 
-        insertInto(ContentTagLinking, 1, 2).result should equal (1)
-        insertInto(ContentTagLinking, 2, 1).result should equal (2)
+        def l = ContentTagLinking
+        insert(l.contentId(1), l.tagId(2)).result should equal(1)
+        insert(l.contentId(2), l.tagId(1)).result should equal(2)
+        insert(l.contentId(3), l.tagId(1)).result should equal(3)
       }
     }
 
@@ -51,7 +55,9 @@ class LinkingSpec extends WordSpec with Matchers {
   }
 }
 
-object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) {
+object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) with SQLLogging {
+
+
   object Content extends Table("Content") {
     val id = column[Option[Int], Int]("id", AutoIncrement, PrimaryKey)
     val title = column[String]("title")
