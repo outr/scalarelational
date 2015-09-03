@@ -41,13 +41,11 @@ trait DSLSupport {
     case (value, column) => column.asInstanceOf[Column[Any, Any]](value)
   }: _*)
   def insertBatch(rows: Seq[Seq[ColumnValue[_, _]]]) = InsertMultiple(rows.head.head.column.table, rows)
-  def insert(inserts: Insert[_]*) = {
-    val rows = inserts.flatMap(_.rows)
-    InsertMultiple(inserts.head.table, rows)
-  }
   def merge(key: Column[_, _], values: ColumnValue[_, _]*) = Merge(values.head.column.table, key, values.toList)
   def update(values: ColumnValue[_, _]*) = Update[Int](values.head.column.table, values.toList, null, identity[Int])
   def delete(table: Table) = Delete(table)
+
+  implicit def insert2Rows(inserts: Seq[Insert[_]]): Seq[Seq[ColumnValue[_, _]]] = inserts.flatMap(_.rows)
 }
 
 object DSLSupport extends DSLSupport {
