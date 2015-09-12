@@ -1,5 +1,6 @@
 package org.scalarelational.versioning
 
+import org.powerscala.concurrent.Time
 import org.scalarelational.extra.PersistentProperties
 
 /**
@@ -40,9 +41,11 @@ trait VersioningSupport extends PersistentProperties {
             val nextVersion = v + 1
             info(s"Upgrading from version $v to $nextVersion...")
             val upgrade = upgrades.getOrElse(nextVersion, throw new RuntimeException(s"No version registered for $nextVersion."))
-            upgrade.upgrade()
+            val elapsed = Time.elapsed {
+              upgrade.upgrade()
+            }
             version := nextVersion
-            info(s"$nextVersion upgrade finished successfully.")
+            info(s"$nextVersion upgrade finished successfully in $elapsed seconds.")
           }
         }
       }
