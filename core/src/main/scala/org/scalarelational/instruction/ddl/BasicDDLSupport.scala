@@ -139,7 +139,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
   }
 
   override def ddl(drop: DropTable): List[CallableInstruction] = {
-    val sql = s"DROP TABLE ${drop.tableName}${if (drop.cascade) " CASCADE"}"
+    val sql = s"DROP TABLE ${drop.tableName}${if (drop.cascade) " CASCADE" else ""}"
     List(CallableInstruction(sql))
   }
 
