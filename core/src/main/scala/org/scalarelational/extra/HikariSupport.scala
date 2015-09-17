@@ -26,7 +26,7 @@ trait HikariSupport extends SQLDatastore {
     super.dispose()
 
     dataSource match {
-      case ds: HikariDataSource => ds.shutdown()
+      case ds: HikariDataSource => ds.close()
       case _ => // Not a HikariDataSource
     }
   }

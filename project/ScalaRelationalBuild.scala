@@ -77,7 +77,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.1.0"
+  val version = "1.2.0-SNAPSHOT"
   val url = "http://outr.com"
   val licenseType = "MIT"
   val licenseURL = "http://opensource.org/licenses/MIT"
@@ -87,7 +87,7 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.8"
+  val sbtVersion = "0.13.9"
   val scalaVersion = "2.11.7"
 }
 
@@ -97,9 +97,9 @@ object Dependencies {
   object powerscala {
     val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion
   }
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.3.9"
-  val h2database = "com.h2database" % "h2" % "1.4.187"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.1"
+  val h2database = "com.h2database" % "h2" % "1.4.189"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.36"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
+  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1202-jdbc42"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }
