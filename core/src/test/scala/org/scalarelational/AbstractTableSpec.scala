@@ -21,6 +21,8 @@ import scala.language.postfixOps
  * @author Matt Hicks <matt@outr.com>
  */
 trait AbstractTableSpec extends WordSpec with Matchers {
+  val currentTime = System.currentTimeMillis()
+
   var acmeId: Int = _
   var superiorId: Int = _
   var highGroundId: Int = _
@@ -389,12 +391,11 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert and verify defaults" in {
       session {
-        val current = System.currentTimeMillis()
         insert(name("Baby Doe"), age(1)).result
         val (n, a, c) = (select(names.name, names.age, names.created) from names where names.name === "Baby Doe").result.converted.one
         n should equal("Baby Doe")
         a should equal(1)
-        c should be >= current
+        c should be >= currentTime
       }
     }
   }
