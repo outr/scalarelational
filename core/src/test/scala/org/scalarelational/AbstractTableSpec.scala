@@ -387,6 +387,16 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         }
       }
     }
+    "insert and verify defaults" in {
+      session {
+        val current = System.currentTimeMillis()
+        insert(name("Baby Doe"), age(1)).result
+        val (n, a, c) = (select(names.name, names.age, names.created) from names where names.name === "Baby Doe").result.converted.one
+        n should equal("Baby Doe")
+        a should equal(1)
+        c should be >= current
+      }
+    }
   }
   "fruit colors" should {
     val ds = testDatastore
@@ -569,6 +579,7 @@ trait AbstractTestDatastore extends Datastore {
   object names extends Table("names") {
     val name = column[String]("name", PrimaryKey, Unique)
     val age = column[Int]("age", Indexed("idxage"))
+    val created = column[Long, Timestamp]("created", Default("NOW()"))
   }
   object fruitColors extends Table("fruit_colors") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)

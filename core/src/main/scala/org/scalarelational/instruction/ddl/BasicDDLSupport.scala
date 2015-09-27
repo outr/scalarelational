@@ -192,6 +192,10 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     if (container.has(Unique)) {
       b.append("UNIQUE")
     }
+    container.get[Default](Default.name) match {
+      case Some(default) => b.append(s"DEFAULT ${default.value}")
+      case None => // No default specified
+    }
     b.toList
   }
 }

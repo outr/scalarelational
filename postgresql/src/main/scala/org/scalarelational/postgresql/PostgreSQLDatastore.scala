@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import org.powerscala.log.{Level, Logging}
 import org.powerscala.property.Property
-import org.scalarelational.column.property.{AutoIncrement, Polymorphic, Unique}
+import org.scalarelational.column.property.{Default, AutoIncrement, Polymorphic, Unique}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.ddl.CreateColumn
@@ -78,6 +78,10 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
     if (container.has(Unique)) {
       b.append("UNIQUE")
+    }
+    container.get[Default](Default.name) match {
+      case Some(default) => b.append(s"DEFAULT ${default.value}")
+      case None => // No default specified
     }
     b.toList
   }
