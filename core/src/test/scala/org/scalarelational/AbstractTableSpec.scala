@@ -391,7 +391,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "insert and verify defaults" in {
       session {
-        insert(name("Baby Doe"), age(1)).result
+        insert(names.name("Baby Doe"), names.age(1)).result
         val (n, a, c) = (select(names.name, names.age, names.created) from names where names.name === "Baby Doe").result.converted.one
         n should equal("Baby Doe")
         a should equal(1)
@@ -578,7 +578,7 @@ trait AbstractTestDatastore extends Datastore {
     val total = column[Int]("TOTAL")
   }
   object names extends Table("names") {
-    val name = column[String]("name", PrimaryKey, Unique)
+    val name = column[String]("name", Unique)
     val age = column[Int]("age", Indexed("idxage"))
     val created = column[Long, Timestamp]("created", Default("NOW()"))
   }
