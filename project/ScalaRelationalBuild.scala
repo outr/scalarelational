@@ -50,21 +50,21 @@ object ScalaRelationalBuild extends Build {
     pomExtra := <url>${Details.url}</url>
       <licenses>
         <license>
-          <name>${Details.licenseType}</name>
-          <url>${Details.licenseURL}</url>
+          <name>{Details.licenseType}</name>
+          <url>{Details.licenseURL}</url>
           <distribution>repo</distribution>
         </license>
       </licenses>
       <scm>
-        <developerConnection>scm:${Details.repoURL}</developerConnection>
-        <connection>scm:${Details.repoURL}</connection>
-        <url>${Details.projectURL}</url>
+        <developerConnection>scm:{Details.repoURL}</developerConnection>
+        <connection>scm:{Details.repoURL}</connection>
+        <url>{Details.projectURL}</url>
       </scm>
       <developers>
         <developer>
-          <id>${Details.developerId}</id>
-          <name>${Details.developerName}</name>
-          <url>${Details.developerURL}</url>
+          <id>{Details.developerId}</id>
+          <name>{Details.developerName}</name>
+          <url>{Details.developerURL}</url>
         </developer>
       </developers>
   )

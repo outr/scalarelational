@@ -581,6 +581,7 @@ trait AbstractTestDatastore extends Datastore {
     val name = column[String]("name", Unique)
     val age = column[Int]("age", Indexed("idxage"))
     val created = column[Long, Timestamp]("created", Default("NOW()"))
+    val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
   }
   object fruitColors extends Table("fruit_colors") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
