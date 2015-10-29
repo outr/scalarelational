@@ -15,11 +15,9 @@ import scala.language.existentials
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-abstract class Table(name: String, tableProperties: TableProperty*)
+abstract class Table(val tableName: String, tableProperties: TableProperty*)
                     (implicit val datastore: Datastore)
   extends Joinable with SQLContainer with DataTypeSupport with TablePropertyContainer {
-
-  lazy val tableName = if (name == null) Table.generateName(getClass) else name
 
   datastore.add(this)   // Make sure the Datastore knows about this table
 
