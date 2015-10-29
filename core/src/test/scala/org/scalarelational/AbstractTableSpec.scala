@@ -291,23 +291,23 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query the minimum price" in {
       session {
-        val query = select(price.min) from coffees
+        val query = select(Min(price)) from coffees
         val results = query.result.toList
         results.size should equal(1)
         val values = results.head
         values.values.size should equal(1)
-        val minimumPrice = values(price.min)
+        val minimumPrice = values(Min(price))
         minimumPrice should equal(7.99)
       }
     }
     "query the count of coffees for Superior Coffee" in {
       session {
-        val query = select(name.count) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
+        val query = select(Count(name)) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
         val results = query.result.toList
         results.size should equal(1)
         val values = results.head
         values.values.size should equal(1)
-        val count = values(name.count)
+        val count = values(Count(name))
         count should equal(2)
       }
     }

@@ -3,7 +3,7 @@ package org.scalarelational.fun
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.SelectExpression
 import org.scalarelational.column.ColumnLike
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{DataTypes, DataType}
 
 import scala.language.existentials
 
@@ -18,17 +18,29 @@ case class SQLFunction[T, S](functionType: FunctionType,
   def as(alias: String) = copy[T, S](alias = Some(alias))
 }
 
-sealed abstract class FunctionType(val sql: String) extends EnumEntry
+trait FunctionType {
+  def sql: String
+}
 
-object FunctionType extends Enumerated[FunctionType] {
-  case object Avg extends FunctionType("AVG")
-  case object BoolAnd extends FunctionType("BOOL_AND")
-  case object BoolOr extends FunctionType("BOOL_OR")
-  case object Count extends FunctionType("COUNT")
-  case object GroupConcat extends FunctionType("GROUP_CONCAT")
-  case object Max extends FunctionType("MAX")
-  case object Min extends FunctionType("MIN")
-  case object Sum extends FunctionType("SUM")
+case class SpecificFunctionType[T, S](sql: String, converter: DataType[T, S]) extends FunctionType {
+  def apply(column: ColumnLike[_, _]) = {
+    SQLFunction[T, S](this, column, converter)
+  }
+}
 
-  val values = findValues.toVector
+case class DerivedFunctionType(sql: String) extends FunctionType {
+  def apply[T, S](column: ColumnLike[T, S]) = {
+    SQLFunction[T, S](this, column, column.dataType)
+  }
+}
+
+trait BasicFunctionTypes {
+  val Avg = DerivedFunctionType("AVG")
+  val BoolAnd = SpecificFunctionType("BOOL_AND", DataTypes.BooleanType)
+  val BoolOr = SpecificFunctionType("BOOL_OR", DataTypes.BooleanType)
+  val Count = SpecificFunctionType("COUNT", DataTypes.LongType)
+  val GroupConcat = SpecificFunctionType("GROUP_CONCAT", DataTypes.StringType)
+  val Max = DerivedFunctionType("MAX")
+  val Min = DerivedFunctionType("MIN")
+  val Sum = DerivedFunctionType("SUM")
 }

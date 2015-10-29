@@ -61,18 +61,18 @@ class ExampleSpec extends WordSpec with Matchers {
     "query rating.avg" in {
       import coffees._
       session {
-        (select (rating.avg)
+        (select (Avg(rating))
           from coffees
-        ).result.one(rating.avg).get should be > 0.0
+        ).result.one.converted.get should be > 0.0
       }
     }
     "query rating.avg without None" in {
       import coffees._
       session {
-        (select (rating.avg)
+        (select (Avg(rating))
           from coffees
           where rating.!==(None) // !== conflicts with ScalaTest
-        ).result.one(rating.avg).get should be > 0.0
+        ).result.one.converted.get should be > 0.0
       }
     }
   }
