@@ -10,6 +10,7 @@ import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.{DataType, TypedValue}
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
+import org.scalarelational.fun.BasicFunctionTypes
 import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
 import org.scalarelational.result.ResultSetIterator
@@ -19,7 +20,7 @@ import org.scalarelational.{PropertyContainer, SessionSupport}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport with DDLDSLSupport {
+trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport with DDLDSLSupport with BasicFunctionTypes {
   implicit def thisDatastore: Datastore = this
 
   def DefaultVarCharLength = 65535

@@ -60,10 +60,4 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
   def ===(column: ColumnLike[T, S]) = ColumnCondition(this, Operator.Equal, column)
-
-  def avg = SQLFunction[T, S](FunctionType.Avg, this, dataType)
-  def count = SQLFunction[Long, Long](FunctionType.Count, this, DataTypes.LongType)
-  def min = SQLFunction[T, S](FunctionType.Min, this, dataType)
-  def max = SQLFunction[T, S](FunctionType.Max, this, dataType)
-  def sum = SQLFunction[T, S](FunctionType.Sum, this, dataType)
 }

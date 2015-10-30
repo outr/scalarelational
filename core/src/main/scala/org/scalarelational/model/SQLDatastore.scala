@@ -31,8 +31,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_, _] => c.longName
     case f: SQLFunction[_, _] => f.alias match {
-      case Some(alias) => s"${f.functionType.name.toUpperCase}(${f.column.longName}) AS $alias"
-      case None => s"${f.functionType.name.toUpperCase}(${f.column.longName})"
+      case Some(alias) => s"${f.functionType.sql}(${f.column.longName}) AS $alias"
+      case None => s"${f.functionType.sql}(${f.column.longName})"
     }
   }
 
