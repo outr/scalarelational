@@ -15,7 +15,7 @@ package object mapper {
   implicit class MapperQuery[Expressions, Result](query: Query[Expressions, Result]) {
     def to[R](implicit manifest: Manifest[R]) = {
       val clazz: EnhancedClass = manifest.runtimeClass
-      val f = (r: QueryResult[R]) => {
+      val f = (r: QueryResult) => {
         clazz.create[R](r.toFieldMap)
       }
       query.convert[R](f)

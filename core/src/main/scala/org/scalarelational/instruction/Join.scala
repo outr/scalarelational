@@ -10,7 +10,7 @@ case class Join(joinable: Joinable, joinType: JoinType = JoinType.Join, conditio
 
 // Used for DSL before the actual Join instance is created
 case class PartialJoin[E, R](query: Query[E, R], joinable: Joinable, joinType: JoinType) {
-  def on(condition: Condition) = query.copy[E, R](joins = (Join(joinable, joinType, condition) :: query.joins.reverse).reverse)(query.vectorify)
+  def on(condition: Condition) = query.copy[E, R](joins = (Join(joinable, joinType, condition) :: query.joins.reverse).reverse)
 }
 
 sealed abstract class JoinType extends EnumEntry

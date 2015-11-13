@@ -8,6 +8,7 @@ import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property._
 import org.scalarelational.datatype._
 import org.scalarelational.datatype.create.OptionDataTypeCreator
+import org.scalarelational.instruction.query.TwoExpressions
 import org.scalarelational.model._
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.Index
@@ -66,7 +67,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "create a simple query" in {
       session {
         val q = select(test.id, test.name) from test
-        q.expressions should equal ((test.id, test.name))
+        q.expressions should equal (TwoExpressions(test.id, test.name))
       }
     }
     "query the record back out" in {
@@ -83,7 +84,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       session {
         val query = select(test.id, test.name) from test
         val results = query.result
-        results.next()() should equal ((Some(1), "John Doe"))
+        results.converted.next() should equal ((Some(1), "John Doe"))
       }
     }
     "query a record back via 'LIKE'" in {

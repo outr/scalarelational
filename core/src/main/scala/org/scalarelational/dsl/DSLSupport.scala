@@ -3,6 +3,7 @@ package org.scalarelational.dsl
 import org.scalarelational.SelectExpression
 import org.scalarelational.column.{Column, ColumnValue}
 import org.scalarelational.instruction._
+import org.scalarelational.instruction.query._
 import org.scalarelational.result.QueryResult
 import org.scalarelational.table.Table
 
@@ -15,30 +16,36 @@ trait DSLSupport {
   import DSLSupport._
 
   def select[E](e1: SelectExpression[E]) = {
-    Query[SelectExpression[E], E](e1, converter = singleValueConverter[E])
+    Query(SingleExpression(e1), converter = singleValueConverter[E])
   }
   def select[E1, E2](e1: SelectExpression[E1], e2: SelectExpression[E2]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2]), (E1, E2)]((e1, e2), converter = tuple2Converter[E1, E2])
+    Query(TwoExpressions(e1, e2), converter = tuple2Converter[E1, E2])
   }
   def select[E1, E2, E3](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3]), (E1, E2, E3)]((e1, e2, e3), converter = tuple3Converter[E1, E2, E3])
+    Query(ThreeExpressions(e1, e2, e3), converter = tuple3Converter[E1, E2, E3])
   }
   def select[E1, E2, E3, E4](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4]), (E1, E2, E3, E4)]((e1, e2, e3, e4), converter = tuple4Converter[E1, E2, E3, E4])
+    Query(FourExpressions(e1, e2, e3, e4), converter = tuple4Converter[E1, E2, E3, E4])
   }
   def select[E1, E2, E3, E4, E5](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5]), (E1, E2, E3, E4, E5)]((e1, e2, e3, e4, e5), converter = tuple5Converter[E1, E2, E3, E4, E5])
+    Query(FiveExpressions(e1, e2, e3, e4, e5), converter = tuple5Converter[E1, E2, E3, E4, E5])
   }
   def select[E1, E2, E3, E4, E5, E6](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6]), (E1, E2, E3, E4, E5, E6)]((e1, e2, e3, e4, e5, e6), converter = tuple6Converter[E1, E2, E3, E4, E5, E6])
+    Query(SixExpressions(e1, e2, e3, e4, e5, e6), converter = tuple6Converter[E1, E2, E3, E4, E5, E6])
   }
   def select[E1, E2, E3, E4, E5, E6, E7](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7]), (E1, E2, E3, E4, E5, E6, E7)]((e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
+    Query(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8]) = {
-    Query[(SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7], SelectExpression[E8]), (E1, E2, E3, E4, E5, E6, E7, E8)]((e1, e2, e3, e4, e5, e6, e7, e8), converter = tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8])
+    Query(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), converter = tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8])
   }
-  def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult[_]](expressions.toVector, converter = DefaultConverter)
+  def select[E1, E2, E3, E4, E5, E6, E7, E8, E9](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8], e9: SelectExpression[E9]) = {
+    Query(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), converter = tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9])
+  }
+  def select[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8], e9: SelectExpression[E9], e10: SelectExpression[E10]) = {
+    Query(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), converter = tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10])
+  }
+  def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), converter = DefaultConverter)
   def insert(values: ColumnValue[_, _]*) = InsertSingle[Int](values.head.column.table, values, identity[Int])
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any, Any]](value)
@@ -52,29 +59,16 @@ trait DSLSupport {
 }
 
 object DSLSupport extends DSLSupport {
-  val DefaultConverter = (qr: QueryResult[_]) => qr
+  val DefaultConverter = (qr: QueryResult) => qr
 
-  def singleValueConverter[E] = (qr: QueryResult[E]) => qr.values.head.value.asInstanceOf[E]
-  implicit def vectorifySingleValue[E](t: SelectExpression[E]): Vector[SelectExpression[_]] = Vector(t)
-
-  def tuple2Converter[E1, E2] = (qr: QueryResult[(E1, E2)]) => qr.values.head.value.asInstanceOf[E1] -> qr.values(1).value.asInstanceOf[E2]
-  implicit def vectorifyTuple2[E1, E2](t: (SelectExpression[E1], SelectExpression[E2])): Vector[SelectExpression[_]] = Vector(t._1, t._2)
-
-  def tuple3Converter[E1, E2, E3] = (qr: QueryResult[(E1, E2, E3)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3])
-  implicit def vectorifyTuple3[E1, E2, E3](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3)
-
-  def tuple4Converter[E1, E2, E3, E4] = (qr: QueryResult[(E1, E2, E3, E4)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4])
-  implicit def vectorifyTuple4[E1, E2, E3, E4](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4)
-
-  def tuple5Converter[E1, E2, E3, E4, E5] = (qr: QueryResult[(E1, E2, E3, E4, E5)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5])
-  implicit def vectorifyTuple5[E1, E2, E3, E4, E5](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5)
-
-  def tuple6Converter[E1, E2, E3, E4, E5, E6] = (qr: QueryResult[(E1, E2, E3, E4, E5, E6)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6])
-  implicit def vectorifyTuple6[E1, E2, E3, E4, E5, E6](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5, t._6)
-
-  def tuple7Converter[E1, E2, E3, E4, E5, E6, E7] = (qr: QueryResult[(E1, E2, E3, E4, E5, E6, E7)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7])
-  implicit def vectorifyTuple7[E1, E2, E3, E4, E5, E6, E7](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5, t._6, t._7)
-
-  def tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8] = (qr: QueryResult[(E1, E2, E3, E4, E5, E6, E7, E8)]) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7], qr.values(7).value.asInstanceOf[E8])
-  implicit def vectorifyTuple8[E1, E2, E3, E4, E5, E6, E7, E8](t: (SelectExpression[E1], SelectExpression[E2], SelectExpression[E3], SelectExpression[E4], SelectExpression[E5], SelectExpression[E6], SelectExpression[E7], SelectExpression[E8])): Vector[SelectExpression[_]] = Vector(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)
+  def singleValueConverter[E] = (qr: QueryResult) => qr.values.head.value.asInstanceOf[E]
+  def tuple2Converter[E1, E2] = (qr: QueryResult) => qr.values.head.value.asInstanceOf[E1] -> qr.values(1).value.asInstanceOf[E2]
+  def tuple3Converter[E1, E2, E3] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3])
+  def tuple4Converter[E1, E2, E3, E4] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4])
+  def tuple5Converter[E1, E2, E3, E4, E5] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5])
+  def tuple6Converter[E1, E2, E3, E4, E5, E6] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6])
+  def tuple7Converter[E1, E2, E3, E4, E5, E6, E7] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7])
+  def tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7], qr.values(7).value.asInstanceOf[E8])
+  def tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7], qr.values(7).value.asInstanceOf[E8], qr.values(8).value.asInstanceOf[E9])
+  def tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10] = (qr: QueryResult) => (qr.values.head.value.asInstanceOf[E1], qr.values(1).value.asInstanceOf[E2], qr.values(2).value.asInstanceOf[E3], qr.values(3).value.asInstanceOf[E4], qr.values(4).value.asInstanceOf[E5], qr.values(5).value.asInstanceOf[E6], qr.values(6).value.asInstanceOf[E7], qr.values(7).value.asInstanceOf[E8], qr.values(8).value.asInstanceOf[E9], qr.values(9).value.asInstanceOf[E10])
 }

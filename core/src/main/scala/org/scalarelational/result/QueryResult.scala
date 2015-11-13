@@ -10,11 +10,7 @@ import scala.language.existentials
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-case class QueryResult[Result](table: Table, values: Vector[ExpressionValue[_]], converter: QueryResult[Result] => Result) {
-  lazy val converted = converter(this)
-
-  def apply() = converted
-
+case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
   def get[T, S](column: Column[T, S]) = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
   }.flatten

@@ -63,7 +63,7 @@ class ExampleSpec extends WordSpec with Matchers {
       session {
         (select (Avg(rating))
           from coffees
-        ).result.one.converted.get should be > 0.0
+        ).result.converted.one.get should be > 0.0
       }
     }
     "query rating.avg without None" in {
@@ -72,7 +72,7 @@ class ExampleSpec extends WordSpec with Matchers {
         (select (Avg(rating))
           from coffees
           where rating.!==(None) // !== conflicts with ScalaTest
-        ).result.one.converted.get should be > 0.0
+        ).result.converted.one.get should be > 0.0
       }
     }
   }
