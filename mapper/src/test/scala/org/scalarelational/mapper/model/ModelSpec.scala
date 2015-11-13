@@ -1,4 +1,4 @@
-package org.scalarelational.mapper
+package org.scalarelational.mapper.model
 
 import java.sql.Timestamp
 
@@ -9,8 +9,8 @@ import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 /**
- * @author Matt Hicks <matt@outr.com>
- */
+  * @author Matt Hicks <matt@outr.com>
+  */
 class ModelSpec extends WordSpec with Matchers {
   import ModelDatastore._
 
