@@ -25,7 +25,7 @@ object QueryMacros {
 
     val conv = q"""
        val converter = new org.scalarelational.instruction.ResultConverter[$r] {
-         def apply(result: org.scalarelational.result.QueryResult[$r]): $r = {
+         def apply(result: org.scalarelational.result.QueryResult): $r = {
            $instance
          }
        }
@@ -48,7 +48,7 @@ object QueryMacros {
 
     val conv = q"""
        val converter = new org.scalarelational.instruction.ResultConverter[($r1, $r2)] {
-         def apply(result: org.scalarelational.result.QueryResult[($r1, $r2)]): ($r1, $r2) = {
+         def apply(result: org.scalarelational.result.QueryResult): ($r1, $r2) = {
            ($instance1, $instance2)
          }
        }
@@ -72,7 +72,7 @@ object QueryMacros {
 
     val conv = q"""
        val converter = new org.scalarelational.instruction.ResultConverter[($r1, $r2, $r3)] {
-         def apply(result: org.scalarelational.result.QueryResult[($r1, $r2, $r3)]): ($r1, $r2, $r3) = {
+         def apply(result: org.scalarelational.result.QueryResult): ($r1, $r2, $r3) = {
            ($instance1, $instance2, $instance3)
          }
        }

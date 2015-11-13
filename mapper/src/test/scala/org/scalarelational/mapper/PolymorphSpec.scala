@@ -47,7 +47,7 @@ class PolymorphSpec extends WordSpec with Matchers {
           if (row(users.isGuest)) classOf[UserGuest]
           else classOf[UserAdmin]
         }
-        insertUsers should equal (x.result.converted.toList.map(_.withoutId))
+        insertUsers should equal (x.converted.toList.map(_.withoutId))
       }
     }
   }
@@ -75,7 +75,7 @@ class PolymorphSpec extends WordSpec with Matchers {
           if (row(content.isString)) classOf[ContentString]
           else classOf[ContentList]
         }
-        insertContent should equal (x.result.converted.toList.map(_.withoutId))
+        insertContent should equal (x.converted.toList.map(_.withoutId))
       }
     }
   }
