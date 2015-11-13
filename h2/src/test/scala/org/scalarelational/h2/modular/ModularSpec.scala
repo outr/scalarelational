@@ -104,7 +104,7 @@ class ModularSpec extends WordSpec with Matchers {
         querying should equal(0)
         queried should equal(0)
         val q = select(id, name, age, created) from users
-        q.result.converted.one should equal((1, "John Doe", 21, None))
+        q.converted.one should equal((1, "John Doe", 21, None))
         querying should equal(1)
         queried should equal(1)
       }
@@ -141,7 +141,7 @@ class ModularSpec extends WordSpec with Matchers {
         querying should equal(1)
         queried should equal(1)
         val q = select(id, name, age, created) from users
-        val result = q.result.converted.one
+        val result = q.converted.one
         result._1 should equal(2)
         result._2 should equal("Jane Doe")
         result._3 should equal(20)
@@ -173,7 +173,7 @@ class ModularSpec extends WordSpec with Matchers {
       session {
         import users._
         val q = select (id, name, created, modified) from users where id === 2
-        val result = q.result.converted.one
+        val result = q.converted.one
         result._2 should equal("updated")
         result._4.get.after(result._3.get) should be (true)
       }
@@ -184,11 +184,11 @@ class ModularSpec extends WordSpec with Matchers {
         insert(name("Jane Doe"), age(20)).result
 
         val q = select (created, modified) from users2 where id === 1
-        val result = q.result.converted.one
+        val result = q.converted.one
 
         (update(name("updated")) where id === 1).result
         val q2 = select (created, modified) from users2 where id === 1
-        val result2 = q2.result.converted.one
+        val result2 = q2.converted.one
         result2._2.after(result2._1) should be (true)
         result2._2.after(result._1) should be (true)
       }

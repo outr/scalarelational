@@ -5,7 +5,7 @@ import org.scalarelational._
 import org.scalarelational.column.{ColumnAlias, ColumnLike}
 import org.scalarelational.instruction.query.SelectExpressions
 import org.scalarelational.op.Condition
-import org.scalarelational.result.{QueryResult, QueryResultsIterator}
+import org.scalarelational.result.{EnhancedIterator, QueryResult, QueryResultsIterator}
 import org.scalarelational.table.Table
 
 import scala.language.existentials
@@ -45,7 +45,7 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
   def convert[NewResult](converter: QueryResult => NewResult) = copy[Types, NewResult](converter = converter)
 
   def result = new QueryResultsIterator(table.datastore.exec(this), this)
-  def converted = result.converted
+  def converted = new EnhancedIterator[Result](result.map(qr => converter(qr)))
   def async = table.datastore.async {
     result
   }

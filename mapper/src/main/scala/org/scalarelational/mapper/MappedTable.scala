@@ -19,7 +19,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   def by[T, S](column: Column[T, S], value: T)
            (implicit manifest: Manifest[MappedType]) = datastore.session {
     val q = query where column === value
-    q.result.converted.headOption
+    q.converted.headOption
   }
 
   private[scalarelational] def updateColumnValues(values: List[ColumnValue[Any, Any]]): Update[Ref[MappedType]] = {

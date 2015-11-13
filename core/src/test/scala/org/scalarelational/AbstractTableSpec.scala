@@ -83,8 +83,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "query the record back out as a Tuple2" in {
       session {
         val query = select(test.id, test.name) from test
-        val results = query.result
-        results.converted.next() should equal ((Some(1), "John Doe"))
+        val results = query.converted
+        results.next() should equal ((Some(1), "John Doe"))
       }
     }
     "query a record back via 'LIKE'" in {

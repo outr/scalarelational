@@ -19,8 +19,6 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   private val NothingLeft = 2
   private var nextStatus = NextNotCalled
 
-  def converted = new EnhancedIterator[R](map(qr => query.converter(qr)))
-
   def hasNext = synchronized {
     if (nextStatus == NextNotCalled) {
       nextStatus = if (rs.next()) HasNext else NothingLeft
