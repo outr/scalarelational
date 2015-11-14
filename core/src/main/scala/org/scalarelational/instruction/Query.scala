@@ -3,7 +3,7 @@ package org.scalarelational.instruction
 import org.powerscala.reflect._
 import org.scalarelational._
 import org.scalarelational.column.{ColumnAlias, ColumnLike}
-import org.scalarelational.instruction.query.SelectExpressions
+import org.scalarelational.instruction.query.{JoinSupport, SelectExpressions}
 import org.scalarelational.op.Condition
 import org.scalarelational.result.{EnhancedIterator, QueryResult, QueryResultsIterator}
 import org.scalarelational.table.Table
@@ -22,15 +22,12 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 resultLimit: Int = -1,
                                 resultOffset: Int = -1,
                                 converter: QueryResult => Result,
-                                alias: Option[String] = None) extends WhereSupport[Query[Types, Result]] with Joinable {
+                                alias: Option[String] = None) extends WhereSupport[Query[Types, Result]]
+                                                              with Joinable
+                                                              with JoinSupport[Types, Result] {
   def apply[T, S](column: ColumnLike[T, S]) = ColumnAlias[T, S](column, alias, None, None)
 
   def where(condition: Condition) = copy[Types, Result](whereCondition = condition)
-
-  def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Types, Result](this, joinable, joinType)
-  def innerJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Inner)
-  def leftJoin(joinable: Joinable) = join(joinable, joinType = JoinType.Left)
-  def leftOuterJoin(joinable: Joinable) = join(joinable, joinType = JoinType.LeftOuter)
 
   def limit(value: Int) = copy[Types, Result](resultLimit = value)
   def offset(value: Int) = copy[Types, Result](resultOffset = value)
