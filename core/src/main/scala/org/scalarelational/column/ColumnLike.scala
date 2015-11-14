@@ -1,8 +1,7 @@
 package org.scalarelational.column
 
 import org.scalarelational.SelectExpression
-import org.scalarelational.datatype.{DataType, DataTypes}
-import org.scalarelational.fun.{FunctionType, SQLFunction}
+import org.scalarelational.datatype.DataType
 import org.scalarelational.op._
 import org.scalarelational.table.Table
 

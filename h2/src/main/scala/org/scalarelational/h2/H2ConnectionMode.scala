@@ -2,8 +2,6 @@ package org.scalarelational.h2
 
 import java.io.File
 
-import org.powerscala.Unique
-
 /**
  * @author Matt Hicks <matt@outr.com>
  */

@@ -1,14 +1,10 @@
 package org.scalarelational.mariadb
 
-import java.sql.{Blob, Types}
 import javax.sql.DataSource
-import javax.sql.rowset.serial.SerialBlob
 
 import org.mariadb.jdbc.MariaDbDataSource
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
-import org.scalarelational.column.ColumnLike
-import org.scalarelational.datatype.{ObjectSQLConverter, SQLConversion}
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.model._
@@ -39,7 +35,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
    * work here as it is the row size limit for MariaDB */
   override def DefaultVarCharLength = 200
 
-  Class.forName("com.mysql.jdbc.Driver")
+  Class.forName("org.mariadb.jdbc.Driver")
 
   val config = Property[MariaDBConfig]()
 
@@ -60,7 +56,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
   def updateDataSource() = {
     dispose() // Make sure to shut down the previous DataSource if possible
     val source: MariaDbDataSource = new MariaDbDataSource()
-    source.setUrl("jdbc:mysql://" + config().host + "/" + config().schema)
+    source.setUrl("jdbc:mariadb://" + config().host + "/" + config().schema)
     source.setUser(config().user)
     source.setPassword(config().password)
     source.setPort(config().port)

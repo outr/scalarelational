@@ -2,11 +2,10 @@ package org.scalarelational.instruction
 
 import java.sql.PreparedStatement
 
-import scala.util.matching.Regex
-
 import org.powerscala.reflect._
-
 import org.scalarelational.model.Datastore
+
+import scala.util.matching.Regex
 
 /**
  * @author Matt Hicks <matt@outr.com>

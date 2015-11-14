@@ -1,7 +1,7 @@
 package org.scalarelational.datatype
 
 import java.io.{ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
-import java.sql.{Types, Blob}
+import java.sql.{Blob, Types}
 import javax.sql.rowset.serial.SerialBlob
 
 import org.scalarelational.column.ColumnLike

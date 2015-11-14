@@ -1,12 +1,12 @@
 package org.scalarelational.extra
 
+import org.scalarelational.model.Datastore
+import org.scalarelational.{Session, SessionSupport}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Try
-
-import org.scalarelational.{Session, SessionSupport}
-import org.scalarelational.model.Datastore
 
 /**
  * @author Matt Hicks <matt@outr.com>

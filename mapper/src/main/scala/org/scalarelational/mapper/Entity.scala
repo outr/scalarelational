@@ -1,9 +1,9 @@
 package org.scalarelational.mapper
 
 import org.scalarelational.column.{Column, ColumnValue}
+import org.scalarelational.compiletime.Macros
 import org.scalarelational.datatype.{Id, Ref}
 import org.scalarelational.instruction.{Delete, InsertSingle, Update}
-import org.scalarelational.compiletime.Macros
 
 import scala.language.experimental.macros
 

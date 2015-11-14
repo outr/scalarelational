@@ -1,6 +1,6 @@
 package org.scalarelational.instruction
 
-import org.powerscala.enum.{Enumerated, EnumEntry}
+import org.powerscala.enum.{EnumEntry, Enumerated}
 
 /**
  * @author Matt Hicks <matt@outr.com>

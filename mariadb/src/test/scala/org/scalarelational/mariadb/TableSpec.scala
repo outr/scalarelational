@@ -1,7 +1,7 @@
 package org.scalarelational.mariadb
 
 import org.scalarelational.extra.HikariSupport
-import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTestCrossReferenceDatastore, AbstractTestDatastore, AbstractTableSpec}
+import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, AbstractTestCrossReferenceDatastore, AbstractTestDatastore}
 
 /**
  * @author Matt Hicks <matt@outr.com>
