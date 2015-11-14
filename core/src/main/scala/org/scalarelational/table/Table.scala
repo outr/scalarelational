@@ -35,8 +35,9 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
 
   props(tableProperties: _*)      // Add properties from constructor
 
-  protected[scalarelational] def addColumn[T, S](column: Column[T, S]) = synchronized {
+  private def add[T, S](column: Column[T, S]): Column[T, S] = synchronized {
     _columns += column
+    column
   }
 
   def as(alias: String): TableAlias = TableAlias(this, alias)
@@ -53,19 +54,19 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
 
   def column[T](name: String, properties: ColumnProperty*)
                (implicit dataType: SimpleDataType[T], manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties)
+    add(new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties))
 
   def column[T](name: String, dataType: SimpleDataType[T], properties: ColumnProperty*)
                (implicit manifest: Manifest[T]): Column[T, T] =
-    new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties)
+    add(new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties))
 
   def column[T, S](name: String, properties: ColumnProperty*)
                (implicit dataType: DataType[T, S], manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties)
+    add(new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties))
 
   def column[T, S](name: String, dataType: DataType[T, S], properties: ColumnProperty*)
                   (implicit manifest: Manifest[T]): Column[T, S] =
-    new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties)
+    add(new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties))
 
   private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty], manifest: Manifest[T]): DataType[T, S] = {
     val instance = DataTypeInstance[Any, Any](dt.asInstanceOf[DataType[Any, Any]], properties, manifest.asInstanceOf[Manifest[Any]])
