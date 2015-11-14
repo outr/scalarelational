@@ -1,14 +1,10 @@
 package org.scalarelational.mariadb
 
-import java.sql.{Blob, Types}
 import javax.sql.DataSource
-import javax.sql.rowset.serial.SerialBlob
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
-import org.scalarelational.column.ColumnLike
-import org.scalarelational.datatype.{ObjectSQLConverter, SQLConversion}
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.model._

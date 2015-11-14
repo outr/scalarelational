@@ -1,6 +1,6 @@
 package org.scalarelational.instruction.query
 
-import org.scalarelational.instruction.{Query, PartialJoin, JoinType, Joinable}
+import org.scalarelational.instruction.{JoinType, Joinable, PartialJoin, Query}
 
 trait JoinSupport[Types, Result] {
   this: Query[Types, Result] =>
