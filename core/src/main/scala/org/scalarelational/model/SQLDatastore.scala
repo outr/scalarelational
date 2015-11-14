@@ -37,7 +37,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   def describe[E, R](query: Query[E, R]) = {
-    val columns = query.asVector.map(expression2SQL).mkString(", ")
+    val columns = query.expressions.vector.map(expression2SQL).mkString(", ")
 
     var args = List.empty[TypedValue[_, _]]
 

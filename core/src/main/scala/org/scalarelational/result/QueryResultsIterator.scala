@@ -13,13 +13,11 @@ import org.scalarelational.{ExpressionValue, SelectExpression}
 /**
  * @author Matt Hicks <matt@outr.com>
  */
-class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult[R]] {
+class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult] {
   private val NextNotCalled = 0
   private val HasNext = 1
   private val NothingLeft = 2
   private var nextStatus = NextNotCalled
-
-  def converted = new EnhancedIterator[R](map(_.converted))
 
   def hasNext = synchronized {
     if (nextStatus == NextNotCalled) {
@@ -30,10 +28,10 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
 
   def nextOption() = if (hasNext) {
     try {
-      val values = query.asVector.zipWithIndex.map {
+      val values = query.expressions.vector.zipWithIndex.map {
         case (expression, index) => valueFromExpressions(expression, index)
       }
-      Some(QueryResult[R](query.table, values, query.converter))
+      Some(QueryResult(query.table, values))
     } finally {
       synchronized {
         nextStatus = NextNotCalled

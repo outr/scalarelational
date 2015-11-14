@@ -36,39 +36,39 @@ class MapperSpec extends WordSpec with Matchers {
       "explicitly map to a case class" in {
         session {
           val query = select(*) from people where name === "John"
-          val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).result.one()
+          val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).converted.one
           john should equal(Person("John", 21, Some("Doe"), Some(1)))
 
           val query2 = select(*) from people where name === "Baby"
-          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).result.one()
+          val baby = query2.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).converted.one
           baby should equal(Person("Baby", 21, None, Some(3)))
         }
       }
       "explicitly map to a (Name, Age) type" in {
         session {
           val query = select(*) from people where name === "John"
-          val john = query.convert[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).result.head()
+          val john = query.convert[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).converted.head
           john should equal((Name("John"), Age(21)))
         }
       }
       "automatically map to a case class" in {
         session {
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[Person].result.head()
+          val jane = query.to[Person].converted.head
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "automatically map to a case class with Macro" in {
         session {
           val query = select(*) from people where name === "Jane"
-          val jane = query.toMacro[Person](people).result.head()
+          val jane = query.toMacro[Person](people).converted.head
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "automatically map a subset of columns to a case class" in {
         session {
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[PartialPerson].result.head()
+          val jane = query.to[PartialPerson].converted.head
           jane should equal(PartialPerson("Jane", 19, Some(2)))
         }
       }
@@ -98,7 +98,7 @@ class MapperSpec extends WordSpec with Matchers {
 
         session {
           val query = select(*) from people where name === "Ray"
-          val ray = query.to[Person].result.head()
+          val ray = query.to[Person].converted.head
           ray should equal(Person("Ray", 30, None, Some(4)))
         }
       }
@@ -114,7 +114,7 @@ class MapperSpec extends WordSpec with Matchers {
           val query1 = select(*) from people where name === "Ray"
           query1.to[Person].result.headOption should equal(None)
           val query2 = select(*) from people where name === "Jay"
-          val jay = query2.to[Person].result.head()
+          val jay = query2.to[Person].converted.head
           jay should equal(Person("Jay", 30, None, Some(4)))
         }
       }
@@ -139,7 +139,7 @@ class MapperSpec extends WordSpec with Matchers {
       "query back 'French Roast' with 'Superior Coffee'" in {
         session {
           val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supId === suppliers.ref.opt) where (coffees.name === "French Roast")
-          val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).result.head()
+          val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).converted.head
           frenchRoast should equal(Coffee("French Roast", Some(superior.ref), 8.99, 0, 0, Some(2)))
           superior should equal(Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460", Some(2)))
         }
@@ -148,7 +148,7 @@ class MapperSpec extends WordSpec with Matchers {
         session {
           import coffees._
           val query = select (*) from coffees where name === "Caffè American"
-          val caffe = query.to[Coffee].result.head()
+          val caffe = query.to[Coffee].converted.head
           caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0, Some(6)))
         }
       }
@@ -171,7 +171,7 @@ class MapperSpec extends WordSpec with Matchers {
             orderBy
               coffees.id.asc
           )
-          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).result.converted.toVector
+          val results = query.to[Coffee, Option[Supplier]](coffees, suppliers).converted.toVector
           results.length should equal(6)
           check(results.head, "Colombian", Some("Acme, Inc."))
           check(results(1), "French Roast", Some("Superior Coffee"))
@@ -223,14 +223,14 @@ class MapperSpec extends WordSpec with Matchers {
       "find and delete Jane Doe" in {
         session {
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[Person].result.head()
+          val jane = query.to[Person].converted.head
           jane.delete.result
         }
       }
       "no longer find Jane Doe" in {
         session {
           val query = select(*) from people where name === "Jane"
-          query.to[Person].result.converted.headOption should equal(None)
+          query.to[Person].converted.headOption should equal(None)
         }
       }
     }

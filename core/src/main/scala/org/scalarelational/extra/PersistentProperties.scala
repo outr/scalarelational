@@ -23,7 +23,7 @@ trait PersistentProperties extends Datastore {
   object persistence {
     def get(name: String): Option[String] = {
       val query = select(persistentProperties.value) from persistentProperties where persistentProperties.key === name
-      query.result.converted.headOption
+      query.converted.headOption
     }
 
     def apply(name: String): String = {
