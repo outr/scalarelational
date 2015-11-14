@@ -25,7 +25,6 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 alias: Option[String] = None) extends WhereSupport[Query[Types, Result]] with Joinable {
   def apply[T, S](column: ColumnLike[T, S]) = ColumnAlias[T, S](column, alias, None, None)
 
-  def from(table: Table) = copy[Types, Result](table = table)
   def where(condition: Condition) = copy[Types, Result](whereCondition = condition)
 
   def join(joinable: Joinable, joinType: JoinType = JoinType.Join) = PartialJoin[Types, Result](this, joinable, joinType)

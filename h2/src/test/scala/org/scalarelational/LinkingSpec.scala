@@ -43,7 +43,6 @@ class LinkingSpec extends WordSpec with Matchers {
       session {
         val result =
           (Tag.q
-            from Tag
             innerJoin ContentTagLinking on ContentTagLinking.tagId.opt === Tag.id
             where ContentTagLinking.contentId === 1
           ).result.toList

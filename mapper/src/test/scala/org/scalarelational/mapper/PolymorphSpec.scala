@@ -42,7 +42,7 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "query users" in {
       session {
-        val query = users.q from users
+        val query = users.q
         val x = query.asCase[User] { row =>
           if (row(users.isGuest)) classOf[UserGuest]
           else classOf[UserAdmin]
@@ -70,7 +70,7 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "query content" in {
       session {
-        val query = content.q from content
+        val query = content.q
         val x = query.asCase[Content] { row =>
           if (row(content.isString)) classOf[ContentString]
           else classOf[ContentList]

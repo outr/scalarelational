@@ -29,14 +29,14 @@ class InheritanceSpec extends WordSpec with Matchers {
 
     "query content" in {
       session {
-        (Content.q from Content where Content.id === Some(2))
+        (Content.q where Content.id === Some(2))
           .result.hasNext should equal (true)
       }
     }
 
     "query content with mapper" in {
       session {
-        val query = Content.q from Content where Content.id === Some(2)
+        val query = Content.q where Content.id === Some(2)
         query.to[InheritanceDatastore.Content].converted.head should equal (Content("content2", Some(2)))
       }
     }
