@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/outr/scalarelational.svg?branch=master)](https://travis-ci.org/outr/scalarelational)
 [![Stories in Ready](https://badge.waffle.io/outr/scalarelational.png?label=ready&title=Ready)](https://waffle.io/outr/scalarelational)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/outr/scalarelational)
-[![Maven Central](https://img.shields.io/maven-central/v/org.scalarelational/scalarelational-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/scalarelational/scalarelational-core_2.11)
+[![Maven Central](https://img.shields.io/maven-central/v/org.scalarelational/scalarelational-core_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.scalarelational/scalarelational-core_2.11)
 
 **ScalaRelational** was created after evaluating all the existing database frameworks for working with SQL and finding them
 both frustrating to work with and overly complex. Most database frameworks attempt to abstract SQL with the goal of
