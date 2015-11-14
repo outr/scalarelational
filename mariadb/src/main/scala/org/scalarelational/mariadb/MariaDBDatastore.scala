@@ -1,10 +1,14 @@
 package org.scalarelational.mariadb
 
+import java.sql.{Blob, Types}
 import javax.sql.DataSource
+import javax.sql.rowset.serial.SerialBlob
 
-import org.mariadb.jdbc.MariaDbDataSource
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
+import org.scalarelational.column.ColumnLike
+import org.scalarelational.datatype.{ObjectSQLConverter, SQLConversion}
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.model._
@@ -16,6 +20,7 @@ case class MariaDBConfig(host: String,
                          schema: String,
                          user: String,
                          password: String,
+                         profileSQL: Boolean = false,
                          port: Int = 3306)
 
 abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
@@ -35,7 +40,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
    * work here as it is the row size limit for MariaDB */
   override def DefaultVarCharLength = 200
 
-  Class.forName("org.mariadb.jdbc.Driver")
+  Class.forName("com.mysql.jdbc.Driver")
 
   val config = Property[MariaDBConfig]()
 
@@ -55,11 +60,12 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
 
   def updateDataSource() = {
     dispose() // Make sure to shut down the previous DataSource if possible
-    val source: MariaDbDataSource = new MariaDbDataSource()
-    source.setUrl("jdbc:mariadb://" + config().host + "/" + config().schema)
+    val source: MysqlDataSource = new MysqlDataSource()
+    source.setURL("jdbc:mysql://" + config().host + "/" + config().schema)
     source.setUser(config().user)
     source.setPassword(config().password)
     source.setPort(config().port)
+    source.setProfileSQL(config().profileSQL)
     dataSourceProperty := source
   }
 }
