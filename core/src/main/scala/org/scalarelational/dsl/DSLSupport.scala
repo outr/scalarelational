@@ -16,36 +16,36 @@ trait DSLSupport {
   import DSLSupport._
 
   def select[E](e1: SelectExpression[E]) = {
-    Query(SingleExpression(e1), converter = singleValueConverter[E])
+    SelectQueryPart(SingleExpression(e1), singleValueConverter[E])
   }
   def select[E1, E2](e1: SelectExpression[E1], e2: SelectExpression[E2]) = {
-    Query(TwoExpressions(e1, e2), converter = tuple2Converter[E1, E2])
+    SelectQueryPart(TwoExpressions(e1, e2), tuple2Converter[E1, E2])
   }
   def select[E1, E2, E3](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3]) = {
-    Query(ThreeExpressions(e1, e2, e3), converter = tuple3Converter[E1, E2, E3])
+    SelectQueryPart(ThreeExpressions(e1, e2, e3), tuple3Converter[E1, E2, E3])
   }
   def select[E1, E2, E3, E4](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4]) = {
-    Query(FourExpressions(e1, e2, e3, e4), converter = tuple4Converter[E1, E2, E3, E4])
+    SelectQueryPart(FourExpressions(e1, e2, e3, e4), tuple4Converter[E1, E2, E3, E4])
   }
   def select[E1, E2, E3, E4, E5](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5]) = {
-    Query(FiveExpressions(e1, e2, e3, e4, e5), converter = tuple5Converter[E1, E2, E3, E4, E5])
+    SelectQueryPart(FiveExpressions(e1, e2, e3, e4, e5), tuple5Converter[E1, E2, E3, E4, E5])
   }
   def select[E1, E2, E3, E4, E5, E6](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6]) = {
-    Query(SixExpressions(e1, e2, e3, e4, e5, e6), converter = tuple6Converter[E1, E2, E3, E4, E5, E6])
+    SelectQueryPart(SixExpressions(e1, e2, e3, e4, e5, e6), tuple6Converter[E1, E2, E3, E4, E5, E6])
   }
   def select[E1, E2, E3, E4, E5, E6, E7](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7]) = {
-    Query(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), converter = tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
+    SelectQueryPart(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8]) = {
-    Query(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), converter = tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8])
+    SelectQueryPart(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8, E9](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8], e9: SelectExpression[E9]) = {
-    Query(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), converter = tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9])
+    SelectQueryPart(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10](e1: SelectExpression[E1], e2: SelectExpression[E2], e3: SelectExpression[E3], e4: SelectExpression[E4], e5: SelectExpression[E5], e6: SelectExpression[E6], e7: SelectExpression[E7], e8: SelectExpression[E8], e9: SelectExpression[E9], e10: SelectExpression[E10]) = {
-    Query(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), converter = tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10])
+    SelectQueryPart(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10])
   }
-  def select(expressions: List[SelectExpression[_]]) = Query[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), converter = DefaultConverter)
+  def select(expressions: List[SelectExpression[_]]) = SelectQueryPart[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), DefaultConverter)
   def insert(values: ColumnValue[_, _]*) = InsertSingle[Int](values.head.column.table, values, identity[Int])
   def insertInto(table: Table, values: Any*) = insert(values.zip(table.columns).map {
     case (value, column) => column.asInstanceOf[Column[Any, Any]](value)
