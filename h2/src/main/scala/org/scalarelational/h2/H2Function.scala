@@ -2,9 +2,7 @@ package org.scalarelational.h2
 
 import org.powerscala.StringUtil
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, functionName: Option[String] = None) {
   lazy val name = functionName match {
     case Some(fn) => fn

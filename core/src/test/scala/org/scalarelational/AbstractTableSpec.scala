@@ -18,9 +18,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait AbstractTableSpec extends WordSpec with Matchers {
   val currentTime = System.currentTimeMillis()
 

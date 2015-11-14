@@ -4,9 +4,7 @@ import java.io.File
 
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class ConnectionModeSpec extends WordSpec with Matchers {
   "H2ConnectionMode" when {
     "creating an embedded connection" should {

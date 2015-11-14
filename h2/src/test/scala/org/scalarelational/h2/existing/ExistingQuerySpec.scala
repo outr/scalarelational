@@ -9,9 +9,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 import scala.language.reflectiveCalls
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class ExistingQuerySpec extends WordSpec with Matchers {
   import TestDatastore._
 

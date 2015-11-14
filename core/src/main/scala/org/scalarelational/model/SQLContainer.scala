@@ -3,9 +3,7 @@ package org.scalarelational.model
 import org.scalarelational.instruction._
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SQLContainer {
   protected def beforeInvoke[E, R](query: Query[E, R]): Query[E, R] = query
   protected def beforeInvoke[T](insert: InsertSingle[T]): InsertSingle[T] = insert

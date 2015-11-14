@@ -7,9 +7,7 @@ import org.scalarelational.extra.StickySessionSupport
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class SessionSpec extends WordSpec with Matchers {
   "Session" when {
     "not sticky" should {

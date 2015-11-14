@@ -3,9 +3,7 @@ package org.scalarelational.versioning
 import org.powerscala.concurrent.Time
 import org.scalarelational.extra.PersistentProperties
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait VersioningSupport extends PersistentProperties {
   lazy val version = persistence.intProperty("databaseVersion")
 

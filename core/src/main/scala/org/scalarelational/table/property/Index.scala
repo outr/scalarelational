@@ -2,9 +2,7 @@ package org.scalarelational.table.property
 
 import org.scalarelational.column.Column
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class Index private(val indexName: String,
                     val unique: Boolean,
                     val columns: List[Column[_, _]]) extends TableProperty {
@@ -12,6 +10,6 @@ class Index private(val indexName: String,
 }
 
 object Index {
-  def apply(name: String, columns: Column[_, _]*) = new Index(name, false, columns.toList)
-  def unique(name: String, columns: Column[_, _]*) = new Index(name, true, columns.toList)
+  def apply(name: String, columns: Column[_, _]*): Index = new Index(name, false, columns.toList)
+  def unique(name: String, columns: Column[_, _]*): Index = new Index(name, true, columns.toList)
 }

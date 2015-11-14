@@ -2,9 +2,7 @@ package org.scalarelational.h2
 
 import java.io.File
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait H2ConnectionMode {
   def path: String
   def options: Seq[H2Option]

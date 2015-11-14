@@ -5,9 +5,7 @@ import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, Ab
 
 import scala.language.postfixOps
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class TableSpec extends AbstractTableSpec {
   override def testDatastore = TestDatastore
   override def specialTypes = SpecialTypesDatastore

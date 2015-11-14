@@ -3,9 +3,7 @@ package org.scalarelational.instruction
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.op.Condition
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class Join(joinable: Joinable, joinType: JoinType = JoinType.Join, condition: Condition)
 
 // Used for DSL before the actual Join instance is created

@@ -2,9 +2,7 @@ package org.scalarelational.datatype
 
 import org.scalarelational.column.ColumnLike
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SQLConversion[T, S] {
   def toSQL(column: ColumnLike[T, S], value: T): S
   def fromSQL(column: ColumnLike[T, S], value: S): T

@@ -7,9 +7,7 @@ import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class AsyncSpec extends WordSpec with Matchers {
   import AsyncDatastore._
 

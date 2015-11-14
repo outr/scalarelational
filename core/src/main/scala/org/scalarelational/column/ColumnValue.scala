@@ -3,9 +3,7 @@ package org.scalarelational.column
 import org.scalarelational.ExpressionValue
 import org.scalarelational.datatype.DataType
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class ColumnValue[T, S] private(val column: ColumnLike[T, S],
                                 val value: T,
                                 val converterOverride: Option[DataType[T, S]]) extends ExpressionValue[T] {

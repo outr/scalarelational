@@ -2,9 +2,7 @@ package org.scalarelational.instruction
 
 import org.scalarelational.model.{Datastore, SQLContainer}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class CallableInstruction(sql: String) {
   def execute(datastore: Datastore): Unit = {
     SQLContainer.calling(datastore, InstructionType.DDL, sql)

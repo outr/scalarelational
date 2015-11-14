@@ -7,9 +7,7 @@ import org.scalarelational.table.Table
 import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object QueryMacros {
   def to1[R](c: blackbox.Context)

@@ -3,9 +3,7 @@ package org.scalarelational.instruction
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class InsertSingle[+ResultType](table: Table,
                                      values: Seq[ColumnValue[_, _]],
                                      mapResult: Int => ResultType

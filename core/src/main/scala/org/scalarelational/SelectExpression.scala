@@ -2,9 +2,7 @@ package org.scalarelational
 
 import org.scalarelational.instruction.{OrderBy, OrderDirection}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SelectExpression[T] {
   def longName: String
   def asc = OrderBy(this, OrderDirection.Ascending)

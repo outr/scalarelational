@@ -9,9 +9,7 @@ import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.model._
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class MariaDBConfig(host: String,
                          schema: String,
                          user: String,

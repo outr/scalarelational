@@ -2,9 +2,7 @@ package org.scalarelational
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 sealed abstract class TransactionMode(val value: Int) extends EnumEntry
 
 object TransactionMode extends Enumerated[TransactionMode] {

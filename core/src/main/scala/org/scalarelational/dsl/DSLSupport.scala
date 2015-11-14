@@ -9,9 +9,7 @@ import org.scalarelational.table.Table
 
 import scala.language.implicitConversions
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait DSLSupport {
   import DSLSupport._
 

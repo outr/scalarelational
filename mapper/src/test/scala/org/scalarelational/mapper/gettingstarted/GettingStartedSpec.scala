@@ -8,9 +8,7 @@ import org.scalarelational.mapper._
 import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class GettingStartedSpec extends WordSpec with Matchers {
   import GettingStartedDatastore._
 

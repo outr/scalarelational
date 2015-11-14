@@ -7,9 +7,7 @@ import org.scalarelational.table.Table
 
 import scala.util.matching.Regex
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String

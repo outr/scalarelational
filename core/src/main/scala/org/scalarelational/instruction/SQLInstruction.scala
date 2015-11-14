@@ -7,9 +7,6 @@ import org.scalarelational.model.Datastore
 
 import scala.util.matching.Regex
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
 case class SQLInstruction[T <: AnyRef](sql: String, clazz: EnhancedClass) {
   lazy val (preparedSQL, builder) = prepared()
 

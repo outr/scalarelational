@@ -1,8 +1,6 @@
 package org.scalarelational.datatype
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class DataType[T, S](val jdbcType: Int,
                      val sqlType: SQLType,
                      val converter: SQLConversion[T, S],

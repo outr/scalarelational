@@ -8,9 +8,7 @@ import org.scalarelational.h2.H2Datastore
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class TriggerInstance extends Trigger with Logging {
   private var table: Table = _
   private var triggerType: TriggerType = _

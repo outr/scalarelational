@@ -6,9 +6,7 @@ import org.scalarelational.table.Table
 
 import scala.language.implicitConversions
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait DDLSupport {
   def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable
   def column2Create[T, S](column: Column[T, S]): CreateColumn[T, S]

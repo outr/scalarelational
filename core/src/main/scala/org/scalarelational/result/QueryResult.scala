@@ -7,9 +7,7 @@ import org.scalarelational.table.Table
 
 import scala.language.existentials
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
   def get[T, S](column: Column[T, S]) = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])

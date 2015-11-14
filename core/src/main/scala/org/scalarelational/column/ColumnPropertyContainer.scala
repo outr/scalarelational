@@ -3,9 +3,7 @@ package org.scalarelational.column
 import org.scalarelational.PropertyContainer
 import org.scalarelational.column.property.ColumnProperty
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait ColumnPropertyContainer extends PropertyContainer[ColumnProperty] {
   def classType: Class[_]
   def isOptional = classType == classOf[Option[_]]

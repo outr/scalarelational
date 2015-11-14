@@ -6,9 +6,7 @@ import org.scalarelational.datatype.{DataType, DataTypeSupport, SimpleDataType}
 import org.scalarelational.instruction.ddl._
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait DDLDSLSupport extends DataTypeSupport {
   this: DDLSupport =>
 

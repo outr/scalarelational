@@ -2,9 +2,7 @@ package org.scalarelational.instruction
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 sealed trait InstructionType extends EnumEntry
 
 object InstructionType extends Enumerated[InstructionType] {

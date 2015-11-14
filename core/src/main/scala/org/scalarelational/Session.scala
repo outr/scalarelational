@@ -5,9 +5,7 @@ import java.sql.{Blob, Connection, Statement}
 import org.scalarelational.datatype.TypedValue
 import org.scalarelational.model.Datastore
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   private var _disposed = false
   private var _connection: Option[Connection] = None

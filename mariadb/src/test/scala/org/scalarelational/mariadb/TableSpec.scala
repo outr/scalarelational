@@ -3,9 +3,7 @@ package org.scalarelational.mariadb
 import org.scalarelational.extra.HikariSupport
 import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, AbstractTestCrossReferenceDatastore, AbstractTestDatastore}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class TableSpec extends AbstractTableSpec {
   override def testDatastore = TestDatastore
   override def testCrossReference = TestCrossReferenceDatastore

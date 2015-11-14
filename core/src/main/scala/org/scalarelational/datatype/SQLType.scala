@@ -4,9 +4,7 @@ import org.scalarelational.column.ColumnPropertyContainer
 import org.scalarelational.column.property.{ColumnLength, IgnoreCase}
 import org.scalarelational.model.Datastore
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SQLType {
   def apply(datastore: Datastore, properties: ColumnPropertyContainer): String
 }

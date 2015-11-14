@@ -9,9 +9,7 @@ import org.scalarelational.column.property.{ColumnLength, NumericStorage}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.model.Datastore
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 object DataTypes {
   def simplify[T, S](dataType: DataType[T, S]) = new SimpleDataType[T](
     jdbcType = dataType.jdbcType,

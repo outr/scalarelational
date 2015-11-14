@@ -7,9 +7,7 @@ import org.scalarelational.instruction.{Delete, InsertSingle, Update}
 
 import scala.language.experimental.macros
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait BaseEntity[Mapped] {
   def insert: InsertSingle[Ref[Mapped]]
   def update: Update[Ref[Mapped]]

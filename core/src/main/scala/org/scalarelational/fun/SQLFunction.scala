@@ -6,9 +6,7 @@ import org.scalarelational.datatype.{DataType, DataTypes}
 
 import scala.language.existentials
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class SQLFunction[T, S](functionType: FunctionType,
                           column: ColumnLike[_, _],
                           converter: DataType[T, S],

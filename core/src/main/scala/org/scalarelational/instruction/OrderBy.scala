@@ -3,9 +3,7 @@ package org.scalarelational.instruction
 import org.powerscala.enum.{EnumEntry, Enumerated}
 import org.scalarelational.SelectExpression
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class OrderBy[T](expression: SelectExpression[T], direction: OrderDirection)
 
 sealed abstract class OrderDirection(val sql: String) extends EnumEntry

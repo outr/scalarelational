@@ -15,9 +15,7 @@ import org.scalarelational.table.{Table, TableAlias}
 
 import scala.collection.mutable.ListBuffer
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def this(dataSource: DataSource) = {
     this()

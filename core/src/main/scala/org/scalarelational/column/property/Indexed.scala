@@ -1,8 +1,6 @@
 package org.scalarelational.column.property
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class Indexed private(val indexName: String) extends ColumnProperty {
   def name = Indexed.name
 }

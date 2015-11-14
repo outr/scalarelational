@@ -3,9 +3,7 @@ package org.scalarelational
 import java.io._
 import java.sql.Blob
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class FileBlob(file: File) extends Blob {
   def length() = file.length()
 

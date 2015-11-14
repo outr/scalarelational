@@ -4,9 +4,7 @@ import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.DataType
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class Column[T, S] private[scalarelational](val name: String,
                                             val dataType: DataType[T, S],
                                             val manifest: Manifest[T],

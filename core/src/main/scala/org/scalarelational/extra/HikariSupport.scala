@@ -3,9 +3,7 @@ package org.scalarelational.extra
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.scalarelational.model.SQLDatastore
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait HikariSupport extends SQLDatastore {
   // Automatically converts DataSources to be wrapped by HikariDataSource
   dataSourceProperty.change.on {

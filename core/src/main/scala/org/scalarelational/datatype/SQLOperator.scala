@@ -3,9 +3,7 @@ package org.scalarelational.datatype
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.op.Operator
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SQLOperator[T, S] {
   def apply(column: ColumnLike[T, S], value: T, op: Operator): Operator
 }

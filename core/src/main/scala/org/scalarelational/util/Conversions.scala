@@ -2,9 +2,7 @@ package org.scalarelational.util
 
 import scala.language.implicitConversions
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 object Conversions {
   implicit def tuple2ToList[T, T1 <: T, T2 <: T](t: (T1, T2)): List[T] = {
     List(t._1, t._2)

@@ -1,8 +1,6 @@
 package org.scalarelational
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait PropertyContainer[P <: Prop] {
   private var _properties = Map.empty[String, P]
 

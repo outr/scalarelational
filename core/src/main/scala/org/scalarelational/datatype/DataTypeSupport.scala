@@ -3,9 +3,7 @@ package org.scalarelational.datatype
 import org.powerscala.enum.EnumEntry
 import org.scalarelational.datatype.create.{EnumDataTypeCreator, OptionDataTypeCreator, RefDataTypeCreator}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait DataTypeSupport {
   import DataTypes._
 

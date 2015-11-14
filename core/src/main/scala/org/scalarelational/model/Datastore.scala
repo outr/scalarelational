@@ -17,9 +17,7 @@ import org.scalarelational.result.ResultSetIterator
 import org.scalarelational.table.Table
 import org.scalarelational.{PropertyContainer, SessionSupport}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait Datastore extends Listenable with Logging with SessionSupport with DSLSupport with SQLContainer with DDLSupport with DDLDSLSupport with BasicFunctionTypes {
   implicit def thisDatastore: Datastore = this
 

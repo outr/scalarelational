@@ -4,9 +4,7 @@ import org.powerscala.log.{Level, Logging}
 import org.powerscala.property.Property
 import org.scalarelational.instruction.InstructionType
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SQLLogging extends SQLContainer with Logging {
   val sqlLogLevel = Property[Level](default = None)
 

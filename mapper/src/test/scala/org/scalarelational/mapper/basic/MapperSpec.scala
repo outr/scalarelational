@@ -7,9 +7,7 @@ import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.mapper._
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class MapperSpec extends WordSpec with Matchers {
   "Mapper" when {
     import Datastore._

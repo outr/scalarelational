@@ -2,9 +2,7 @@ package org.scalarelational.column.property
 
 import org.scalarelational.column.Column
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class ForeignKey(fc: => Column[_, _]) extends ColumnProperty {
   lazy val foreignColumn = fc
 

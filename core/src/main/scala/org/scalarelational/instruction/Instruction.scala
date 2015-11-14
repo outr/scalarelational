@@ -4,9 +4,7 @@ import org.scalarelational.table.Table
 
 import scala.concurrent.Future
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait Instruction[+R] {
   def table: Table
 

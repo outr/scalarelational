@@ -8,9 +8,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.Try
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait StickySessionSupport extends SessionSupport {
   this: Datastore =>
 

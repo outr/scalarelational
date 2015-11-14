@@ -12,16 +12,14 @@ import org.scalarelational.table.property.TableProperty
 import scala.collection.mutable.ListBuffer
 import scala.language.existentials
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 abstract class Table(val tableName: String, tableProperties: TableProperty*)
                     (implicit val datastore: Datastore)
   extends Joinable with SQLContainer with DataTypeSupport with TablePropertyContainer {
 
   datastore.add(this)   // Make sure the Datastore knows about this table
 
-  implicit def thisTable = this
+  implicit def thisTable: Table = this
 
   private var _columns = ListBuffer.empty[Column[_, _]]
   private lazy val columnMap = Map(columns.map(c => c.name.toLowerCase -> c): _*)
@@ -41,17 +39,17 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     _columns += column
   }
 
-  def as(alias: String) = TableAlias(this, alias)
+  def as(alias: String): TableAlias = TableAlias(this, alias)
 
   def primaryKey: Column[_, _] = columns.find(_.has(PrimaryKey)).get
 
-  def columns = _columns.toList
+  def columns: List[Column[_, _]] = _columns.toList
 
   def * = columns
 
-  def getColumn[T, S](name: String) = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T, S]]]
-  def getColumnByField[T, S](name: String) = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T, S]]]
-  def columnsByName[T, S](names: String*) = names.flatMap(name => getColumn[T, S](name))
+  def getColumn[T, S](name: String): Option[Column[T, S]] = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T, S]]]
+  def getColumnByField[T, S](name: String): Option[Column[T, S]] = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T, S]]]
+  def columnsByName[T, S](names: String*): Seq[Column[T, S]] = names.flatMap(name => getColumn[T, S](name))
 
   def column[T](name: String, properties: ColumnProperty*)
                (implicit dataType: SimpleDataType[T], manifest: Manifest[T]): Column[T, T] =
@@ -74,11 +72,9 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     datastore.dataTypeInstanceProcessor.fire(instance).asInstanceOf[DataType[T, S]]
   }
 
-  protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = {
-    tpe.getSuperclass match {
-      case null => tpe.getDeclaredFields
-      case s => tpe.getDeclaredFields ++ allFields(s)
-    }
+  protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = tpe.getSuperclass match {
+    case s: Class[_] => tpe.getDeclaredFields ++ allFields(s)
+    case _ => tpe.getDeclaredFields
   }
 
   protected[scalarelational] def fieldName(column: Column[_, _]) = {
@@ -88,9 +84,9 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
   }
 
-  def exists = datastore.doesTableExist(tableName)
+  def exists: Boolean = datastore.doesTableExist(tableName)
 
-  override def toString = tableName
+  override def toString: String = tableName
 }
 
 object Table {

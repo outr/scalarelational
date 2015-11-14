@@ -8,9 +8,7 @@ import org.scalarelational.model.ModularSupport
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class ModularSpec extends WordSpec with Matchers {
   import ModularDatastore._
 

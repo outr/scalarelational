@@ -7,9 +7,7 @@ import org.powerscala.reflect._
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, SQLConversion, SQLType}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extends SQLConversion[T, String] {
   val enumerated = manifest.runtimeClass.instance
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))

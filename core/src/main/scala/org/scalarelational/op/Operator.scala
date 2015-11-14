@@ -2,9 +2,7 @@ package org.scalarelational.op
 
 import org.powerscala.enum.{EnumEntry, Enumerated}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 sealed abstract class Operator(val symbol: String) extends EnumEntry
 
 object Operator extends Enumerated[Operator] {

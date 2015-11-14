@@ -3,9 +3,7 @@ package org.scalarelational.instruction
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait Insert[+T] {
   def table: Table
   def rows: Seq[Seq[ColumnValue[_, _]]]

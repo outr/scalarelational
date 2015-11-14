@@ -2,9 +2,7 @@ package org.scalarelational.datatype.create
 
 import org.scalarelational.datatype.{DataType, OptionSQLConversion, OptionSQLOperator}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 object OptionDataTypeCreator {
   def create[T, S](dt: DataType[T, S]) = {
     val conversion = new OptionSQLConversion(dt.converter)

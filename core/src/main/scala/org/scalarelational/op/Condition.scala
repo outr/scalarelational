@@ -5,9 +5,7 @@ import org.scalarelational.instruction.ConnectType
 
 import scala.util.matching.Regex
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 sealed trait Condition {
   def and(condition: Condition) = Conditions(List(this, condition), ConnectType.And)
   def or(condition: Condition) = Conditions(List(this, condition), ConnectType.Or)

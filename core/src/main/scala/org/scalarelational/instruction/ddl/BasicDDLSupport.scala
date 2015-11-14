@@ -9,9 +9,7 @@ import org.scalarelational.table.property.Index
 
 import scala.collection.mutable.ListBuffer
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait BasicDDLSupport extends DDLSupport with Datastore {
   override def table2Create(table: Table, ifNotExists: Boolean = true) = {
     val createColumns = table.columns.map(c => column2Create(c))

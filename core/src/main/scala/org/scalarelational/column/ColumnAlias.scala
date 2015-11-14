@@ -1,8 +1,6 @@
 package org.scalarelational.column
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class ColumnAlias[T, S](column: ColumnLike[T, S],
                           tableAlias: Option[String],
                           alias: Option[String],

@@ -5,9 +5,7 @@ import java.io.{File, FileWriter}
 import org.scalarelational.dsl.DSLSupport._
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 object CSVExporter {
   private val NewLine = "\r\n"
 

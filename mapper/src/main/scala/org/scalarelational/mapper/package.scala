@@ -8,9 +8,7 @@ import org.scalarelational.table.Table
 
 import scala.language.experimental.macros
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 package object mapper {
   implicit class MapperQuery[Expressions, Result](query: Query[Expressions, Result]) {
     def to[R](implicit manifest: Manifest[R]) = {

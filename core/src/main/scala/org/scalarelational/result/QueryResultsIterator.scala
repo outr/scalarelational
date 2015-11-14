@@ -10,23 +10,23 @@ import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
 import org.scalarelational.instruction.Query
 import org.scalarelational.{ExpressionValue, SelectExpression}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+import scala.annotation.tailrec
+
+
 class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult] {
   private val NextNotCalled = 0
   private val HasNext = 1
   private val NothingLeft = 2
   private var nextStatus = NextNotCalled
 
-  def hasNext = synchronized {
+  def hasNext: Boolean = synchronized {
     if (nextStatus == NextNotCalled) {
       nextStatus = if (rs.next()) HasNext else NothingLeft
     }
     nextStatus == HasNext
   }
 
-  def nextOption() = if (hasNext) {
+  def nextOption(): Option[QueryResult] = if (hasNext) {
     try {
       val values = query.expressions.vector.zipWithIndex.map {
         case (expression, index) => valueFromExpressions(expression, index)
@@ -41,17 +41,21 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     None
   }
 
-  def next() = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
+  def next(): QueryResult = nextOption().getOrElse(throw new RuntimeException("No more results. Use nextOption() instead."))
 
+  private val bufferSize = 1024
   private def readInputStream(in: InputStream): ByteArrayOutputStream = {
     val out = new ByteArrayOutputStream()
-    val buffer = new Array[Byte](1024)
-    while (true) {
-      in.read(buffer) match {
-        case -1 => return out
-        case read => out.write(buffer, 0, read)
+    val buffer = new Array[Byte](bufferSize)
+    @tailrec
+    def read(): Unit = in.read(buffer) match {
+      case -1 => // Finished
+      case len => {
+        out.write(buffer, 0, len)
+        read()
       }
     }
+    read()
     out
   }
 

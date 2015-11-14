@@ -5,9 +5,7 @@ import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class VersioningSpec extends WordSpec with Matchers {
   import VersioningDatastore._
 

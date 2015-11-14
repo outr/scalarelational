@@ -4,9 +4,7 @@ import org.scalarelational.column.ColumnValue
 import org.scalarelational.op.Condition
 import org.scalarelational.table.Table
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 case class Update[+ResultType](table: Table,
                                values: List[ColumnValue[_, _]],
                                whereCondition: Condition = null,

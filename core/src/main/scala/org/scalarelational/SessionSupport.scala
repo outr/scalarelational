@@ -4,9 +4,7 @@ import org.scalarelational.model.Datastore
 
 import scala.concurrent._
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 trait SessionSupport {
   this: Datastore =>
 

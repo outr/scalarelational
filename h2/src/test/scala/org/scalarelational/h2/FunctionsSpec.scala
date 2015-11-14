@@ -6,9 +6,7 @@ import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Matt Hicks <matt@outr.com>
- */
+
 class FunctionsSpec extends WordSpec with Matchers {
   import FunctionsDatastore._
 
