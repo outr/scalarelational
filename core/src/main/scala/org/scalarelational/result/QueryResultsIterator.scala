@@ -1,6 +1,6 @@
 package org.scalarelational.result
 
-import java.io.{InputStream, ByteArrayOutputStream}
+import java.io.{ByteArrayOutputStream, InputStream}
 import java.sql.ResultSet
 import javax.sql.rowset.serial.SerialBlob
 

@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import org.powerscala.log.{Level, Logging}
 import org.powerscala.property.Property
-import org.scalarelational.column.property.{Default, AutoIncrement, Polymorphic, Unique}
+import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.ddl.CreateColumn

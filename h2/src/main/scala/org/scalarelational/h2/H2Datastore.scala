@@ -3,11 +3,9 @@ package org.scalarelational.h2
 import javax.sql.DataSource
 
 import org.h2.jdbcx.JdbcConnectionPool
-
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
-
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
 import org.scalarelational.model._
 import org.scalarelational.table.Table

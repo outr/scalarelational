@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import org.scalarelational.instruction.{OrderDirection, OrderBy}
+import org.scalarelational.instruction.{OrderBy, OrderDirection}
 
 /**
  * @author Matt Hicks <matt@outr.com>

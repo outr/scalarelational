@@ -97,9 +97,9 @@ object Dependencies {
   object powerscala {
     val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion
   }
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.1"
-  val h2database = "com.h2database" % "h2" % "1.4.189"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.2"
+  val h2database = "com.h2database" % "h2" % "1.4.190"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.36"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1202-jdbc42"
+  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1205-jdbc42"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }

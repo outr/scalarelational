@@ -1,6 +1,6 @@
 package org.scalarelational.instruction
 
-import org.scalarelational.model.{SQLContainer, Datastore}
+import org.scalarelational.model.{Datastore, SQLContainer}
 
 /**
  * @author Matt Hicks <matt@outr.com>

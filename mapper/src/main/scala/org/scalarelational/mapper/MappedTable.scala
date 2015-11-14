@@ -4,7 +4,7 @@ import org.scalarelational.SelectExpression
 import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue, RefColumn}
 import org.scalarelational.datatype._
-import org.scalarelational.instruction.{Query, InsertSingle, Update}
+import org.scalarelational.instruction.{InsertSingle, Query, Update}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.TableProperty
