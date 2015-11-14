@@ -4,7 +4,7 @@ import java.sql.{Blob, Types}
 import javax.sql.DataSource
 import javax.sql.rowset.serial.SerialBlob
 
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+import org.mariadb.jdbc.MariaDbDataSource
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
 import org.scalarelational.column.ColumnLike
@@ -20,7 +20,6 @@ case class MariaDBConfig(host: String,
                          schema: String,
                          user: String,
                          password: String,
-                         profileSQL: Boolean = false,
                          port: Int = 3306)
 
 abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
@@ -60,12 +59,11 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
 
   def updateDataSource() = {
     dispose() // Make sure to shut down the previous DataSource if possible
-    val source: MysqlDataSource = new MysqlDataSource()
-    source.setURL("jdbc:mysql://" + config().host + "/" + config().schema)
+    val source: MariaDbDataSource = new MariaDbDataSource()
+    source.setUrl("jdbc:mysql://" + config().host + "/" + config().schema)
     source.setUser(config().user)
     source.setPassword(config().password)
     source.setPort(config().port)
-    source.setProfileSQL(config().profileSQL)
     dataSourceProperty := source
   }
 }
