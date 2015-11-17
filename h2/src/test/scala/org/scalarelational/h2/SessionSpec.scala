@@ -17,15 +17,15 @@ class SessionSpec extends WordSpec with Matchers {
         hasSession should equal(false)
       }
       "properly create and release" in {
-        withSession {
+        withSession { implicit session =>
           hasSession should equal(true)
         }
         hasSession should equal(false)
       }
       "wrap session calls for a single session" in {
-        withSession {
+        withSession { implicit session =>
           val s = session
-          withSession {
+          withSession { implicit session =>
             s should be theSameInstanceAs session
           }
         }
@@ -33,10 +33,10 @@ class SessionSpec extends WordSpec with Matchers {
       "create distinct sessions" in {
         var s1: Session = null
         var s2: Session = null
-        withSession {
+        withSession { implicit session =>
           s1 = session
         }
-        withSession {
+        withSession { implicit session =>
           s2 = session
         }
         s1.disposed should equal(true)
@@ -52,15 +52,15 @@ class SessionSpec extends WordSpec with Matchers {
       hasSession should equal(false)
     }
     "properly create and release" in {
-      withSession {
+      withSession { implicit session =>
         hasSession should equal(true)
       }
       hasSession should equal(false)
     }
     "wrap session calls for a single session" in {
-      withSession {
+      withSession { implicit session =>
         val s = session
-        withSession {
+        withSession { implicit session =>
           s should be theSameInstanceAs session
         }
       }
@@ -68,11 +68,11 @@ class SessionSpec extends WordSpec with Matchers {
     "pick back up sticky session and make sure it closes gracefully" in {
       var s1: Session = null
       var s2: Session = null
-      withSession {
+      withSession { implicit session =>
         s1 = session
         s1.connection     // We have to establish a connection
       }
-      withSession {
+      withSession { implicit session =>
         s2 = session      // We have to establish a connection
       }
       s1.disposed should equal(false)

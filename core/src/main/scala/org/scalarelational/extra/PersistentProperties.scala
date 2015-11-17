@@ -21,7 +21,7 @@ trait PersistentProperties extends Datastore {
   }
 
   object persistence {
-    def get(name: String): Option[String] = {
+    def get(name: String): Option[String] = withSession { implicit session =>
       val query = select(persistentProperties.value) from persistentProperties where persistentProperties.key === name
       query.converted.headOption
     }

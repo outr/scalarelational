@@ -20,11 +20,11 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
     s
   }
 
-  def call(args: Any*) = datastore.withSession {
+  def call(args: Any*) = datastore.withSession { implicit session =>
     buildStatement(args: _*).execute()
   }
 
-  def query(args: Any*) = datastore.withSession {
+  def query(args: Any*) = datastore.withSession { implicit session =>
     buildStatement(args: _*).executeQuery()
   }
 }

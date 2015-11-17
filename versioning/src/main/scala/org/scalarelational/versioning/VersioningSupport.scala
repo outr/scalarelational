@@ -20,7 +20,7 @@ trait VersioningSupport extends PersistentProperties {
   def upgrade() = synchronized {
     info("Checking for Database Upgrades...")
 
-    withSession {
+    withSession { implicit session =>
       val latestVersion = upgrades.keys.toList match {
         case Nil => 0
         case keys => keys.max
@@ -35,7 +35,7 @@ trait VersioningSupport extends PersistentProperties {
       } else {
         info(s"Current Version: ${version()}, Latest Version: ${latestVersion}")
         (version() until latestVersion).foreach {
-          case v => transaction {
+          case v => transaction { implicit session =>
             val nextVersion = v + 1
             info(s"Upgrading from version $v to $nextVersion...")
             val upgrade = upgrades.getOrElse(nextVersion, throw new RuntimeException(s"No version registered for $nextVersion."))

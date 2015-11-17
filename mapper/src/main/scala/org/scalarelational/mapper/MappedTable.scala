@@ -1,6 +1,5 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.SelectExpression
 import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue, RefColumn}
 import org.scalarelational.datatype._
@@ -8,6 +7,7 @@ import org.scalarelational.instruction.{InsertSingle, Query, Update}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.TableProperty
+import org.scalarelational.{SelectExpression, Session}
 
 abstract class MappedTable[MappedType](name: String, tableProperties: TableProperty*)
                                       (implicit val ds: Datastore)
@@ -17,7 +17,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   def query: Query[Vector[SelectExpression[_]], MappedType]
 
   def by[T, S](column: Column[T, S], value: T)
-           (implicit manifest: Manifest[MappedType]) = datastore.withSession {
+           (implicit manifest: Manifest[MappedType], session: Session) = {
     val q = query where column === value
     q.converted.headOption
   }

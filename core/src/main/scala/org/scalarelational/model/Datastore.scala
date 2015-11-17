@@ -177,7 +177,9 @@ trait Datastore extends Listenable with Logging with SessionSupport with DSLSupp
       instructions.foreach(i => i.execute(thisDatastore))
       instructions.size
     }
-    def async = thisDatastore.async(result)
+    def async = thisDatastore.async { implicit session =>
+      result
+    }
     def and(moreInstructions: List[CallableInstruction]) = new CallableInstructions(instructions ::: moreInstructions)
   }
 }

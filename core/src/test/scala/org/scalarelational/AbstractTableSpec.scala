@@ -40,36 +40,36 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       test.columns.size should equal(3)
     }
     "verify that there are no tables currently created" in {
-      withSession {
+      withSession { implicit session =>
         testDatastore.jdbcTables should equal(Set.empty)
         testDatastore.empty should equal(true)
       }
     }
     "create the table" in {
-      withSession {
+      withSession { implicit session =>
         create(test, suppliers, coffees, names, fruitColors)
       }
     }
     "verify that tables exist" in {
-      withSession {
+      withSession { implicit session =>
         testDatastore.jdbcTables shouldNot equal(Set.empty)
         testDatastore.empty should equal(false)
       }
     }
     "insert a record" in {
-      withSession {
+      withSession { implicit session =>
         val result = insert(test.name("John Doe")).result
         result should equal (1)
       }
     }
     "create a simple query" in {
-      withSession {
+      withSession { implicit session =>
         val q = select(test.id, test.name) from test
         q.expressions should equal (TwoExpressions(test.id, test.name))
       }
     }
     "query the record back out" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test
         val results = query.result.toList
         results.size should equal (1)
@@ -79,14 +79,14 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query the record back out as a Tuple2" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test
         val results = query.converted
         results.next() should equal ((Some(1), "John Doe"))
       }
     }
     "query a record back via 'LIKE'" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test where test.name % "John%"
         val results = query.result.toList
         results.size should equal (1)
@@ -96,12 +96,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "insert another record" in {
-      withSession {
+      withSession { implicit session =>
         insert(test.name("Jane Doe")).result
       }
     }
     "query the record back by name" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test where test.name === "Jane Doe"
         val results = query.result.toList
         results.size should equal(1)
@@ -111,14 +111,14 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query with multiple where clauses" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test where (test.name === "Jane Doe" or test.name === "John Doe") and test.id > Some(0)
         val results = query.result.toList
         results.size should equal (2)
       }
     }
     "query with valid None comparison" in {
-      withSession {
+      withSession { implicit session =>
         val query = select (test.id) from test where test.id.!==(None) // !== conflicts with ScalaTest
         describe(query) should equal (
           expectedNotNone
@@ -128,7 +128,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query with invalid None comparison" in {
-      withSession {
+      withSession { implicit session =>
         intercept[RuntimeException] {
           val query = select (test.id) from test where test.id > None
           query.result
@@ -136,7 +136,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query two records back via regular expression" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test where test.name * ".*Doe".r orderBy(test.id asc)
         val results = query.result.toList
         results.size should equal (2)
@@ -149,40 +149,40 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "update 'John Doe' to 'Joe Doe'" in {
-      withSession {
+      withSession { implicit session =>
         val updated = exec(update(test.name("Joe Doe")) where test.name === "John Doe")
         updated should equal(1)
       }
     }
     "verify that 'John Doe' no longer exists" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.name) from test where test.name === "John Doe"
         val results = query.result.toList
         results.size should equal(0)
       }
     }
     "verify that 'Joe Doe' does exist" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.name) from test where test.name === "Joe Doe"
         val results = query.result.toList
         results.size should equal(1)
       }
     }
     "verify that 'Jane Doe' wasn't modified" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.name) from test where test.name === "Jane Doe"
         val results = query.result.toList
         results.size should equal(1)
       }
     }
     "delete 'Joe Doe' from the database" in {
-      withSession {
+      withSession { implicit session =>
         val deleted = exec(delete(test) where test.name === "Joe Doe")
         deleted should equal(1)
       }
     }
     "verify there is just one record left in the database" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test
         val results = query.result.toList
         results.size should equal(1)
@@ -192,13 +192,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "delete everything from the database" in {
-      withSession {
+      withSession { implicit session =>
         val deleted = exec(delete(test))
         deleted should equal(1)
       }
     }
     "verify there are no records left in the database" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(test.id, test.name) from test
         val results = query.result.toList
         results.size should equal(0)
@@ -207,7 +207,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "insert several new records asynchronously" in {
       import test._
 
-      withSession {
+      withSession { implicit session =>
         val future = insert(name("Adam")).
           and(name("Ben")).
           and(name("Chris")).
@@ -249,7 +249,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import ds._
     import suppliers._
     "insert three suppliers" in {
-      withSession {
+      withSession { implicit session =>
         acmeId = insert(name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
         superiorId = insert(name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
         highGroundId = insert(name("The High Ground"), street("100 Coffee Lane"), city("Meadows"), state("CA"), zip("93966")).result
@@ -264,7 +264,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import ds._
     import coffees._
     "insert five coffees" in {
-      withSession {
+      withSession { implicit session =>
         insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
           and(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
           and(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
@@ -273,13 +273,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query five coffees back out" in {
-      withSession {
+      withSession { implicit session =>
         val results = (select(*) from coffees).result.toList
         results.size should equal(5)
       }
     }
     "query joining suppliers" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID.opt
         val results = query.result.toList
         results.size should equal(5)
@@ -289,7 +289,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query the minimum price" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(Min(price)) from coffees
         val results = query.result.toList
         results.size should equal(1)
@@ -300,7 +300,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query the count of coffees for Superior Coffee" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(Count(name)) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
         val results = query.result.toList
         results.size should equal(1)
@@ -311,7 +311,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query with an inner join aliased" in {
-      withSession {
+      withSession { implicit session =>
         val s = suppliers as "s"
         val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID.opt === s(suppliers.id)
         val results = query.result.toList
@@ -319,7 +319,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query coffees ordered by name and limited to the second result" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(name) from coffees orderBy (name asc) limit 1 offset 1
         val results = query.result.toList
         results.size should equal(1)
@@ -330,7 +330,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query coffees grouped by price" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(price) from coffees groupBy price orderBy (price asc)
         val results = query.result.toVector
         results.size should equal(3)
@@ -348,14 +348,14 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     val queryAll = select(*) from names orderBy(name asc)
 
     "have no records in the table" in {
-      withSession {
+      withSession { implicit session =>
         val results = queryAll.result.toList
         results.size should equal(0)
       }
     }
     if (supportsMerge) {
       "merge 'John Doe' for an inserted record" in {
-        withSession {
+        withSession { implicit session =>
           merge(name, name("John Doe"), age(21)).result
           val results = queryAll.result.toList
           results.size should equal(1)
@@ -365,7 +365,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         }
       }
       "merge 'John Doe' for an updated record" in {
-        withSession {
+        withSession { implicit session =>
           merge(name, name("John Doe"), age(25)).result
           val results = queryAll.result.toList
           results.size should equal(1)
@@ -375,7 +375,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         }
       }
       "merge 'Jane Doe' for an inserted record" in {
-        withSession {
+        withSession { implicit session =>
           merge(name, name("Jane Doe"), age(22)).result
           val results = queryAll.result.toList
           results.size should equal(2)
@@ -405,12 +405,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import fruitColors._
 
     "insert an Orange" in {
-      transaction {
+      transaction { implicit session =>
         insert(color("Orange"), fruit(Fruit("Orange"))).result
       }
     }
     "query the Orange back" in {
-      withSession {
+      withSession { implicit session =>
         val results = (select(*) from fruitColors).result.toList
         results.size should equal(1)
         val orange = results.head
@@ -423,7 +423,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     val ds = testCrossReference
     import ds._
     "create the tables successfully" in {
-      withSession {
+      withSession { implicit session =>
         create(first, second)
       }
     }
@@ -436,12 +436,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     var dataId = -1
 
     "create the tables successfully" in {
-      withSession {
+      withSession { implicit session =>
         create(lists, data, combinedUnique)
       }
     }
     "insert a List[String] entry" in {
-      withSession {
+      withSession { implicit session =>
         val idOption = insert(lists.strings(List("One", "Two", "Three")))
         idOption shouldNot equal(None)
         listId = idOption.result
@@ -449,7 +449,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "query a List[String] entry" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(lists.id, lists.strings) from lists
         val results = query.result.toList
         results.size should equal(1)
@@ -459,13 +459,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "insert a Blob entry" in {
-      transaction {
+      transaction { implicit session =>
         dataId = insert(data.content(new SerialBlob("test using blob".getBytes("UTF-8")))).result
         dataId should equal (1)
       }
     }
     "query a Blob entry" in {
-      withSession {
+      withSession { implicit session =>
         val query = select(data.id, data.content) from data
         val results = query.result.toList
         results.size should equal(1)
@@ -477,21 +477,21 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       }
     }
     "insert John Doe into combinedUnique" in {
-      withSession {
+      withSession { implicit session =>
         insert(
           combinedUnique.firstName("John"),
           combinedUnique.lastName("Doe")).result should equal (1)
       }
     }
     "insert Jane Doe into combinedUnique" in {
-      withSession {
+      withSession { implicit session =>
         insert(
           combinedUnique.firstName("Jane"),
           combinedUnique.lastName("Doe")).result should equal (2)
       }
     }
     "attempting to insert John Doe again throws a constraint violation" in {
-      withSession {
+      withSession { implicit session =>
         intercept[Throwable] {
           insert(combinedUnique.firstName("John"), combinedUnique.lastName("Doe")).result
           fail()
@@ -505,7 +505,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       import ds._
 
       "drop all tables" in {
-        withSession {
+        withSession { implicit session =>
           dropTable(test, cascade = true).result
           dropTable(coffees, cascade = true).result
           dropTable(suppliers, cascade = true).result
@@ -514,7 +514,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         }
       }
       "verify no tables exist anymore" in {
-        withSession {
+        withSession { implicit session =>
           jdbcTables should equal(Set.empty[String])
         }
       }
@@ -524,13 +524,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       import ds._
 
       "drop all tables" in {
-        withSession {
+        withSession { implicit session =>
           dropTable(first, cascade = true).result
           dropTable(second, cascade = true).result
         }
       }
       "verify no tables exist anymore" in {
-        withSession {
+        withSession { implicit session =>
           jdbcTables should equal(Set.empty[String])
         }
       }
@@ -540,14 +540,14 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       import ds._
 
       "drop all tables" in {
-        withSession {
+        withSession { implicit session =>
           dropTable(lists, cascade = true).result
           dropTable(data, cascade = true).result
           dropTable(combinedUnique, cascade = true).result
         }
       }
       "verify no tables exist anymore" in {
-        withSession {
+        withSession { implicit session =>
           jdbcTables should equal(Set.empty[String])
         }
       }

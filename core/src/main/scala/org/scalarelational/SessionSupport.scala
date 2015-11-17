@@ -53,19 +53,20 @@ trait SessionSupport {
     session.inTransaction = false
   }
 
-  def withSession[Result](f: => Result): Result = {
+  def withSession[Result](f: Session => Result): Result = {
     val created = createSession()
+    val session = this.session
     try {
-      f
+      f(session)
     } finally {
       if (created) disposeSession()
     }
   }
 
-  def transaction[Result](f: => Result): Result = withSession {
+  def transaction[Result](f: Session => Result): Result = withSession { session =>
     val created = createTransaction()
     try {
-      val result: Result = f
+      val result: Result = f(session)
       if (created) commitTransaction()
       result
     } catch {
@@ -79,9 +80,9 @@ trait SessionSupport {
   /**
    * Executes the inline function asynchronously and surrounds in a session returning Future[Result].
    */
-  def async[Result](f: => Result) = Future({
-    withSession {
-      f
+  def async[Result](f: Session => Result) = Future({
+    withSession { session =>
+      f(session)
     }
   })(executionContext)
 }
