@@ -26,12 +26,12 @@ class PolymorphSpec extends WordSpec with Matchers {
 
   "Users" should {
     "create tables" in {
-      session {
+      withSession {
         create(users)
       }
     }
     "insert users" in {
-      session {
+      withSession {
         insertUsers.zipWithIndex.foreach {
           case (usr, index) => {
             val result = usr.insert.result
@@ -41,7 +41,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       }
     }
     "query users" in {
-      session {
+      withSession {
         val query = users.q
         val x = query.asCase[User] { row =>
           if (row(users.isGuest)) classOf[UserGuest]
@@ -54,12 +54,12 @@ class PolymorphSpec extends WordSpec with Matchers {
 
   "Content" should {
     "create tables" in {
-      session {
+      withSession {
         create(content)
       }
     }
     "insert content" in {
-      session {
+      withSession {
         insertContent.zipWithIndex.foreach {
           case (c, index) => {
             val result = c.insert.result
@@ -69,7 +69,7 @@ class PolymorphSpec extends WordSpec with Matchers {
       }
     }
     "query content" in {
-      session {
+      withSession {
         val query = content.q
         val x = query.asCase[Content] { row =>
           if (row(content.isString)) classOf[ContentString]

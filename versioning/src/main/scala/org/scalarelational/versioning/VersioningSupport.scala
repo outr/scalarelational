@@ -20,7 +20,7 @@ trait VersioningSupport extends PersistentProperties {
   def upgrade() = synchronized {
     info("Checking for Database Upgrades...")
 
-    session {
+    withSession {
       val latestVersion = upgrades.keys.toList match {
         case Nil => 0
         case keys => keys.max

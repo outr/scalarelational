@@ -14,7 +14,7 @@ class LinkingSpec extends WordSpec with Matchers {
 
   "LinkingSpec" should {
     "create tables" in {
-      session {
+      withSession {
         create(
           Content,
           Tag,
@@ -24,7 +24,7 @@ class LinkingSpec extends WordSpec with Matchers {
     }
 
     "insert rows" in {
-      session {
+      withSession {
         insert(Content.title("content")).result should equal (1)
         insert(Content.title("content2")).result should equal (2)
         insert(Content.title("content3")).result should equal (3)
@@ -40,7 +40,7 @@ class LinkingSpec extends WordSpec with Matchers {
     }
 
     "query content" in {
-      session {
+      withSession {
         val result =
           (Tag.q
             innerJoin ContentTagLinking on ContentTagLinking.tagId.opt === Tag.id

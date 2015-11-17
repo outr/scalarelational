@@ -17,7 +17,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   def query: Query[Vector[SelectExpression[_]], MappedType]
 
   def by[T, S](column: Column[T, S], value: T)
-           (implicit manifest: Manifest[MappedType]) = datastore.session {
+           (implicit manifest: Manifest[MappedType]) = datastore.withSession {
     val q = query where column === value
     q.converted.headOption
   }

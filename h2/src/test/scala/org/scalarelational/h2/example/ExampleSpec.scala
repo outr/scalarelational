@@ -11,14 +11,14 @@ class ExampleSpec extends WordSpec with Matchers {
 
   "example" should {
     "create the database" in {
-      session {
+      withSession {
         create(suppliers, coffees)
       }
     }
     "populate some data for suppliers" in {
       import suppliers._
 
-      session {
+      withSession {
         // Clean and type-safe inserts
         insert(id(101), name("Acme, Inc."), street("99 Market Street"), city("Groundsville"), state("CA"), zip("95199")).result
         insert(id(49), name("Superior Coffee"), street("1 Party Place"), city("Mendocino"), state("CA"), zip("95460")).result
@@ -29,7 +29,7 @@ class ExampleSpec extends WordSpec with Matchers {
     "populate some data for coffees" in {
       import coffees._
 
-      session {
+      withSession {
         // Batch insert some coffees
         insert(name("Colombian"), supID(101), price(7.99), sales(0), total(0), rating(Some(0.5))).
            and(name("French Roast"), supID(49), price(8.99), sales(0), total(0), rating(Some(0.3))).
@@ -41,7 +41,7 @@ class ExampleSpec extends WordSpec with Matchers {
     "query all coffees back" in {
       import coffees._
 
-      session {
+      withSession {
         println("Coffees:")
         (select(*) from coffees).result.foreach {
           case r => println(s"  ${r(name)}\t${r(supID)}\t${r(price)}\t${r(sales)}\t${r(total)}")
@@ -49,7 +49,7 @@ class ExampleSpec extends WordSpec with Matchers {
       }
     }
     "query all coffees back filtering and joining with suppliers" in {
-      session {
+      withSession {
         println("Filtered Results:")
         (select(coffees.name, suppliers.name) from coffees innerJoin suppliers on coffees.supID === suppliers.id where coffees.price < 9.0).result.foreach {
           case r => println(s"  Coffee: ${r(coffees.name)}, Supplier: ${r(suppliers.name)}")
@@ -58,7 +58,7 @@ class ExampleSpec extends WordSpec with Matchers {
     }
     "query rating.avg" in {
       import coffees._
-      session {
+      withSession {
         (select (Avg(rating))
           from coffees
         ).converted.one.get should be > 0.0
@@ -66,7 +66,7 @@ class ExampleSpec extends WordSpec with Matchers {
     }
     "query rating.avg without None" in {
       import coffees._
-      session {
+      withSession {
         (select (Avg(rating))
           from coffees
           where rating.!==(None) // !== conflicts with ScalaTest

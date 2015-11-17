@@ -15,14 +15,14 @@ class AsyncSpec extends WordSpec with Matchers {
 
   "Async" should {
     "create tables" in {
-      session {
+      withSession {
         create(users)
       }
     }
     "insert a bunch of values asynchronously" in {
       val running = new AtomicInteger(0)
 
-      session {
+      withSession {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()
@@ -39,7 +39,7 @@ class AsyncSpec extends WordSpec with Matchers {
     "persist a bunch of values asynchronously" in {
       val running = new AtomicInteger(0)
 
-      session {
+      withSession {
         (0 until 100).foreach {
           case index => {
             running.incrementAndGet()

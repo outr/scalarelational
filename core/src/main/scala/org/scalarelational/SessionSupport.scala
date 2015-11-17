@@ -53,7 +53,7 @@ trait SessionSupport {
     session.inTransaction = false
   }
 
-  def session[Result](f: => Result): Result = {
+  def withSession[Result](f: => Result): Result = {
     val created = createSession()
     try {
       f
@@ -62,7 +62,7 @@ trait SessionSupport {
     }
   }
 
-  def transaction[Result](f: => Result): Result = session {
+  def transaction[Result](f: => Result): Result = withSession {
     val created = createTransaction()
     try {
       val result: Result = f
@@ -80,7 +80,7 @@ trait SessionSupport {
    * Executes the inline function asynchronously and surrounds in a session returning Future[Result].
    */
   def async[Result](f: => Result) = Future({
-    session {
+    withSession {
       f
     }
   })(executionContext)

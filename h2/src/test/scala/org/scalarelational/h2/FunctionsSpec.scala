@@ -12,17 +12,17 @@ class FunctionsSpec extends WordSpec with Matchers {
 
   "FunctionsTest" should {
     "create the tables" in {
-      session {
+      withSession {
         create(users)
       }
     }
     "invoke the createUser function" in {
-      session {
+      withSession {
         createUser("John Doe", 21)
       }
     }
     "get the created user out via byName function" in {
-      session {
+      withSession {
         val results = byName("John Doe")
         try {
           results.next() should equal(true)
@@ -33,7 +33,7 @@ class FunctionsSpec extends WordSpec with Matchers {
       }
     }
     "query the created user out" in {
-      session {
+      withSession {
         val query = select(users.*) from users
         val results = query.result.toList
         results.size should equal(1)

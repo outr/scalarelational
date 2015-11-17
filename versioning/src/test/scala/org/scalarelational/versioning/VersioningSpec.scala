@@ -11,28 +11,28 @@ class VersioningSpec extends WordSpec with Matchers {
 
   "Versioning" should {
     "create the database" in {
-      session {
+      withSession {
         create(test, persistentProperties)
       }
     }
     "have version at 0" in {
-      session {
+      withSession {
         version() should equal(0)
         persistence.get("databaseVersion") should equal(None)
       }
     }
     "register an upgrade" in {
-      session {
+      withSession {
         register(Upgrade1)
       }
     }
     "run upgrades but automatically update version" in {
-      session {
+      withSession {
         upgrade()
       }
     }
     "have version at 1" in {
-      session {
+      withSession {
         version() should equal(1)
         persistence.get("databaseVersion") should equal(Some("1"))
       }
@@ -42,12 +42,12 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade3)
     }
     "run upgrades" in {
-      session {
+      withSession {
         upgrade()
       }
     }
     "have version at 3" in {
-      session {
+      withSession {
         Upgrade2.invoked should equal(true)
         Upgrade3.invoked should equal(true)
         version() should equal(3)
@@ -58,17 +58,17 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade4)
     }
     "have only two tables in the datastore" in {
-      session {
+      withSession {
         jdbcTables should equal(Set("TEST", "PERSISTENT_PROPERTIES"))
       }
     }
     "run fourth upgrade" in {
-      session {
+      withSession {
         upgrade()
       }
     }
     "have version at 4" in {
-      session {
+      withSession {
         version() should equal(4)
         persistence.get("databaseVersion") should equal(Some("4"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
@@ -79,12 +79,12 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade5)
     }
     "run fifth upgrade" in {
-      session {
+      withSession {
         upgrade()
       }
     }
     "have version at 5" in {
-      session {
+      withSession {
         version() should equal(5)
         persistence.get("databaseVersion") should equal(Some("5"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
@@ -95,12 +95,12 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade6)
     }
     "run sixth upgrade" in {
-      session {
+      withSession {
         upgrade()
       }
     }
     "have version at 6" in {
-      session {
+      withSession {
         version() should equal(6)
         persistence.get("databaseVersion") should equal(Some("6"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
