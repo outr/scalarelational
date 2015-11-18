@@ -6,6 +6,7 @@ import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import org.powerscala.log.{Level, Logging}
 import org.powerscala.property.Property
+import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.datatype._
@@ -95,9 +96,8 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
       super.columnSQLType(create)
     }
 
-  override def jdbcTables = {
-    val s = session
-    val meta = s.connection.getMetaData
+  override def jdbcTables(implicit session: Session) = {
+    val meta = session.connection.getMetaData
     val results = meta.getTables(null, "public", "%", null)
     try {
       new ResultSetIterator(results).map(_.getString("TABLE_NAME")).toSet
@@ -106,9 +106,8 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def jdbcColumns(tableName: String) = {
-    val s = session
-    val meta = s.connection.getMetaData
+  override def jdbcColumns(tableName: String)(implicit session: Session) = {
+    val meta = session.connection.getMetaData
     val results = meta.getColumns(null, "public", tableName, null)
     try {
       new ResultSetIterator(results).map(_.getString("COLUMN_NAME")).toSet
@@ -117,9 +116,8 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def doesTableExist(name: String) = {
-    val s = session
-    val meta = s.connection.getMetaData
+  override def doesTableExist(name: String)(implicit session: Session) = {
+    val meta = session.connection.getMetaData
     val results = meta.getTables(null, "public", name.toLowerCase, null)
     try {
       results.next()
