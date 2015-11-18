@@ -31,7 +31,8 @@ trait PersistentProperties extends Datastore {
       get(name).getOrElse(throw new NullPointerException(s"Unable to find $name in persistent properties table."))
     }
 
-    def update(name: String, newValue: String)(implicit session: Session): Unit = {
+    def update(name: String, newValue: String)
+              (implicit session: Session): Unit = {
       val m = merge(
         persistentProperties.key,
         persistentProperties.key(name),
@@ -39,7 +40,7 @@ trait PersistentProperties extends Datastore {
       m.result
     }
 
-    def remove(name: String)(implicit session: Session) {
+    def remove(name: String)(implicit session: Session): Unit = {
       val d = delete (persistentProperties) where (persistentProperties.key === name)
       d.result
     }

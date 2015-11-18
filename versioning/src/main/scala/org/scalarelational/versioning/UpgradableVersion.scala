@@ -1,5 +1,7 @@
 package org.scalarelational.versioning
 
+import org.scalarelational.Session
+
 /**
  * UpgradableVersions are registered to a Datastore that mixes-in VersioningSupport. An UpgradableVersion represents a
  * specific version number of the database that can be upgraded to. By default the database starts at zero an
@@ -10,5 +12,5 @@ package org.scalarelational.versioning
  */
 trait UpgradableVersion {
   def version: Int
-  def upgrade(): Unit
+  def upgrade(implicit session: Session): Unit
 }

@@ -1,11 +1,15 @@
 package org.scalarelational.versioning
 
 import org.powerscala.concurrent.Time
+import org.powerscala.property.Property
+import org.scalarelational.Session
 import org.scalarelational.extra.PersistentProperties
 
-
 trait VersioningSupport extends PersistentProperties {
-  lazy val version = persistence.intProperty("databaseVersion")
+  def version: Property[Int] =
+    withSession { implicit session =>
+      persistence.intProperty("databaseVersion")
+    }
 
   private var upgrades = Map.empty[Int, UpgradableVersion]
 
@@ -40,7 +44,7 @@ trait VersioningSupport extends PersistentProperties {
             info(s"Upgrading from version $v to $nextVersion...")
             val upgrade = upgrades.getOrElse(nextVersion, throw new RuntimeException(s"No version registered for $nextVersion."))
             val elapsed = Time.elapsed {
-              upgrade.upgrade()
+              upgrade.upgrade(session)
             }
             version := nextVersion
             info(s"$nextVersion upgrade finished successfully in $elapsed seconds.")

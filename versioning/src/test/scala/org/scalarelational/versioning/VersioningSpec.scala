@@ -1,5 +1,6 @@
 package org.scalarelational.versioning
 
+import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
@@ -42,9 +43,7 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade3)
     }
     "run upgrades" in {
-      withSession { implicit session =>
-        upgrade()
-      }
+      upgrade()
     }
     "have version at 3" in {
       withSession { implicit session =>
@@ -113,7 +112,8 @@ class VersioningSpec extends WordSpec with Matchers {
 object Upgrade1 extends UpgradableVersion {
   override def version = 1
 
-  override def upgrade() = throw new RuntimeException("This should never be invoked.")
+  override def upgrade(implicit session: Session) =
+    throw new RuntimeException("This should never be invoked.")
 }
 
 object Upgrade2 extends UpgradableVersion {
@@ -121,7 +121,7 @@ object Upgrade2 extends UpgradableVersion {
 
   override def version = 2
 
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     invoked = true
   }
 }
@@ -131,14 +131,14 @@ object Upgrade3 extends UpgradableVersion {
 
   override def version = 3
 
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     invoked = true
   }
 }
 
 object Upgrade4 extends UpgradableVersion {
   override def version = 4
-  override def upgrade() = {
+  override def upgrade(implicit session: Session): Unit = {
     import VersioningDatastore._
 
     createTable("test2").
@@ -150,7 +150,7 @@ object Upgrade4 extends UpgradableVersion {
 
 object Upgrade5 extends UpgradableVersion {
   override def version = 5
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     import VersioningDatastore._
 
     dropColumn("test2", "name").result
@@ -159,7 +159,7 @@ object Upgrade5 extends UpgradableVersion {
 
 object Upgrade6 extends UpgradableVersion {
   override def version = 6
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     import VersioningDatastore._
 
     renameColumn("test2", "age", "yearsOld").result
