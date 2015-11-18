@@ -1,5 +1,6 @@
 package org.scalarelational.instruction
 
+import org.scalarelational.Session
 import org.scalarelational.table.Table
 
 import scala.concurrent.Future
@@ -8,7 +9,7 @@ import scala.concurrent.Future
 trait Instruction[+R] {
   def table: Table
 
-  def result: R
+  def result(implicit session: Session): R
   final def async: Future[R] = table.datastore.async { implicit session =>
     result
   }
@@ -16,5 +17,5 @@ trait Instruction[+R] {
   /**
    * Convenience wrapper that simply calls <code>result</code>
    */
-  def apply(): R = result
+  def apply()(implicit session: Session): R = result
 }

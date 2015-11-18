@@ -3,6 +3,7 @@ package org.scalarelational.instruction
 import java.sql.PreparedStatement
 
 import org.powerscala.reflect._
+import org.scalarelational.Session
 import org.scalarelational.model.Datastore
 
 import scala.util.matching.Regex
@@ -36,21 +37,24 @@ object SQLInstruction {
   def apply[T <: AnyRef](sql: String)(implicit manifest: Manifest[T]) = new SQLInstruction[T](sql, manifest.runtimeClass)
 }
 
-case class SQLInstructionInstance[T <: AnyRef](instruction: SQLInstruction[T], datastore: Datastore) {
-  lazy val preparedStatement = datastore.connection.prepareStatement(instruction.preparedSQL)
+case class SQLInstructionInstance[T <: AnyRef](instruction: SQLInstruction[T],
+                                               datastore: Datastore) {
+  def preparedStatement(session: Session) =
+    session.connection.prepareStatement(instruction.preparedSQL)
 
-  def execute(instances: T*) = {
+  def execute(instances: T*)(implicit session: Session) = {
     var first = true
+    val stmt = preparedStatement(session)
     instances.foreach {
       case instance => {
         if (first) {
           first = false
         } else {
-          preparedStatement.addBatch()
+          stmt.addBatch()
         }
-        instruction.builder(preparedStatement, instance)
+        instruction.builder(stmt, instance)
       }
     }
-    preparedStatement.execute()
+    stmt.execute()
   }
 }

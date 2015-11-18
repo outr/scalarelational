@@ -3,6 +3,7 @@ package org.scalarelational.existing
 import java.sql.ResultSet
 
 import org.powerscala.reflect._
+import org.scalarelational.Session
 import org.scalarelational.datatype.{DataTypes, TypedValue}
 import org.scalarelational.model.Datastore
 
@@ -18,12 +19,12 @@ class ExistingQuery[R](datastore: Datastore, queryString: String)(implicit manif
   if (!caseClass.isCase) throw new RuntimeException(s"$caseClass is not a case class!")
   private val caseValues = caseClass.caseValues.map(cv => cv.name.toLowerCase -> cv).toMap
 
-  def query(args: List[TypedValue[_, _]]) = {
+  def query(args: List[TypedValue[_, _]])(implicit session: Session) = {
     val namedArgs = args.collect {
       case arg if arg.isInstanceOf[NamedArgument] => arg.asInstanceOf[NamedArgument]
     }
     val query = applyNamed(queryString, namedArgs)
-    val results = datastore.session.executeQuery(query, args.filterNot(a => a.isInstanceOf[NamedArgument]))
+    val results = session.executeQuery(query, args.filterNot(a => a.isInstanceOf[NamedArgument]))
     new Iterator[R] {
       def hasNext = results.next()
       def next() = result2R(results)

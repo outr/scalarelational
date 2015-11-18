@@ -6,6 +6,7 @@ import org.h2.jdbcx.JdbcConnectionPool
 import org.powerscala.event.processor.UnitProcessor
 import org.powerscala.log.Logging
 import org.powerscala.property.Property
+import org.scalarelational.Session
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
 import org.scalarelational.model._
 import org.scalarelational.table.Table
@@ -56,7 +57,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     f
   }
 
-  override def create(tables: Table*) = {
+  override def create(tables: Table*)(implicit session: Session) = {
     val created = super.create(tables: _*)
 
     // TODO: convert this to use CallableInstructions

@@ -2,6 +2,7 @@ package org.scalarelational.table
 
 import java.lang.reflect.Field
 
+import org.scalarelational.Session
 import org.scalarelational.column.Column
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
@@ -85,7 +86,8 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
   }
 
-  def exists: Boolean = datastore.doesTableExist(tableName)
+  def exists(implicit session: Session): Boolean =
+    datastore.doesTableExist(tableName)
 
   override def toString: String = tableName
 }
