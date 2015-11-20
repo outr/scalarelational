@@ -86,9 +86,6 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     }).map(_.getName).getOrElse(throw new RuntimeException(s"Unable to find field name in '$tableName' for '${column.name}'."))
   }
 
-  def exists(implicit session: Session): Boolean =
-    datastore.tableExists(tableName)
-
   override def toString: String = tableName
 }
 
