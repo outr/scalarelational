@@ -116,7 +116,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def doesTableExist(name: String)(implicit session: Session) = {
+  override def tableExists(name: String)(implicit session: Session) = {
     val meta = session.connection.getMetaData
     val results = meta.getTables(null, "public", name.toLowerCase, null)
     try {

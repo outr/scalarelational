@@ -87,7 +87,7 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
   }
 
   def exists(implicit session: Session): Boolean =
-    datastore.doesTableExist(tableName)
+    datastore.tableExists(tableName)
 
   override def toString: String = tableName
 }

@@ -87,7 +87,7 @@ trait Datastore
     }
   }
 
-  def doesTableExist(name: String)(implicit session: Session) = {
+  def tableExists(name: String)(implicit session: Session) = {
     val meta = session.connection.getMetaData
     val results = meta.getTables(null, "PUBLIC", name.toUpperCase, null)
     try {
