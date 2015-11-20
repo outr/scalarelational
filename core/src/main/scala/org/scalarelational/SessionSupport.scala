@@ -7,17 +7,19 @@ import scala.concurrent._
 trait SessionSupport { this: Datastore =>
   protected def executionContext = ExecutionContext.global
 
-  protected val _session = new ThreadLocal[Session]
+  protected val _session = new ThreadLocal[Option[Session]] {
+    override def initialValue = None
+  }
 
-  def hasSession: Boolean = _session.get() != null
+  def hasSession: Boolean = _session.get().nonEmpty
 
   protected def createSession(): (Boolean, Session) =
-    if (hasSession) {
-      (false, _session.get)
-    } else {
-      val session = instantiateSession()
-      _session.set(session)
-      (true, session)
+    _session.get() match {
+      case Some(session) => (false, session)
+      case None =>
+        val session = instantiateSession()
+        _session.set(Some(session))
+        (true, session)
     }
 
   protected def instantiateSession(): Session = Session(this)
