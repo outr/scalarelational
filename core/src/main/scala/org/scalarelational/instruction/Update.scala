@@ -1,5 +1,6 @@
 package org.scalarelational.instruction
 
+import org.scalarelational.Session
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.op.Condition
 import org.scalarelational.table.Table
@@ -14,7 +15,7 @@ case class Update[+ResultType](table: Table,
   def where(condition: Condition): Update[ResultType] =
     copy(whereCondition = condition)
 
-  def result: ResultType = mapResult(table.datastore.exec(this))
+  def result(implicit session: Session): ResultType = mapResult(table.datastore.exec(this))
 
   /**
    * Returns a new copy of this Update with an additional column value. Will

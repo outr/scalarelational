@@ -1,5 +1,6 @@
 package org.scalarelational.versioning
 
+import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.table.Table
@@ -11,28 +12,28 @@ class VersioningSpec extends WordSpec with Matchers {
 
   "Versioning" should {
     "create the database" in {
-      session {
+      withSession { implicit session =>
         create(test, persistentProperties)
       }
     }
     "have version at 0" in {
-      session {
+      withSession { implicit session =>
         version() should equal(0)
         persistence.get("databaseVersion") should equal(None)
       }
     }
     "register an upgrade" in {
-      session {
+      withSession { implicit session =>
         register(Upgrade1)
       }
     }
     "run upgrades but automatically update version" in {
-      session {
+      withSession { implicit session =>
         upgrade()
       }
     }
     "have version at 1" in {
-      session {
+      withSession { implicit session =>
         version() should equal(1)
         persistence.get("databaseVersion") should equal(Some("1"))
       }
@@ -42,12 +43,10 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade3)
     }
     "run upgrades" in {
-      session {
-        upgrade()
-      }
+      upgrade()
     }
     "have version at 3" in {
-      session {
+      withSession { implicit session =>
         Upgrade2.invoked should equal(true)
         Upgrade3.invoked should equal(true)
         version() should equal(3)
@@ -58,17 +57,17 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade4)
     }
     "have only two tables in the datastore" in {
-      session {
+      withSession { implicit session =>
         jdbcTables should equal(Set("TEST", "PERSISTENT_PROPERTIES"))
       }
     }
     "run fourth upgrade" in {
-      session {
+      withSession { implicit session =>
         upgrade()
       }
     }
     "have version at 4" in {
-      session {
+      withSession { implicit session =>
         version() should equal(4)
         persistence.get("databaseVersion") should equal(Some("4"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
@@ -79,12 +78,12 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade5)
     }
     "run fifth upgrade" in {
-      session {
+      withSession { implicit session =>
         upgrade()
       }
     }
     "have version at 5" in {
-      session {
+      withSession { implicit session =>
         version() should equal(5)
         persistence.get("databaseVersion") should equal(Some("5"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
@@ -95,12 +94,12 @@ class VersioningSpec extends WordSpec with Matchers {
       register(Upgrade6)
     }
     "run sixth upgrade" in {
-      session {
+      withSession { implicit session =>
         upgrade()
       }
     }
     "have version at 6" in {
-      session {
+      withSession { implicit session =>
         version() should equal(6)
         persistence.get("databaseVersion") should equal(Some("6"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
@@ -113,7 +112,8 @@ class VersioningSpec extends WordSpec with Matchers {
 object Upgrade1 extends UpgradableVersion {
   override def version = 1
 
-  override def upgrade() = throw new RuntimeException("This should never be invoked.")
+  override def upgrade(implicit session: Session) =
+    throw new RuntimeException("This should never be invoked.")
 }
 
 object Upgrade2 extends UpgradableVersion {
@@ -121,7 +121,7 @@ object Upgrade2 extends UpgradableVersion {
 
   override def version = 2
 
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     invoked = true
   }
 }
@@ -131,14 +131,14 @@ object Upgrade3 extends UpgradableVersion {
 
   override def version = 3
 
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     invoked = true
   }
 }
 
 object Upgrade4 extends UpgradableVersion {
   override def version = 4
-  override def upgrade() = {
+  override def upgrade(implicit session: Session): Unit = {
     import VersioningDatastore._
 
     createTable("test2").
@@ -150,7 +150,7 @@ object Upgrade4 extends UpgradableVersion {
 
 object Upgrade5 extends UpgradableVersion {
   override def version = 5
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     import VersioningDatastore._
 
     dropColumn("test2", "name").result
@@ -159,7 +159,7 @@ object Upgrade5 extends UpgradableVersion {
 
 object Upgrade6 extends UpgradableVersion {
   override def version = 6
-  override def upgrade() = {
+  override def upgrade(implicit session: Session) = {
     import VersioningDatastore._
 
     renameColumn("test2", "age", "yearsOld").result

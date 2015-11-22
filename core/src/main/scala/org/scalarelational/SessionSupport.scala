@@ -4,84 +4,82 @@ import org.scalarelational.model.Datastore
 
 import scala.concurrent._
 
-
-trait SessionSupport {
-  this: Datastore =>
-
+trait SessionSupport { this: Datastore =>
   protected def executionContext = ExecutionContext.global
 
-  protected val _session = new ThreadLocal[Session]
-  def session = _session.get() match {
-    case null => throw new RuntimeException(s"No session defined in the current thread. SQL calls must be executed in a session or transaction block.")
-    case c => c
+  protected val _session = new ThreadLocal[Option[Session]] {
+    override def initialValue = None
   }
-  def connection = session.connection
-  def hasSession = _session.get() != null
 
-  protected def createSession() = if (hasSession) {
-    false
-  } else {
-    _session.set(instantiateSession())
-    true
-  }
+  def hasSession: Boolean = _session.get().nonEmpty
+
+  protected def createSession(): (Boolean, Session) =
+    _session.get() match {
+      case Some(session) => (false, session)
+      case None =>
+        val session = instantiateSession()
+        _session.set(Some(session))
+        (true, session)
+    }
 
   protected def instantiateSession(): Session = Session(this)
 
-  protected def disposeSession() = {
-    if (!hasSession) throw new RuntimeException(s"No context currently exists in current thread...cannot dispose.")
+  protected def disposeSession(session: Session): Unit = {
+    if (!hasSession) throw new RuntimeException(
+      s"No context currently exists in current thread...cannot dispose.")
     session.dispose()
     _session.remove()
   }
 
-  protected def createTransaction() = if (session.inTransaction) {
-    false
-  } else {
-    connection.setAutoCommit(false)
-    session.inTransaction = true
-    true
-  }
+  protected def createTransaction(session: Session): Boolean =
+    if (session.inTransaction) {
+      false
+    } else {
+      session.connection.setAutoCommit(false)
+      session.inTransaction = true
+      true
+    }
 
-  protected def commitTransaction() = {
-    connection.commit()
-    connection.setAutoCommit(false)
+  protected def commitTransaction(session: Session): Unit = {
+    session.connection.commit()
+    session.connection.setAutoCommit(false)
     session.inTransaction = false
   }
 
-  protected def rollbackTransaction() = {
-    connection.rollback()
-    connection.setAutoCommit(false)
+  protected def rollbackTransaction(session: Session): Unit = {
+    session.connection.rollback()
+    session.connection.setAutoCommit(false)
     session.inTransaction = false
   }
 
-  def session[Result](f: => Result): Result = {
-    val created = createSession()
+  def withSession[Result](f: Session => Result): Result = {
+    val (created, session) = createSession()
     try {
-      f
+      f(session)
     } finally {
-      if (created) disposeSession()
+      if (created) disposeSession(session)
     }
   }
 
-  def transaction[Result](f: => Result): Result = session {
-    val created = createTransaction()
-    try {
-      val result: Result = f
-      if (created) commitTransaction()
-      result
-    } catch {
-      case t: Throwable => {
-        if (created) rollbackTransaction()
-        throw t
+  def transaction[Result](f: Session => Result): Result =
+    withSession { session =>
+      val created = createTransaction(session)
+      try {
+        val result: Result = f(session)
+        if (created) commitTransaction(session)
+        result
+      } finally {
+        if (created) rollbackTransaction(session)
       }
     }
-  }
 
   /**
-   * Executes the inline function asynchronously and surrounds in a session returning Future[Result].
+   * Executes the inline function asynchronously and surrounds in a session
+   * returning Future[Result].
    */
-  def async[Result](f: => Result) = Future({
-    session {
-      f
+  def async[Result](f: Session => Result): Future[Result] = Future(
+    withSession { session =>
+      f(session)
     }
-  })(executionContext)
+  )(executionContext)
 }

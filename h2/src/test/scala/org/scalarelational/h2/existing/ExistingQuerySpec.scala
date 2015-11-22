@@ -19,18 +19,18 @@ class ExistingQuerySpec extends WordSpec with Matchers {
     val existingQuery1 = new ExistingQuery[ExistingResult](TestDatastore, queryString1)
     val existingQuery2 = new ExistingQuery[ExistingResult](TestDatastore, queryString2)
     "create the database" in {
-      session {
+      withSession { implicit session =>
         create(users)
       }
     }
     "insert some records" in {
-      session {
+      withSession { implicit session =>
         insert(users.name("Adam"), users.language("English")).
            and(users.name("Victor"), users.language("Russian")).result
       }
     }
     "query back a specific result" in {
-      session {
+      withSession { implicit session =>
         val results = existingQuery1.query(List(DataTypes.IntType.typed(2))).toList
         results.length should equal(1)
         val result = results.head
@@ -40,7 +40,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
       }
     }
     "query back a specific result with a NamedArgument" in {
-      session {
+      withSession { implicit session =>
         val results = existingQuery2.query(List(new NamedArgument("id", "1"))).toList
         results.length should equal(1)
         val result = results.head

@@ -4,7 +4,7 @@ import java.io.File
 import javax.sql.DataSource
 
 import org.powerscala.property.Property
-import org.scalarelational.SelectExpression
+import org.scalarelational.{Session, SelectExpression}
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction
@@ -67,7 +67,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
-  def exportTable(table: Table, file: File, drop: Boolean = true) = {
+  def exportTable(table: Table, file: File, drop: Boolean = true)
+                 (implicit session: Session) = {
     val command = new StringBuilder("SCRIPT ")
     if (drop) {
       command.append("DROP ")
@@ -81,19 +82,20 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.execute(command.toString())
   }
 
-  def importScript(file: File) = {
+  def importScript(file: File)(implicit session: Session) = {
     val command = s"RUNSCRIPT FROM '${file.getCanonicalPath}'"
     session.execute(command)
   }
 
-  protected def invoke[E, R](query: Query[E, R]) = {
+  protected def invoke[E, R](query: Query[E, R])(implicit session: Session) = {
     val (sql, args) = describe(query)
     SQLContainer.calling(query.table, InstructionType.Query, sql)
 
     session.executeQuery(sql, args)
   }
 
-  protected def invoke[T](insert: InsertSingle[T]): Int = {
+  protected def invoke[T](insert: InsertSingle[T])
+                         (implicit session: Session): Int = {
     if (insert.values.isEmpty) throw new IndexOutOfBoundsException(s"Attempting an insert query with no values: $insert")
     val table = insert.table
     val columnNames = insert.values.map(_.column.name).mkString(", ")
@@ -113,7 +115,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  protected def invoke(merge: Merge) = {
+  protected def invoke(merge: Merge)(implicit session: Session): Int = {
     val table = merge.key.table
     val columnNames = merge.values.map(_.column.name).mkString(", ")
     val columnValues = merge.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any, Any]].typed(cv.toSQL))
@@ -123,7 +125,8 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(mergeString, columnValues)
   }
 
-  protected def invoke(insert: InsertMultiple) = {
+  protected def invoke(insert: InsertMultiple)
+                      (implicit session: Session): List[Int] = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
     if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
     val table = insert.rows.head.head.column.table
@@ -144,7 +147,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  protected def invoke[T](update: Update[T]): Int = {
+  protected def invoke[T](update: Update[T])(implicit session: Session): Int = {
     var args = List.empty[TypedValue[_, _]]
     val sets = update.values.map(cv => s"${cv.column.name}=?").mkString(", ")
     val setArgs = update.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any, Any]].typed(cv.toSQL))
@@ -157,7 +160,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.executeUpdate(sql, args)
   }
 
-  protected def invoke(delete: Delete) = {
+  protected def invoke(delete: Delete)(implicit session: Session) = {
     var args = List.empty[TypedValue[_, _]]
 
     val (where, whereArgs) = where2SQL(delete.whereCondition)

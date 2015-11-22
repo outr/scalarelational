@@ -16,7 +16,7 @@ class TriggerSpec extends WordSpec with Matchers {
     import TriggerTestDatastore._
 
     "create tables" in {
-      session {
+      withSession { implicit session =>
         create(triggerTest)
       }
     }
@@ -37,7 +37,7 @@ class TriggerSpec extends WordSpec with Matchers {
       selected should equal(0)
     }
     "insert a record to fire a trigger" in {
-      session {
+      withSession { implicit session =>
         val result = insert(triggerTest.name("Test1")).result
         result should equal (1)
       }
@@ -49,7 +49,7 @@ class TriggerSpec extends WordSpec with Matchers {
       selected should equal(0)
     }
     "update a record to fire a trigger" in {
-      session {
+      withSession { implicit session =>
         exec(update(triggerTest.name("Test2")) where triggerTest.id === Some(1)) should equal(1)
       }
     }
@@ -60,7 +60,7 @@ class TriggerSpec extends WordSpec with Matchers {
       selected should equal(0)
     }
     "select a record to fire a select trigger" in {
-      session {
+      withSession { implicit session =>
         val results = (select(triggerTest.*) from triggerTest).result.toList
         results.size should equal(1)
       }
@@ -72,7 +72,7 @@ class TriggerSpec extends WordSpec with Matchers {
       selected should equal(1)
     }
     "delete a record to fire a trigger" in {
-      session {
+      withSession { implicit session =>
         exec(delete(triggerTest) where triggerTest.id === Some(1)) should equal(1)
       }
     }

@@ -13,7 +13,7 @@ class InheritanceSpec extends WordSpec with Matchers {
 
   "InheritanceSpec" should {
     "create tables" in {
-      session {
+      withSession { implicit session =>
         create(
           Content
         )
@@ -21,21 +21,21 @@ class InheritanceSpec extends WordSpec with Matchers {
     }
 
     "insert rows" in {
-      session {
+      withSession { implicit session =>
         insert(Content.title("content")).result should equal (1)
         insert(Content.title("content2")).result should equal (2)
       }
     }
 
     "query content" in {
-      session {
+      withSession { implicit session =>
         (Content.q where Content.id === Some(2))
           .result.hasNext should equal (true)
       }
     }
 
     "query content with mapper" in {
-      session {
+      withSession { implicit session =>
         val query = Content.q where Content.id === Some(2)
         query.to[InheritanceDatastore.Content].converted.head should equal (Content("content2", Some(2)))
       }

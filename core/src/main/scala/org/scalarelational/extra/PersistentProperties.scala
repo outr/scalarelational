@@ -1,6 +1,7 @@
 package org.scalarelational.extra
 
 import org.powerscala.property.Property
+import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
@@ -21,7 +22,7 @@ trait PersistentProperties extends Datastore {
   }
 
   object persistence {
-    def get(name: String): Option[String] = {
+    def get(name: String): Option[String] = withSession { implicit session =>
       val query = select(persistentProperties.value) from persistentProperties where persistentProperties.key === name
       query.converted.headOption
     }
@@ -30,7 +31,8 @@ trait PersistentProperties extends Datastore {
       get(name).getOrElse(throw new NullPointerException(s"Unable to find $name in persistent properties table."))
     }
 
-    def update(name: String, newValue: String) {
+    def update(name: String, newValue: String)
+              (implicit session: Session): Unit = {
       val m = merge(
         persistentProperties.key,
         persistentProperties.key(name),
@@ -38,12 +40,13 @@ trait PersistentProperties extends Datastore {
       m.result
     }
 
-    def remove(name: String) {
-      val d = delete(persistentProperties) where(persistentProperties.key === name)
+    def remove(name: String)(implicit session: Session): Unit = {
+      val d = delete (persistentProperties) where (persistentProperties.key === name)
       d.result
     }
 
-    def stringProperty(key: String, default: String = null): Property[String] = {
+    def stringProperty(key: String, default: String = null)
+                      (implicit session: Session): Property[String] = {
       val p = Property[String](default = Some(get(key).getOrElse(default)))
       p.change.on {
         case evt => if (evt.newValue != null) {
@@ -55,7 +58,8 @@ trait PersistentProperties extends Datastore {
       p
     }
 
-    def intProperty(key: String, default: Int = 0): Property[Int] = {
+    def intProperty(key: String, default: Int = 0)
+                   (implicit session: Session): Property[Int] = {
       val p = Property[Int](default = Some(get(key).map(s => s.toInt).getOrElse(default)))
       p.change.on {
         case evt => this(key) = evt.newValue.toString

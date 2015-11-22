@@ -14,14 +14,14 @@ class MapperSpec extends WordSpec with Matchers {
 
     "doing setup" should {
       "create the database" in {
-        session {
+        withSession { implicit session =>
           create(people, suppliers, coffees)
         }
       }
       "insert some people into the database" in {
         import people._
 
-        session {
+        withSession { implicit session =>
           insert(name("John"), age(21), surname(Some("Doe"))).
              and(name("Jane"), age(19), surname(Some("Doe"))).result
           insert(name("Baby"), age(21)).result
@@ -32,7 +32,7 @@ class MapperSpec extends WordSpec with Matchers {
       import people._
 
       "explicitly map to a case class" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "John"
           val john = query.convert[Person](qr => Person(qr(name), qr(age), qr(surname), qr(id))).converted.one
           john should equal(Person("John", 21, Some("Doe"), Some(1)))
@@ -43,28 +43,28 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
       "explicitly map to a (Name, Age) type" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "John"
           val john = query.convert[(Name, Age)](qr => (Name(qr(name)), Age(qr(age)))).converted.head
           john should equal((Name("John"), Age(21)))
         }
       }
       "automatically map to a case class" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
           val jane = query.to[Person].converted.head
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "automatically map to a case class with Macro" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
           val jane = query.toMacro[Person](people).converted.head
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "automatically map a subset of columns to a case class" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
           val jane = query.to[PartialPerson].converted.head
           jane should equal(PartialPerson("Jane", 19, Some(2)))
@@ -73,19 +73,19 @@ class MapperSpec extends WordSpec with Matchers {
     }
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {
-        session {
+        withSession { implicit session =>
           val result = Person("Ray", 30).insert.result
           result.id should equal(4)
         }
       }
       "automatically convert a case class with a subset of optional columns to an insert" in {
-        session {
+        withSession { implicit session =>
           val result = PartialPerson("Ray2", 30).insert.result
           result.id should equal(5)
         }
       }
       "don't convert a case class with missing non-optional columns to an insert" in {
-        session {
+        withSession { implicit session =>
           intercept[JdbcSQLException] {
             PartialPersonWithoutAge("Ray3").insert.result
           }
@@ -94,21 +94,21 @@ class MapperSpec extends WordSpec with Matchers {
       "query back the inserted object" in {
         import people._
 
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Ray"
           val ray = query.to[Person].converted.head
           ray should equal(Person("Ray", 30, None, Some(4)))
         }
       }
       "automatically convert a case class to an update" in {
-        session {
+        withSession { implicit session =>
           Person("Jay", 30, None, Some(4)).update.result
         }
       }
       "query back the updated object" in {
         import people._
 
-        session {
+        withSession { implicit session =>
           val query1 = select(*) from people where name === "Ray"
           query1.to[Person].result.headOption should equal(None)
           val query2 = select(*) from people where name === "Jay"
@@ -119,7 +119,7 @@ class MapperSpec extends WordSpec with Matchers {
     }
     "more complex relationships" should {
       "persist records" in {
-        session {
+        withSession { implicit session =>
           // Insert Suppliers
           val acmeId = Supplier("Acme, Inc.", "99 Market Street", "Groundsville", "CA", "95199").insert.result
           val superiorId = Supplier("Superior Coffee", "1 Party Place", "Mendocino", "CA", "95460").insert.result
@@ -135,7 +135,7 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
       "query back 'French Roast' with 'Superior Coffee'" in {
-        session {
+        withSession { implicit session =>
           val query = select(coffees.* ::: suppliers.*) from coffees innerJoin suppliers on (coffees.supId === suppliers.ref.opt) where (coffees.name === "French Roast")
           val (frenchRoast, superior) = query.to[Coffee, Supplier](coffees, suppliers).converted.head
           frenchRoast should equal(Coffee("French Roast", Some(superior.ref), 8.99, 0, 0, Some(2)))
@@ -143,7 +143,7 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
       "query back 'Caffè American'" in {
-        session {
+        withSession { implicit session =>
           import coffees._
           val query = select (*) from coffees where name === "Caffè American"
           val caffe = query.to[Coffee].converted.head
@@ -151,12 +151,12 @@ class MapperSpec extends WordSpec with Matchers {
         }
       }
       "query back an item using MapTo" in {
-        session {
+        withSession { implicit session =>
           coffees.by(coffees.id, Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
       "query multiple with left join" in {
-        session {
+        withSession { implicit session =>
           val query = (
             select
               (coffees.* ::: suppliers.*)
@@ -209,7 +209,7 @@ class MapperSpec extends WordSpec with Matchers {
         values.tail.tail.tail.tail.tail.head should equal(id(None))
       }
       "insert a @mapped Supplier" in {
-        session {
+        withSession { implicit session =>
           val target = Supplier("Target", "123 All Over Rd.", "Lotsaplaces", "California", "95461")
           target.insert.result.id should equal(4)
         }
@@ -219,14 +219,14 @@ class MapperSpec extends WordSpec with Matchers {
       import people._
 
       "find and delete Jane Doe" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
           val jane = query.to[Person].converted.head
           jane.delete.result
         }
       }
       "no longer find Jane Doe" in {
-        session {
+        withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
           query.to[Person].converted.headOption should equal(None)
         }

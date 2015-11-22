@@ -25,7 +25,7 @@ class ModularSpec extends WordSpec with Matchers {
 
   "ModularSpec" should {
     "create the database" in {
-      session {
+      withSession { implicit session =>
         create(users, users2)
       }
     }
@@ -87,7 +87,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "insert a record" in {
-      session {
+      withSession { implicit session =>
         import users._
         inserting should equal(0)
         inserted should equal(0)
@@ -97,7 +97,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "query a record" in {
-      session {
+      withSession { implicit session =>
         import users._
         querying should equal(0)
         queried should equal(0)
@@ -108,7 +108,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "delete a record" in {
-      session {
+      withSession { implicit session =>
         import users._
         deleting should equal(0)
         deleted should equal(0)
@@ -124,7 +124,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "insert a second record" in {
-      session {
+      withSession { implicit session =>
         import users._
         inserting should equal(1)
         inserted should equal(1)
@@ -134,7 +134,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "query back the record expecting a created date" in {
-      session {
+      withSession { implicit session =>
         import users._
         querying should equal(1)
         queried should equal(1)
@@ -162,13 +162,13 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "updating second record" in {
-      session {
+      withSession { implicit session =>
         import users._
         (update(name("updated")) where id === 2).result
       }
     }
     "query back the record expecting a modified date" in {
-      session {
+      withSession { implicit session =>
         import users._
         val q = select (id, name, created, modified) from users where id === 2
         val result = q.converted.one
@@ -177,7 +177,7 @@ class ModularSpec extends WordSpec with Matchers {
       }
     }
     "insert and update record using mixin" in {
-      session {
+      withSession { implicit session =>
         import users2._
         insert(name("Jane Doe"), age(20)).result
 

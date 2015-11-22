@@ -38,9 +38,9 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
   def map[NewResult](converter: Result => NewResult) = copy[Types, NewResult](converter = this.converter.andThen(converter))
   def convert[NewResult](converter: QueryResult => NewResult) = copy[Types, NewResult](converter = converter)
 
-  def result = new QueryResultsIterator(table.datastore.exec(this), this)
-  def converted = new EnhancedIterator[Result](result.map(qr => converter(qr)))
-  def async = table.datastore.async {
+  def result(implicit session: Session) = new QueryResultsIterator(table.datastore.exec(this), this)
+  def converted(implicit session: Session) = new EnhancedIterator[Result](result.map(qr => converter(qr)))
+  def async = table.datastore.async { implicit session =>
     result
   }
 

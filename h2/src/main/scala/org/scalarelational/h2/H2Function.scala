@@ -1,6 +1,7 @@
 package org.scalarelational.h2
 
 import org.powerscala.StringUtil
+import org.scalarelational.Session
 
 
 case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, functionName: Option[String] = None) {
@@ -11,20 +12,20 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
 
   def apply[F](caller: H2Function => F) = caller(this)
 
-  private def buildStatement(args: Any*) = {
+  private def buildStatement(args: Any*)(implicit session: Session) = {
     val argEntries = (0 until args.length).map(i => "?").mkString(", ")
-    val s = datastore.session.connection.prepareCall(s"CALL ${name}($argEntries)")
+    val s = session.connection.prepareCall(s"CALL ${name}($argEntries)")
     args.zipWithIndex.foreach {
       case (arg, index) => s.setObject(index + 1, arg)
     }
     s
   }
 
-  def call(args: Any*) = datastore.session {
+  def call(args: Any*) = datastore.withSession { implicit session =>
     buildStatement(args: _*).execute()
   }
 
-  def query(args: Any*) = datastore.session {
+  def query(args: Any*) = datastore.withSession { implicit session =>
     buildStatement(args: _*).executeQuery()
   }
 }
