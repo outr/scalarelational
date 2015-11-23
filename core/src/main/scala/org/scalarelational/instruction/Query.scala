@@ -14,7 +14,7 @@ import scala.language.existentials
 case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 table: Table = null,
                                 joins: List[Join] = Nil,
-                                whereCondition: Condition = null,
+                                whereCondition: Option[Condition] = None,
                                 grouping: List[SelectExpression[_]] = Nil,
                                 ordering: List[OrderBy[_]] = Nil,
                                 resultLimit: Int = -1,
@@ -25,7 +25,7 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                                               with JoinSupport[Types, Result] {
   def apply[T, S](column: ColumnLike[T, S]) = ColumnAlias[T, S](column, alias, None, None)
 
-  def where(condition: Condition) = copy[Types, Result](whereCondition = condition)
+  def where(condition: Condition) = copy[Types, Result](whereCondition = Option(condition))
 
   def limit(value: Int) = copy[Types, Result](resultLimit = value)
   def offset(value: Int) = copy[Types, Result](resultOffset = value)

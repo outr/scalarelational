@@ -8,12 +8,12 @@ import org.scalarelational.table.Table
 
 case class Update[+ResultType](table: Table,
                                values: List[ColumnValue[_, _]],
-                               whereCondition: Condition = null,
+                               whereCondition: Option[Condition] = None,
                                mapResult: Int => ResultType)
   extends WhereSupport[Update[ResultType]] with Instruction[ResultType] {
 
   def where(condition: Condition): Update[ResultType] =
-    copy(whereCondition = condition)
+    copy(whereCondition = Option(condition))
 
   def result(implicit session: Session): ResultType = mapResult(table.datastore.exec(this))
 
@@ -26,5 +26,7 @@ case class Update[+ResultType](table: Table,
     copy(values = value :: filtered.toList)
   }
 
-  override def toString = s"Update(values = ${values.mkString(", ")}, table = ${table.tableName}, where = $whereCondition)"
+  override def toString: String = {
+    s"Update(values = ${values.mkString(", ")}, table = ${table.tableName}, where = $whereCondition)"
+  }
 }

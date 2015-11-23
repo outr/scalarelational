@@ -4,7 +4,6 @@ import java.io.File
 import javax.sql.DataSource
 
 import org.powerscala.property.Property
-import org.scalarelational.{Session, SelectExpression}
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction
@@ -12,6 +11,7 @@ import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.op._
 import org.scalarelational.table.{Table, TableAlias}
+import org.scalarelational.{SelectExpression, Session}
 
 import scala.collection.mutable.ListBuffer
 
@@ -24,7 +24,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   val dataSourceProperty = Property[DataSource]()
 
-  def dataSource = dataSourceProperty()
+  def dataSource: DataSource = dataSourceProperty()
 
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_, _] => c.longName
@@ -34,7 +34,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     }
   }
 
-  def describe[E, R](query: Query[E, R]) = {
+  def describe[E, R](query: Query[E, R]): (String, List[TypedValue[_, _]]) = {
     val columns = query.expressions.vector.map(expression2SQL).mkString(", ")
 
     var args = List.empty[TypedValue[_, _]]
@@ -68,7 +68,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   }
 
   def exportTable(table: Table, file: File, drop: Boolean = true)
-                 (implicit session: Session) = {
+                 (implicit session: Session): Boolean = {
     val command = new StringBuilder("SCRIPT ")
     if (drop) {
       command.append("DROP ")
@@ -82,7 +82,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.execute(command.toString())
   }
 
-  def importScript(file: File)(implicit session: Session) = {
+  def importScript(file: File)(implicit session: Session): Boolean = {
     val command = s"RUNSCRIPT FROM '${file.getCanonicalPath}'"
     session.execute(command)
   }
@@ -128,7 +128,11 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def invoke(insert: InsertMultiple)
                       (implicit session: Session): List[Int] = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
-    if (!insert.rows.map(_.length).sliding(2).forall { case Seq(first, second) => first == second }) throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
+    if (!insert.rows.map(_.length).sliding(2).forall {
+      case Seq(first, second) => first == second
+    }) {
+      throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
+    }
     val table = insert.rows.head.head.column.table
     val columnNames = insert.rows.head.map(_.column.name).mkString(", ")
     val columnValues = insert.rows.map(r => r.map(cv => cv.column.dataType.asInstanceOf[DataType[Any, Any]].typed(cv.toSQL)))
@@ -245,18 +249,19 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     (b.toString(), args.toList)
   }
 
-  private def where2SQL(condition: Condition): (String, List[TypedValue[_, _]]) = if (condition != null) {
-    val args = ListBuffer.empty[TypedValue[_, _]]
-    val sql = condition2String(condition, args)
-    if (sql != null && sql.nonEmpty) {
-      s" WHERE $sql" -> args.toList
-    } else {
-      "" -> Nil
+  private def where2SQL(conditionOption: Option[Condition]) = conditionOption match {
+    case Some(condition) => {
+      val args = ListBuffer.empty[TypedValue[_, _]]
+      Option(condition2String(condition, args)) match {
+        case Some(sql) if sql.nonEmpty => {
+          s" WHERE $sql" -> args.toList
+        }
+        case _ => "" -> Nil
+      }
     }
-  } else {
-    "" -> Nil
+    case None => "" -> Nil
   }
 
-  override def dispose() = {
+  override def dispose(): Unit = {
   }
 }

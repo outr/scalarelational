@@ -14,14 +14,16 @@ trait StickySessionSupport extends SessionSupport {
 
   def sessionTimeout: Double = 5.0
 
-  private val stickySession = new ThreadLocal[StickySession]
+  private val stickySession = new ThreadLocal[Option[StickySession]] {
+    override def initialValue(): Option[StickySession] = None
+  }
 
   override protected def disposeSession(session: Session): Unit = {
     if (!hasSession) throw new RuntimeException(s"No context currently exists in current thread...cannot dispose.")
-    assert(stickySession.get() == null, "Sticky Session should never be set when dispose is called.")
+    assert(stickySession.get().isEmpty, "Sticky Session should never be set when dispose is called.")
     if (session.hasConnection) {
       val ss = StickySession(session)
-      stickySession.set(StickySession(ss.session))
+      stickySession.set(Some(StickySession(ss.session)))
       _session.remove()
 
       Future {
@@ -39,8 +41,8 @@ trait StickySessionSupport extends SessionSupport {
 
   override protected def instantiateSession(): Session =
     stickySession.get() match {
-      case null => super.instantiateSession()
-      case ss => {
+      case None => super.instantiateSession()
+      case Some(ss) => {
         ss.cancelled = true
         stickySession.remove()
         ss.session

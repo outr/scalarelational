@@ -4,7 +4,7 @@ import org.scalarelational.ExpressionValue
 
 
 case class SQLFunctionValue[T, S](function: SQLFunction[T, S], value: T) extends ExpressionValue[T] {
-  def expression = function
+  def expression: SQLFunction[T, S] = function
 
-  override def toString = s"${function.functionType.sql}(alias = ${function.alias}) = $value"
+  override def toString: String = s"${function.functionType.sql}(alias = ${function.alias}) = $value"
 }

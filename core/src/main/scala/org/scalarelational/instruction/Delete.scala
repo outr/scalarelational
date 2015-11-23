@@ -5,9 +5,9 @@ import org.scalarelational.op.Condition
 import org.scalarelational.table.Table
 
 
-case class Delete(table: Table, whereCondition: Condition = null)
+case class Delete(table: Table, whereCondition: Option[Condition] = None)
   extends WhereSupport[Delete] with Instruction[Int] {
 
-  def where(condition: Condition) = copy(whereCondition = condition)
-  def result(implicit session: Session) = table.datastore.exec(this)
+  def where(condition: Condition): Delete = copy(whereCondition = Option(condition))
+  def result(implicit session: Session): Int = table.datastore.exec(this)
 }

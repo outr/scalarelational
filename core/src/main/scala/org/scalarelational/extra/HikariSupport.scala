@@ -6,11 +6,11 @@ import org.scalarelational.model.SQLDatastore
 
 trait HikariSupport extends SQLDatastore {
   // Automatically converts DataSources to be wrapped by HikariDataSource
-  dataSourceProperty.change.on {
-    case evt => evt.newValue match {
-      case null => // Ignore null DataSource
-      case ds: HikariDataSource => // Ignore HikariDataSource
-      case ds => {
+  dataSourceProperty.change.on { evt =>
+    dataSourceProperty.get match {
+      case None => // Ignore unset DataSource
+      case Some(ds: HikariDataSource) => // Ignore HikariDataSource
+      case Some(ds) => {
         val config = new HikariConfig()
         config.setDataSource(ds)
         val hikari = new HikariDataSource(config)
@@ -20,7 +20,7 @@ trait HikariSupport extends SQLDatastore {
   }
 
   // Clean up data source after shutdown
-  override def dispose() = {
+  override def dispose(): Unit = {
     super.dispose()
 
     dataSource match {

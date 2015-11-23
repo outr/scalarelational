@@ -11,8 +11,8 @@ case class SQLFunction[T, S](functionType: FunctionType,
                           column: ColumnLike[_, _],
                           converter: DataType[T, S],
                           alias: Option[String] = None) extends SelectExpression[T] {
-  override def longName = alias.getOrElse(column.longName)
-  def as(alias: String) = copy[T, S](alias = Some(alias))
+  override def longName: String = alias.getOrElse(column.longName)
+  def as(alias: String): SQLFunction[T, S] = copy[T, S](alias = Some(alias))
 }
 
 trait FunctionType {
@@ -20,13 +20,13 @@ trait FunctionType {
 }
 
 case class SpecificFunctionType[T, S](sql: String, converter: DataType[T, S]) extends FunctionType {
-  def apply(column: ColumnLike[_, _]) = {
+  def apply(column: ColumnLike[_, _]): SQLFunction[T, S] = {
     SQLFunction[T, S](this, column, converter)
   }
 }
 
 case class DerivedFunctionType(sql: String) extends FunctionType {
-  def apply[T, S](column: ColumnLike[T, S]) = {
+  def apply[T, S](column: ColumnLike[T, S]): SQLFunction[T, S] = {
     SQLFunction[T, S](this, column, column.dataType)
   }
 }

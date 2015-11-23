@@ -9,14 +9,14 @@ import org.scalarelational.table.Table
 object CSVExporter {
   private val NewLine = "\r\n"
 
-  def exportTables(directory: File, tables: Table*) = {
+  def exportTables(directory: File, tables: Table*): Unit = {
     directory.mkdirs()
     tables.foreach {
       case table => exportTable(new File(directory, s"${table.tableName.toLowerCase}.csv"), table)
     }
   }
 
-  def exportTable(file: File, table: Table) = table.datastore.withSession { implicit session =>
+  def exportTable(file: File, table: Table): Unit = table.datastore.withSession { implicit session =>
     val writer = new FileWriter(file)
     try {
       val columnNames = table.columns.map(c => c.name).mkString(",")
@@ -28,9 +28,9 @@ object CSVExporter {
       results.foreach {
         case r => {
           val values = r.values.map {
-            case ev => ev.value match {
-              case null => "null"
-              case v => v.toString
+            case ev => Option(ev.value) match {
+              case None => "null"
+              case Some(v) => v.toString
             }
           }
           writer.write(values.mkString(","))

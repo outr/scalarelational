@@ -4,18 +4,15 @@ import org.scalarelational.op.{Condition, Conditions}
 
 
 trait WhereSupport[+S <: WhereSupport[S]] extends SQLStatement {
-  def whereCondition: Condition
+  def whereCondition: Option[Condition]
 
   def where(condition: Condition): S
 
-  def and(condition: Condition) = if (whereCondition != null) {
-    where(Conditions(List(whereCondition, condition), ConnectType.And))
-  } else {
-    where(condition)
+  def where(condition: Condition, connectType: ConnectType): S = whereCondition match {
+    case Some(wc) => where(Conditions(List(wc, condition), connectType))
+    case None => where(condition)
   }
-  def or(condition: Condition) = if (whereCondition != null) {
-    where(Conditions(List(whereCondition, condition), ConnectType.Or))
-  } else {
-    where(condition)
-  }
+
+  def and(condition: Condition): S = where(condition, ConnectType.And)
+  def or(condition: Condition): S = where(condition, ConnectType.Or)
 }

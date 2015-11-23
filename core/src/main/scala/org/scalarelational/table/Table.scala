@@ -2,7 +2,6 @@ package org.scalarelational.table
 
 import java.lang.reflect.Field
 
-import org.scalarelational.Session
 import org.scalarelational.column.Column
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
@@ -47,7 +46,7 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
 
   def columns: List[Column[_, _]] = _columns.toList
 
-  def * = columns
+  def `*`: List[Column[_, _]] = columns
 
   def getColumn[T, S](name: String): Option[Column[T, S]] = columnMap.get(name.toLowerCase).asInstanceOf[Option[Column[T, S]]]
   def getColumnByField[T, S](name: String): Option[Column[T, S]] = columnMap.values.find(c => c.fieldName == name).asInstanceOf[Option[Column[T, S]]]

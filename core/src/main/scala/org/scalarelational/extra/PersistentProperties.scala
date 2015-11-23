@@ -45,11 +45,11 @@ trait PersistentProperties extends Datastore {
       d.result
     }
 
-    def stringProperty(key: String, default: String = null)
+    def stringProperty(key: String, default: Option[String] = None)
                       (implicit session: Session): Property[String] = {
-      val p = Property[String](default = Some(get(key).getOrElse(default)))
+      val p = Property[String](default = Option(get(key)).getOrElse(default))
       p.change.on {
-        case evt => if (evt.newValue != null) {
+        case evt => if (p.get.nonEmpty) {
           this(key) = evt.newValue
         } else {
           remove(key)
