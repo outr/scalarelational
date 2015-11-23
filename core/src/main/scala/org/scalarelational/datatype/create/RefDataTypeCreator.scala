@@ -6,5 +6,7 @@ import org.scalarelational.datatype.{DataType, Ref, RefSQLConversion, SQLType}
 
 
 object RefDataTypeCreator {
-  def create[T] = new DataType[Ref[T], Int](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
+  def create[T]: DataType[Ref[T], Int] = {
+    new DataType[Ref[T], Int](Types.INTEGER, SQLType("INTEGER"), new RefSQLConversion[T])
+  }
 }

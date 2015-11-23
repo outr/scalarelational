@@ -10,19 +10,22 @@ trait SQLType {
 }
 
 object SQLType {
-  def apply(value: String) = new SimpleSQLType(value)
+  def apply(value: String): SimpleSQLType = new SimpleSQLType(value)
 }
 
 class SimpleSQLType(value: String) extends SQLType {
-  def apply(datastore: Datastore, properties: ColumnPropertyContainer) = value
+  def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = value
 }
 
 object StringSQLType extends SQLType {
-  override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
+  override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = {
     val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
       .getOrElse(datastore.DefaultVarCharLength)
-    if (properties.has(IgnoreCase)) s"VARCHAR_IGNORECASE($length)"
-    else s"VARCHAR($length)"
+    if (properties.has(IgnoreCase)) {
+      s"VARCHAR_IGNORECASE($length)"
+    } else {
+      s"VARCHAR($length)"
+    }
   }
 }
 

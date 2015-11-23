@@ -60,22 +60,27 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
   }
 
   protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
-    val value =
-      dataType.sqlType match {
-        case t: BlobSQLType =>
-          val binaryStream = rs.getBinaryStream(index + 1)
-          val byteArrayStream = readInputStream(binaryStream)
-          new SerialBlob(byteArrayStream.toByteArray)
+    val valueOption = Option(dataType.sqlType match {
+      case t: BlobSQLType =>
+        val binaryStream = rs.getBinaryStream(index + 1)
+        val byteArrayStream = readInputStream(binaryStream)
+        new SerialBlob(byteArrayStream.toByteArray)
 
-        case _ => rs.getObject(index + 1)
-      }
+      case _ => rs.getObject(index + 1)
+    })
 
-    if (!c.isOptional && value == null) {
-      null.asInstanceOf[T]
-    } else try {
+    def convert(value: AnyRef) = try {
       dataType.converter.fromSQL(c, value.asInstanceOf[S])
     } catch {
-      case t: Throwable => throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
+      case t: Throwable => {
+        throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
+      }
+    }
+
+    valueOption match {
+      case None if !c.isOptional => None.orNull.asInstanceOf[T]
+      case None => convert(None.orNull[AnyRef])
+      case Some(value) => convert(value)
     }
   }
 
@@ -93,7 +98,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
       }
     }
 
-  def one = if (hasNext) {
+  def one: QueryResult = if (hasNext) {
     val n = next()
     if (hasNext) throw new RuntimeException("More than one result for query!")
     n
@@ -101,21 +106,21 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     throw new RuntimeException("No results for the query!")
   }
 
-  def head = next()
-  def headOption = nextOption()
+  def head: QueryResult = next()
+  def headOption: Option[QueryResult] = nextOption()
 }
 
 class EnhancedIterator[T](iterator: Iterator[T]) extends Iterator[T] {
-  override def hasNext = iterator.hasNext
+  override def hasNext: Boolean = iterator.hasNext
 
-  override def next() = iterator.next()
+  override def next(): T = iterator.next()
 
-  def nextOption() = if (hasNext) Option(next()) else None
+  def nextOption(): Option[T] = if (hasNext) Option(next()) else None
 
-  def head = next()
-  def headOption = nextOption()
+  def head: T = next()
+  def headOption: Option[T] = nextOption()
 
-  def one = if (hasNext) {
+  def one: T = if (hasNext) {
     val n = next()
     if (hasNext) throw new RuntimeException("More than one result for query!")
     n

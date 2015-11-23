@@ -9,25 +9,25 @@ import scala.language.existentials
 
 
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
-  def get[T, S](column: Column[T, S]) = values.collectFirst {
+  def get[T, S](column: Column[T, S]): Option[T] = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
   }.flatten
 
-  def apply[T, S](column: Column[T, S]) = {
+  def apply[T, S](column: Column[T, S]): T = {
     get[T, S](column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
   }
 
-  def has[T, S](column: Column[T, S]) = {
+  def has[T, S](column: Column[T, S]): Boolean = {
     val value = get[T, S](column)
     value.nonEmpty && value.get != None
   }
 
-  def apply[T, S](function: SQLFunction[T, S]) = values.collectFirst {
+  def apply[T, S](function: SQLFunction[T, S]): T = values.collectFirst {
     case fv: SQLFunctionValue[_, _] if function.alias.nonEmpty && fv.function.alias == function.alias => fv.value.asInstanceOf[T]
     case fv: SQLFunctionValue[_, _] if fv.function == function => fv.value.asInstanceOf[T]
   }.getOrElse(throw new RuntimeException(s"Unable to find function value: $function in result."))
 
-  def toSimpleMap = {
+  def toSimpleMap: Map[String, Any] = {
     values.collect {
       case v if v.expression.isInstanceOf[ColumnLike[_, _]] => v.expression.asInstanceOf[ColumnLike[_, _]].name -> v.value
     }.toMap
@@ -45,7 +45,7 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
     }.toMap
   }
 
-  def toFieldMapForTable(table: Table) = {
+  def toFieldMapForTable(table: Table): Map[String, Any] = {
     values.collect {
       case v if v.expression.longName.toLowerCase.startsWith(s"${table.tableName.toLowerCase}.") => {
         val name = v.expression match {
@@ -63,5 +63,5 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
     }.toMap
   }
 
-  override def toString = s"${table.tableName}(${values.mkString(", ")})"
+  override def toString: String = s"${table.tableName}(${values.mkString(", ")})"
 }

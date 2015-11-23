@@ -6,5 +6,5 @@ import org.scalarelational.table.Table
 
 case class SelectQueryPart[Types, Result](expressions: SelectExpressions[Types],
                                           converter: QueryResult => Result) {
-  def from(table: Table) = Query[Types, Result](expressions, table, converter = converter)
+  def from(table: Table): Query[Types, Result] = Query[Types, Result](expressions, table, converter = converter)
 }

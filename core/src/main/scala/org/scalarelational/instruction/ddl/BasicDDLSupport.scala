@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 
 
 trait BasicDDLSupport extends DDLSupport with Datastore {
-  override def table2Create(table: Table, ifNotExists: Boolean = true) = {
+  override def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable = {
     val createColumns = table.columns.map(c => column2Create(c))
     CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties.values.toSeq)
   }

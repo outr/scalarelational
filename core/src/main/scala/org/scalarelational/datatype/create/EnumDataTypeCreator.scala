@@ -13,10 +13,14 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit manifest: Manifest[T]) extend
     .getOrElse(throw new RuntimeException(s"Unable to find companion for ${manifest.runtimeClass}"))
     .asInstanceOf[Enumerated[T]]
 
-  val length = math.max(enumerated.values.maxBy(_.name.length).name.length, 128)
+  val length: Int = math.max(enumerated.values.maxBy(_.name.length).name.length, EnumDataTypeCreator.MaxLength)
 
-  def create() = new DataType[T, String](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
+  def create(): DataType[T, String] = new DataType[T, String](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
 
   override def toSQL(column: ColumnLike[T, String], value: T): String = value.name
   override def fromSQL(column: ColumnLike[T, String], value: String): T = enumerated(value)
+}
+
+object EnumDataTypeCreator {
+  val MaxLength = 128
 }

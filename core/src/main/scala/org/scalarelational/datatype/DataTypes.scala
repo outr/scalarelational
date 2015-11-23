@@ -11,7 +11,7 @@ import org.scalarelational.model.Datastore
 
 
 object DataTypes {
-  def simplify[T, S](dataType: DataType[T, S]) = new SimpleDataType[T](
+  def simplify[T, S](dataType: DataType[T, S]): SimpleDataType[T] = new SimpleDataType[T](
     jdbcType = dataType.jdbcType,
     sqlType = dataType.sqlType,
     converter = dataType.converter.asInstanceOf[SQLConversion[T, T]],
@@ -32,7 +32,7 @@ object DataTypes {
   object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
   object BlobType extends SimpleDataType[Blob](Types.BLOB, new BlobSQLType("BLOB"))
   object ByteArrayType extends SimpleDataType[Array[Byte]](Types.BINARY, new SQLType {
-    override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
+    override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = {
       val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
         .getOrElse(datastore.DefaultBinaryLength)
@@ -51,8 +51,8 @@ object DataTypes {
   }))
 
   object LongTimestampType extends DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
-    override def toSQL(column: ColumnLike[Long, Timestamp], value: Long) = new Timestamp(value)
+    override def toSQL(column: ColumnLike[Long, Timestamp], value: Long): Timestamp = new Timestamp(value)
 
-    override def fromSQL(column: ColumnLike[Long, Timestamp], value: Timestamp) = value.getTime
+    override def fromSQL(column: ColumnLike[Long, Timestamp], value: Timestamp): Long = value.getTime
   })
 }

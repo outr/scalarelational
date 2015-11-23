@@ -15,7 +15,9 @@ import org.scalarelational.instruction._
 import org.scalarelational.instruction.ddl.DDLSupport
 import org.scalarelational.result.ResultSetIterator
 import org.scalarelational.table.Table
-import org.scalarelational.{Session, PropertyContainer, SessionSupport}
+import org.scalarelational.{PropertyContainer, Session, SessionSupport}
+
+import scala.concurrent.Future
 
 
 trait Datastore
@@ -29,8 +31,8 @@ trait Datastore
   with BasicFunctionTypes {
   implicit def thisDatastore: Datastore = this
 
-  def DefaultVarCharLength = 65535
-  def DefaultBinaryLength  = 1000
+  def DefaultVarCharLength: Int = Datastore.DefaultVarCharLength
+  def DefaultBinaryLength: Int  = Datastore.DefaultBinaryLength
 
   /**
    * All columns that are created receive a DataType responsible for converting data between Scala and the database.
@@ -44,18 +46,18 @@ trait Datastore
   /**
    * True if this database implementation supports merges.
    */
-  def supportsMerge = true
+  def supportsMerge: Boolean = true
 
   /**
    * True if this database implementation supports multiple id responses on batch insert.
    */
-  def supportsBatchInsertResponse = true
+  def supportsBatchInsertResponse: Boolean = true
 
   private var _tables = Map.empty[String, Table]
   protected[scalarelational] def add(table: Table) = synchronized {
     _tables += table.tableName.toLowerCase -> table
   }
-  def tableByName(name: String) = _tables.get(name.toLowerCase)
+  def tableByName(name: String): Option[Table] = _tables.get(name.toLowerCase)
 
   /**
    * Called when the datastore is being created for the first time. This does not mean the tables are being created but
@@ -65,10 +67,10 @@ trait Datastore
 
   def dataSource: DataSource
 
-  def jdbcTables(implicit session: Session) = {
+  def jdbcTables(implicit session: Session): Set[String] = {
     val s = session
     val meta = s.connection.getMetaData
-    val results = meta.getTables(null, "PUBLIC", "%", null)
+    val results = meta.getTables(None.orNull, "PUBLIC", "%", None.orNull)
     try {
       new ResultSetIterator(results).map(_.getString("TABLE_NAME")).toSet
     } finally {
@@ -76,10 +78,10 @@ trait Datastore
     }
   }
 
-  def jdbcColumns(tableName: String)(implicit session: Session) = {
+  def jdbcColumns(tableName: String)(implicit session: Session): Set[String] = {
     val s = session
     val meta = s.connection.getMetaData
-    val results = meta.getColumns(null, "PUBLIC", tableName, null)
+    val results = meta.getColumns(None.orNull, "PUBLIC", tableName, None.orNull)
     try {
       new ResultSetIterator(results).map(_.getString("COLUMN_NAME")).toSet
     } finally {
@@ -87,9 +89,9 @@ trait Datastore
     }
   }
 
-  def tableExists(name: String)(implicit session: Session) = {
+  def tableExists(name: String)(implicit session: Session): Boolean = {
     val meta = session.connection.getMetaData
-    val results = meta.getTables(null, "PUBLIC", name.toUpperCase, null)
+    val results = meta.getTables(None.orNull, "PUBLIC", name.toUpperCase, None.orNull)
     try {
       results.next()
     } finally {
@@ -97,9 +99,9 @@ trait Datastore
     }
   }
 
-  def empty()(implicit session: Session) = jdbcTables.isEmpty
+  def empty()(implicit session: Session): Boolean = jdbcTables.isEmpty
 
-  def create(tables: Table*)(implicit session: Session) = {
+  def create(tables: Table*)(implicit session: Session): Int = {
     if (tables.isEmpty) throw new RuntimeException(s"Datastore.create must include all tables that need to be created.")
     val sql = ddl(tables.toList)
     sql.result
@@ -179,17 +181,19 @@ trait Datastore
   protected def invoke[T](update: Update[T])(implicit session: Session): Int
   protected def invoke(delete: Delete)(implicit session: Session): Int
 
-  def dispose() = {}
+  def dispose(): Unit = {}
 
   implicit class CallableInstructions(instructions: List[CallableInstruction]) {
-    def result(implicit session: Session) = {
+    def result(implicit session: Session): Int = {
       instructions.foreach(i => i.execute(thisDatastore))
       instructions.size
     }
-    def async = thisDatastore.async { implicit session =>
+    def async: Future[Int] = thisDatastore.async { implicit session =>
       result
     }
-    def and(moreInstructions: List[CallableInstruction]) = new CallableInstructions(instructions ::: moreInstructions)
+    def and(moreInstructions: List[CallableInstruction]): CallableInstructions = {
+      new CallableInstructions(instructions ::: moreInstructions)
+    }
   }
 }
 
@@ -199,8 +203,9 @@ case class DataTypeInstance[T, S](dataType: DataType[T, S],
   props(columnProperties: _*)
 }
 
-class DataTypeInstanceProcessor(implicit val listenable: Listenable) extends EventProcessor[DataTypeInstance[Any, Any], DataType[Any, Any], DataType[Any, Any]] {
-  override def name = "dataTypeInstanceProcessor"
+class DataTypeInstanceProcessor(implicit val listenable: Listenable)
+    extends EventProcessor[DataTypeInstance[Any, Any], DataType[Any, Any], DataType[Any, Any]] {
+  override def name: String = "dataTypeInstanceProcessor"
 
   override def eventManifest: Manifest[DataTypeInstance[Any, Any]] = implicitly[Manifest[DataTypeInstance[Any, Any]]]
 
@@ -212,8 +217,11 @@ class DataTypeInstanceProcessor(implicit val listenable: Listenable) extends Eve
 }
 
 object Datastore {
+  val DefaultVarCharLength: Int = 65535
+  val DefaultBinaryLength: Int  = 1000
+
   private val instance = new ThreadLocal[Datastore]
 
   protected[scalarelational] def current(d: Datastore) = instance.set(d)
-  def apply() = instance.get()
+  def apply(): Datastore = instance.get()
 }

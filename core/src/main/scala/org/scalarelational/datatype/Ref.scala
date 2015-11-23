@@ -4,7 +4,7 @@ package org.scalarelational.datatype
  * @author Tim Nieradzik <tim@kognit.io>
  */
 case class Ref[+T](id: Int) {
-  override def toString = id.toString
+  override def toString: String = id.toString
 }
 
 object Ref {
