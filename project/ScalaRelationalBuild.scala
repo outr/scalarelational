@@ -4,7 +4,10 @@ import sbt._
 object ScalaRelationalBuild extends Build {
   import Dependencies._
 
-  lazy val root = Project(id = "root", base = file(".")).settings(name := "ScalaRelational", publish := {}).aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
+  lazy val root = Project(
+    id = "root",
+    base = file(".")).settings(name := "ScalaRelational", publish := {}
+  ).aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
   lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
@@ -41,10 +44,11 @@ object ScalaRelationalBuild extends Build {
     publishTo <<= version {
       (v: String) =>
         val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT"))
+        if (v.trim.endsWith("SNAPSHOT")) {
           Some("snapshots" at nexus + "content/repositories/snapshots")
-        else
+        } else {
           Some("releases" at nexus + "service/local/staging/deploy/maven2")
+        }
     },
     publishArtifact in Test := false,
     pomExtra := <url>${Details.url}</url>
@@ -70,7 +74,7 @@ object ScalaRelationalBuild extends Build {
   )
 
   implicit class EnhancedProject(project: Project) {
-    def withDependencies(modules: ModuleID*) = project.settings(libraryDependencies ++= modules)
+    def withDependencies(modules: ModuleID*): Project = project.settings(libraryDependencies ++= modules)
   }
 }
 
@@ -92,14 +96,14 @@ object Details {
 }
 
 object Dependencies {
-  private val powerscalaVersion = "1.6.10"
+  private val powerscalaVersion = "1.6.11"
 
   object powerscala {
     val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion
   }
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.2"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
   val h2database = "com.h2database" % "h2" % "1.4.190"
-  val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.36"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1205-jdbc42"
+  val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
+  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1206-jdbc42"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
 }
