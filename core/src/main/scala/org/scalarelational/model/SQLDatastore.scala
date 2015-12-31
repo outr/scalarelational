@@ -128,10 +128,12 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def invoke(insert: InsertMultiple)
                       (implicit session: Session): List[Int] = {
     if (insert.rows.isEmpty) throw new IndexOutOfBoundsException(s"Attempting a multi-insert with no values: $insert")
-    if (!insert.rows.map(_.length).sliding(2).forall {
-      case Seq(first, second) => first == second
-    }) {
-      throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
+    if (insert.rows.tail.nonEmpty) {
+      if (!insert.rows.map(_.length).sliding(2).forall {
+        case Seq(first, second) => first == second
+      }) {
+        throw new IndexOutOfBoundsException(s"In multi-inserts all rows must have the exact same length.")
+      }
     }
     val table = insert.rows.head.head.column.table
     val columnNames = insert.rows.head.map(_.column.name).mkString(", ")
