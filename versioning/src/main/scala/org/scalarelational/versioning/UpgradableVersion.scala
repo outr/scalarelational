@@ -11,6 +11,20 @@ import org.scalarelational.Session
  * @author Matt Hicks <matt@outr.com>
  */
 trait UpgradableVersion {
+  /**
+    * The version this upgrade will apply. The first upgrade version should start at 1.
+    */
   def version: Int
+
+  /**
+    * If true, will run even if it's a new database. If false, this upgrade is skipped upon database creation.
+    *
+    * Defaults to false
+    */
+  def runOnNewDatabase: Boolean = false
+
+  /**
+    * Runs the upgrade
+    */
   def upgrade(implicit session: Session): Unit
 }
