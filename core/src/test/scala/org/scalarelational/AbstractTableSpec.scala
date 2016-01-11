@@ -265,11 +265,11 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     import coffees._
     "insert five coffees" in {
       withSession { implicit session =>
-        insert(name("Colombian"), supID(acmeId), price(7.99), sales(0), total(0)).
-          and(name("French Roast"), supID(superiorId), price(8.99), sales(0), total(0)).
-          and(name("Espresso"), supID(highGroundId), price(9.99), sales(0), total(0)).
-          and(name("Colombian Decaf"), supID(acmeId), price(8.99), sales(0), total(0)).
-          and(name("French Roast Decaf"), supID(superiorId), price(9.99), sales(0), total(0)).result
+        insert(name("Colombian"), supID(Some(acmeId)), price(7.99), sales(0), total(0)).
+          and(name("French Roast"), supID(Some(superiorId)), price(8.99), sales(0), total(0)).
+          and(name("Espresso"), supID(Some(highGroundId)), price(9.99), sales(0), total(0)).
+          and(name("Colombian Decaf"), supID(Some(acmeId)), price(8.99), sales(0), total(0)).
+          and(name("French Roast Decaf"), supID(Some(superiorId)), price(9.99), sales(0), total(0)).result
       }
     }
     "query five coffees back out" in {
@@ -280,7 +280,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query joining suppliers" in {
       withSession { implicit session =>
-        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID.opt
+        val query = select(name, supID, price, sales, total, suppliers.name) from coffees innerJoin suppliers on suppliers.id === supID
         val results = query.result.toList
         results.size should equal(5)
         val first = results.head
@@ -301,7 +301,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     }
     "query the count of coffees for Superior Coffee" in {
       withSession { implicit session =>
-        val query = select(Count(name)) from coffees innerJoin suppliers on supID.opt === suppliers.id where suppliers.name === "Superior Coffee"
+        val query = select(Count(name)) from coffees innerJoin suppliers on supID === suppliers.id where suppliers.name === "Superior Coffee"
         val results = query.result.toList
         results.size should equal(1)
         val values = results.head
@@ -313,7 +313,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     "query with an inner join aliased" in {
       withSession { implicit session =>
         val s = suppliers as "s"
-        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID.opt === s(suppliers.id)
+        val query = select(name, s(suppliers.name)) from coffees innerJoin s on supID === s(suppliers.id)
         val results = query.result.toList
         results.size should equal(5)
       }
@@ -337,6 +337,38 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         results.head(price) should equal(7.99)
         results(1)(price) should equal(8.99)
         results(2)(price) should equal(9.99)
+      }
+    }
+    "insert coffee without a supplier" in {
+      withSession { implicit session =>
+        insert(name("Brown Stuff"), price(2.99), sales(0), total(0)).result
+      }
+    }
+    "query coffees with suppliers via left join" in {
+      withSession { implicit session =>
+        val query = (
+          select(name, price, suppliers.name.opt)
+          from coffees
+          leftJoin suppliers
+          on coffees.supID === suppliers.id
+          orderBy coffees.name.asc
+        )
+        val results = query.converted.toVector
+        results.size should equal(6)
+
+        def checkResult(index: Int, expectedName: String, expectedPrice: Double, expectedSupplierName: Option[String]): Unit = {
+          val (n, p, s) = results(index)
+          n should be(expectedName)
+          p should be(expectedPrice)
+          s should be(expectedSupplierName)
+        }
+
+        checkResult(0, "Brown Stuff", 2.99, None)
+        checkResult(1, "Colombian", 7.99, Some("Acme, Inc."))
+        checkResult(2, "Colombian Decaf", 8.99, Some("Acme, Inc."))
+        checkResult(3, "Espresso", 9.99, Some("The High Ground"))
+        checkResult(4, "French Roast", 8.99, Some("Superior Coffee"))
+        checkResult(5, "French Roast Decaf", 9.99, Some("Superior Coffee"))
       }
     }
   }
@@ -572,7 +604,7 @@ trait AbstractTestDatastore extends Datastore {
   object coffees extends Table("COFFEE") {
     val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
     val name = column[String]("COF_NAME", PrimaryKey)
-    val supID = column[Int]("SUP_ID", new ForeignKey(suppliers.id))
+    val supID = column[Option[Int], Int]("SUP_ID", new ForeignKey(suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
