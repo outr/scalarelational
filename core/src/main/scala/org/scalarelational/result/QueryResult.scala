@@ -9,8 +9,8 @@ import scala.language.existentials
 
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
   def get[T, S](column: ColumnLike[T, S]): Option[T] = values.collectFirst {
-    case cv: ColumnValue[_, _] if cv.column == column => cv.value.asInstanceOf[T]
-  }
+    case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
+  }.flatten
 
   def apply[T, S](column: ColumnLike[T, S]): T = {
     get[T, S](column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
@@ -18,7 +18,7 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
 
   def has[T, S](column: ColumnLike[T, S]): Boolean = {
     val value = get[T, S](column)
-    value.nonEmpty && value.get != None && !value.contains(null)
+    value.nonEmpty && value.get != None
   }
 
   def apply[T, S](function: SQLFunction[T, S]): T = values.collectFirst {
