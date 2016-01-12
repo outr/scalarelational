@@ -52,11 +52,13 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
           case f: SQLFunction[_, _] if f.alias.nonEmpty => f.alias.get
           case c: ColumnLike[_, _] => c.name
         }
-        val shortName = if (name.indexOf('.') != -1) {
-          name.substring(name.lastIndexOf('.') + 1)
-        } else {
-          name
-        }
+
+        val shortName =
+          name.lastIndexOf('.') match {
+            case -1 => name
+            case i  => name.substring(i + 1)
+          }
+
         shortName -> v.value
       }
     }.toMap
