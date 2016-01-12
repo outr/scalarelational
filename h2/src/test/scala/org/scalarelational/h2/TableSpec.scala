@@ -5,13 +5,12 @@ import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, Ab
 
 import scala.language.postfixOps
 
-
 class TableSpec extends AbstractTableSpec {
-  override def testDatastore = TestDatastore
-  override def specialTypes = SpecialTypesDatastore
-  override def testCrossReference = TestCrossReferenceDatastore
+  override def testDatastore: AbstractTestDatastore = TestDatastore
+  override def specialTypes: AbstractSpecialTypesDatastore = SpecialTypesDatastore
+  override def testCrossReference: AbstractTestCrossReferenceDatastore = TestCrossReferenceDatastore
 }
 
 object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with AbstractTestDatastore with HikariSupport
-object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) with AbstractTestCrossReferenceDatastore
 object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) with AbstractSpecialTypesDatastore
+object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) with AbstractTestCrossReferenceDatastore

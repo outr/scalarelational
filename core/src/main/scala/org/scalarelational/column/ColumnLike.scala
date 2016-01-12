@@ -1,7 +1,7 @@
 package org.scalarelational.column
 
 import org.scalarelational.SelectExpression
-import org.scalarelational.datatype.DataType
+import org.scalarelational.datatype.{DataType, SQLType}
 import org.scalarelational.op._
 import org.scalarelational.table.Table
 
@@ -15,7 +15,7 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
   def dataType: DataType[T, S]
   def manifest: Manifest[T]
 
-  def sqlType = dataType.sqlType
+  def sqlType: SQLType = dataType.sqlType
 
   def apply(value: T, converterOverride: Option[DataType[T, S]] = None): ColumnValue[T, S] =
     ColumnValue[T, S](this, value, converterOverride)
