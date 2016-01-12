@@ -7,19 +7,18 @@ import org.scalarelational.table.Table
 
 import scala.language.existentials
 
-
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
-  def get[T, S](column: Column[T, S]): Option[T] = values.collectFirst {
-    case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
-  }.flatten
+  def get[T, S](column: ColumnLike[T, S]): Option[T] = values.collectFirst {
+    case cv: ColumnValue[_, _] if cv.column == column => cv.value.asInstanceOf[T]
+  }
 
-  def apply[T, S](column: Column[T, S]): T = {
+  def apply[T, S](column: ColumnLike[T, S]): T = {
     get[T, S](column).getOrElse(throw new RuntimeException(s"Unable to find column: ${column.name} in result."))
   }
 
-  def has[T, S](column: Column[T, S]): Boolean = {
+  def has[T, S](column: ColumnLike[T, S]): Boolean = {
     val value = get[T, S](column)
-    value.nonEmpty && value.get != None
+    value.nonEmpty && value.get != None && !value.contains(null)
   }
 
   def apply[T, S](function: SQLFunction[T, S]): T = values.collectFirst {

@@ -178,7 +178,7 @@ class MapperSpec extends WordSpec with Matchers {
           check(results(4), "French Roast Decaf", Some("Superior Coffee"))
           check(results(5), "Caffè American", None)
 
-          def check(t: (Coffee, Option[Supplier]), coffeeName: String, supplierName: Option[String]) = t match {
+          def check(t: (Coffee, Option[Supplier]), coffeeName: String, supplierName: Option[String]): Unit = t match {
             case (coffee, supplier) => {
               coffee.name should equal(coffeeName)
               supplier.map(_.name) should equal(supplierName)

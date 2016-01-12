@@ -11,7 +11,7 @@ import scala.language.experimental.macros
 
 package object mapper {
   implicit class MapperQuery[Expressions, Result](query: Query[Expressions, Result]) {
-    def to[R](implicit manifest: Manifest[R]) = {
+    def to[R](implicit manifest: Manifest[R]): Query[Expressions, R] = {
       val clazz: EnhancedClass = manifest.runtimeClass
       val f = (r: QueryResult) => {
         clazz.create[R](r.toFieldMap)
