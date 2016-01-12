@@ -15,8 +15,9 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     val createColumns = table.columns.map(c => column2Create(c))
     CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties.values.toSeq)
   }
+
   override def column2Create[T, S](column: Column[T, S]): CreateColumn[T, S] = {
-    CreateColumn[T, S](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)(column.manifest)
+    CreateColumn[T, S](column.table.tableName, column.name, column.dataType, column.properties.values.toSeq)
   }
 
   override def ddl(tables: List[Table], ifNotExists: Boolean = false): List[CallableInstruction] = {
@@ -102,7 +103,7 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
   }
 
   override def ddl[T, S](alter: ChangeColumnType[T, S]): List[CallableInstruction] = {
-    val properties = ColumnPropertyContainer[T](alter.properties: _*)(alter.manifest)
+    val properties = ColumnPropertyContainer[T](alter.properties: _*)(alter.isOptional)
     val sql = s"ALTER TABLE ${alter.tableName} ALTER COLUMN ${alter.columnName} ${alter.dataType.sqlType(this, properties)}"
     List(CallableInstruction(sql))
   }
@@ -190,9 +191,8 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
     if (container.has(Unique)) {
       b.append("UNIQUE")
     }
-    container.get[Default](Default.name) match {
-      case Some(default) => b.append(s"DEFAULT ${default.value}")
-      case None => // No default specified
+    container.get[Default](Default.name).foreach { default =>
+      b.append(s"DEFAULT ${default.value}")
     }
     b.toList
   }

@@ -5,9 +5,7 @@ import org.scalarelational.instruction.Joinable
 
 import scala.language.existentials
 
-
 case class TableAlias(table: Table, tableAlias: String) extends Joinable {
-  def apply[T, S](column: ColumnLike[T, S]): ColumnAlias[T, S] = {
+  def apply[T, S](column: ColumnLike[T, S]): ColumnAlias[T, S] =
     ColumnAlias[T, S](column, Option(tableAlias), Option(column.name), None)
-  }
 }

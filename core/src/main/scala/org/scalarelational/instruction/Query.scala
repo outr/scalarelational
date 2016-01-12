@@ -11,7 +11,6 @@ import org.scalarelational.table.Table
 import scala.concurrent.Future
 import scala.language.existentials
 
-
 case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 table: Table,
                                 joins: List[Join] = Nil,

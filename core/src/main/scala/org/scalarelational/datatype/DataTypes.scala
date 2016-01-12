@@ -3,12 +3,9 @@ package org.scalarelational.datatype
 import java.math
 import java.sql.{Blob, Timestamp, Types}
 
-import org.powerscala.reflect._
-import org.scalarelational.WrappedString
 import org.scalarelational.column.property.{ColumnLength, NumericStorage}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
 import org.scalarelational.model.Datastore
-
 
 object DataTypes {
   def simplify[T, S](dataType: DataType[T, S]): SimpleDataType[T] = new SimpleDataType[T](
@@ -24,9 +21,7 @@ object DataTypes {
       s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
     }
   }, new SQLConversion[BigDecimal, java.math.BigDecimal] {
-
     override def toSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: BigDecimal) = value.underlying()
-
     override def fromSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: math.BigDecimal) = BigDecimal(value)
   }))
   object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
@@ -44,15 +39,13 @@ object DataTypes {
   object LongType extends SimpleDataType[Long](Types.BIGINT, SQLType("BIGINT"))
   object StringType extends SimpleDataType[String](Types.VARCHAR, StringSQLType)
   object TimestampType extends SimpleDataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
-  val WrappedStringType = simplify(new DataType[WrappedString, String](StringType.jdbcType, StringType.sqlType, new SQLConversion[WrappedString, String] {
+  /*val WrappedStringType = simplify(new DataType[WrappedString, String](StringType.jdbcType, StringType.sqlType, new SQLConversion[WrappedString, String] {
     override def toSQL(column: ColumnLike[WrappedString, String], value: WrappedString) = value.value
-
     override def fromSQL(column: ColumnLike[WrappedString, String], value: String) = column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
-  }))
+  }))*/
 
   object LongTimestampType extends DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
     override def toSQL(column: ColumnLike[Long, Timestamp], value: Long): Timestamp = new Timestamp(value)
-
     override def fromSQL(column: ColumnLike[Long, Timestamp], value: Timestamp): Long = value.getTime
   })
 }

@@ -10,8 +10,6 @@ case class RefColumn[T](column: ColumnLike[T, Int]) extends ColumnLike[Ref[T], I
   def longName: String = column.longName
   def table: Table = column.table
   def dataType: DataType[Ref[T], Int] = column.dataType.asInstanceOf[DataType[Ref[T], Int]]
-  def manifest: Manifest[Ref[T]] = column.manifest.asInstanceOf[Manifest[Ref[T]]]
-
-  override def classType = manifest.runtimeClass
+  override def isOptional: Boolean = column.isOptional
   override def properties = column.properties
 }
