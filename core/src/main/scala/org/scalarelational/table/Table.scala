@@ -53,23 +53,21 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
   def columnsByName[T, S](names: String*): Seq[Column[T, S]] = names.flatMap(name => getColumn[T, S](name))
 
   def column[T](name: String, properties: ColumnProperty*)
-               (implicit dataType: SimpleDataType[T], manifest: Manifest[T]): Column[T, T] =
-    add(new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties))
+               (implicit dataType: SimpleDataType[T]): Column[T, T] =
+    add(new Column[T, T](name, dt(dataType, properties), this, properties))
 
-  def column[T](name: String, dataType: SimpleDataType[T], properties: ColumnProperty*)
-               (implicit manifest: Manifest[T]): Column[T, T] =
-    add(new Column[T, T](name, dt(dataType, properties, manifest), manifest, this, properties))
+  def column[T](name: String, dataType: SimpleDataType[T], properties: ColumnProperty*): Column[T, T] =
+    add(new Column[T, T](name, dt(dataType, properties), this, properties))
 
   def column[T, S](name: String, properties: ColumnProperty*)
-               (implicit dataType: DataType[T, S], manifest: Manifest[T]): Column[T, S] =
-    add(new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties))
+               (implicit dataType: DataType[T, S]): Column[T, S] =
+    add(new Column[T, S](name, dt(dataType, properties), this, properties))
 
-  def column[T, S](name: String, dataType: DataType[T, S], properties: ColumnProperty*)
-                  (implicit manifest: Manifest[T]): Column[T, S] =
-    add(new Column[T, S](name, dt(dataType, properties, manifest), manifest, this, properties))
+  def column[T, S](name: String, dataType: DataType[T, S], properties: ColumnProperty*): Column[T, S] =
+    add(new Column[T, S](name, dt(dataType, properties), this, properties))
 
-  private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty], manifest: Manifest[T]): DataType[T, S] = {
-    val instance = DataTypeInstance[Any, Any](dt.asInstanceOf[DataType[Any, Any]], properties, manifest.asInstanceOf[Manifest[Any]])
+  private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty]): DataType[T, S] = {
+    val instance = DataTypeInstance[Any, Any](dt.asInstanceOf[DataType[Any, Any]], properties)
     datastore.dataTypeInstanceProcessor.fire(instance).asInstanceOf[DataType[T, S]]
   }
 

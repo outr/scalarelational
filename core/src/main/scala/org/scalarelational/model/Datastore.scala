@@ -198,8 +198,8 @@ trait Datastore
 }
 
 case class DataTypeInstance[T, S](dataType: DataType[T, S],
-                                  columnProperties: Seq[ColumnProperty],
-                                  manifest: Manifest[T]) extends PropertyContainer[ColumnProperty] {
+                                  columnProperties: Seq[ColumnProperty]
+                                 ) extends PropertyContainer[ColumnProperty] {
   props(columnProperties: _*)
 }
 

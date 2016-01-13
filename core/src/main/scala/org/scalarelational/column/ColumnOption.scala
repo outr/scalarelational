@@ -10,8 +10,8 @@ case class ColumnOption[T, S](column: ColumnLike[T, S]) extends ColumnLike[Optio
   def longName: String = column.longName
   def table: Table = column.table
   def dataType: DataType[Option[T], S] = OptionDataTypeCreator.create[T, S](column.dataType)
-  def manifest: Manifest[Option[T]] = column.manifest.asInstanceOf[Manifest[Option[T]]]
 
-  override def classType: Class[_] = classOf[Option[T]]
+  override def optional: Boolean = true
+
   override def properties: Map[String, ColumnProperty] = column.properties
 }

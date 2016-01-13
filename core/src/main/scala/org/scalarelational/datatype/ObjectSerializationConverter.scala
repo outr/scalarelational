@@ -12,9 +12,8 @@ import org.scalarelational.column.ColumnLike
  * @author Matt Hicks <matt@outr.com>
  */
 object ObjectSerializationDataTypeCreator {
-  def create[T <: AnyRef](implicit manifest: Manifest[T]) = {
+  def create[T <: AnyRef] =
     new DataType[T, Blob](Types.BLOB, new BlobSQLType("BLOB"), new ObjectSQLConverter[T])
-  }
 }
 
 class ObjectSQLConverter[T] extends SQLConversion[T, Blob] {

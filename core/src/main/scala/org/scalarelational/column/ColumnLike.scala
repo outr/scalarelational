@@ -7,14 +7,13 @@ import org.scalarelational.table.Table
 
 import scala.util.matching.Regex
 
-
 trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer {
   def name: String
   def longName: String
   def table: Table
   def dataType: DataType[T, S]
-  def manifest: Manifest[T]
 
+  def optional: Boolean = dataType.optional
   def sqlType: SQLType = dataType.sqlType
 
   def apply(value: T, converterOverride: Option[DataType[T, S]] = None): ColumnValue[T, S] =
@@ -32,9 +31,8 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
       toConvert.asInstanceOf[T]
     } catch {
       case t: Throwable =>
-        val sourceClass = manifest.runtimeClass
         val targetClass = v.getClass
-        throw new RuntimeException(s"Invalid conversion from $sourceClass to $targetClass (table = $table, column = $this, value = $toConvert)")
+        throw new RuntimeException(s"Invalid conversion to $targetClass (table = $table, column = $this, value = $toConvert)")
     }
   }
 

@@ -1,24 +1,18 @@
 package org.scalarelational.column
 
-
 case class ColumnAlias[T, S](column: ColumnLike[T, S],
-                          tableAlias: Option[String],
-                          alias: Option[String],
-                          as: Option[String]
-                         ) extends ColumnLike[T, S] {
+                             tableAlias: Option[String],
+                             alias: Option[String],
+                             as: Option[String]
+                            ) extends ColumnLike[T, S] {
   val name = columnName
-  val longName = as match {
-    case Some(s) => s"$tableName.$columnName AS [$s]"
-    case None => s"$tableName.$columnName"
-  }
+  val longName = as.fold(s"$tableName.$columnName")(s => s"$tableName.$columnName AS [$s]")
+
   def dataType = column.dataType
   def table = column.table
-  def manifest = column.manifest
 
   def tableName = tableAlias.getOrElse(table.tableName)
   def columnName = alias.getOrElse(column.name)
-
-  override def classType = column.classType
 
   override def properties = column.properties
 }
