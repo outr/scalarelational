@@ -39,10 +39,6 @@ object DataTypes {
   object LongType extends SimpleDataType[Long](Types.BIGINT, SQLType("BIGINT"))
   object StringType extends SimpleDataType[String](Types.VARCHAR, StringSQLType)
   object TimestampType extends SimpleDataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
-  /*val WrappedStringType = simplify(new DataType[WrappedString, String](StringType.jdbcType, StringType.sqlType, new SQLConversion[WrappedString, String] {
-    override def toSQL(column: ColumnLike[WrappedString, String], value: WrappedString) = value.value
-    override def fromSQL(column: ColumnLike[WrappedString, String], value: String) = column.manifest.runtimeClass.create[WrappedString](Map("value" -> value))
-  }))*/
 
   object LongTimestampType extends DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
     override def toSQL(column: ColumnLike[Long, Timestamp], value: Long): Timestamp = new Timestamp(value)

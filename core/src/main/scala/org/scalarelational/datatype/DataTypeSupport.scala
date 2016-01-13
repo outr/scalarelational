@@ -17,7 +17,6 @@ trait DataTypeSupport {
   implicit def longType: SimpleDataType[Long] = LongType
   implicit def stringType: SimpleDataType[String] = StringType
   implicit def timestampType: SimpleDataType[Timestamp] = TimestampType
-  // implicit def wrappedStringType: SimpleDataType[WrappedString] = WrappedStringType
 
   implicit def longTimestampType: DataType[Long, Timestamp] = LongTimestampType
 
