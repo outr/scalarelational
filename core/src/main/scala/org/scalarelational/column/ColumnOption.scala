@@ -11,7 +11,7 @@ case class ColumnOption[T, S](column: ColumnLike[T, S]) extends ColumnLike[Optio
   def table: Table = column.table
   def dataType: DataType[Option[T], S] = OptionDataTypeCreator.create[T, S](column.dataType)
 
-  override def isOptional: Boolean = true
+  override def optional: Boolean = true
 
   override def properties: Map[String, ColumnProperty] = column.properties
 }

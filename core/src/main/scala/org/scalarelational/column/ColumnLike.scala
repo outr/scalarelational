@@ -13,7 +13,7 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
   def table: Table
   def dataType: DataType[T, S]
 
-  def isOptional: Boolean = dataType.isOptional
+  def optional: Boolean = dataType.optional
   def sqlType: SQLType = dataType.sqlType
 
   def apply(value: T, converterOverride: Option[DataType[T, S]] = None): ColumnValue[T, S] =

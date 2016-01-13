@@ -11,5 +11,5 @@ case class CreateColumn[T, S](tableName: String,
                              ) extends ColumnPropertyContainer {
   this.props(props: _*)
 
-  override def isOptional: Boolean = dataType.isOptional
+  override def optional: Boolean = dataType.optional
 }

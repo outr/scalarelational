@@ -70,7 +70,7 @@ class ModelSpec extends WordSpec with Matchers {
         val c: Column[_, _] = person.columns.head
         c.name should equal("ID")
         c.fieldName should equal("id")
-        c.isOptional should equal(true)
+        c.optional should equal(true)
         c.has(AutoIncrement) should equal(true)
         c.has(PrimaryKey) should equal(true)
       }
@@ -78,7 +78,7 @@ class ModelSpec extends WordSpec with Matchers {
         val c: Column[_, _] = person.columns.tail.head
         c.name should equal("NAME")
         c.fieldName should equal("name")
-        c.isOptional should equal(false)
+        c.optional should equal(false)
         c.has(AutoIncrement) should equal(false)
         c.has(PrimaryKey) should equal(false)
       }
@@ -86,13 +86,13 @@ class ModelSpec extends WordSpec with Matchers {
         val c: Column[_, _] = person.columns.tail.tail.head
         c.name should equal("AGE")
         c.fieldName should equal("age")
-        c.isOptional should equal(false)
+        c.optional should equal(false)
       }
       "have created: Timestamp as the fourth column" in {
         val c: Column[_, _] = person.columns.tail.tail.tail.head
         c.name should equal("created")
         c.fieldName should equal("created")
-        c.isOptional should equal(false)
+        c.optional should equal(false)
       }
       "verify type access" in {
         person.id.name should equal("ID")

@@ -78,7 +78,7 @@ class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends 
     }
 
     valueOption match {
-      case None if !c.isOptional => None.orNull.asInstanceOf[T]
+      case None if !c.optional => None.orNull.asInstanceOf[T]
       case None => convert(None.orNull[AnyRef])
       case Some(value) => convert(value)
     }

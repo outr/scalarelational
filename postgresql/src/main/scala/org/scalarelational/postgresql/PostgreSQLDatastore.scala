@@ -74,7 +74,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
 
   override protected def columnPropertiesSQL(container: ColumnPropertyContainer): List[String] = {
     val b = ListBuffer.empty[String]
-    if (!container.isOptional && !container.has(Polymorphic)) {
+    if (!container.optional && !container.has(Polymorphic)) {
       b.append("NOT NULL")
     }
     if (container.has(Unique)) {
