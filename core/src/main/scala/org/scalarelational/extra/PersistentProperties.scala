@@ -13,8 +13,6 @@ import org.scalarelational.Session
  * Convenience methods are provided to get, set, and remove the value for a
  * property and to create a Property instance that can update the database in an
  * event-driven manner.
- *
- * @author Matt Hicks <matt@outr.com>
  */
 trait PersistentProperties extends Datastore {
   object persistentProperties extends Table("PERSISTENT_PROPERTIES") {
