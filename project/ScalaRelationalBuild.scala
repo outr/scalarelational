@@ -9,7 +9,7 @@ object ScalaRelationalBuild extends Build {
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
    .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
-  lazy val core = project("core").withDependencies(powerscala.property, hikariCP, scalaTest, metaRx).settings(
+  lazy val core = project("core").withDependencies(powerscala.enum, powerscala.reflect, powerscala.log, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val macros = project("macros").withDependencies(scalaTest).dependsOn(core)
@@ -17,10 +17,11 @@ object ScalaRelationalBuild extends Build {
   lazy val mariadb = project("mariadb").withDependencies(mariadbdatabase).dependsOn(core, core % "test->test")
   lazy val postgresql = project("postgresql").withDependencies(postgresqldatabase).dependsOn(core, core % "test->test")
     .configs(PGSslTest)
-    .settings( inConfig(PGSslTest)(Defaults.testTasks): _*)
-    .settings(testOptions in Test := Seq(Tests.Filter(pgRegFilter)),
-    testOptions in PGSslTest := Seq(Tests.Filter(pgSslFilter))
-    )
+    .settings(inConfig(PGSslTest)(Defaults.testTasks): _*)
+    .settings(
+      testOptions in Test := Seq(Tests.Filter(pgRegFilter)),
+      testOptions in PGSslTest := Seq(Tests.Filter(pgSslFilter))
+     )
   lazy val PGSslTest = config("pgssl") extend Test
   def pgRegFilter(name: String): Boolean = (name endsWith "Spec") && !pgSslFilter(name)
   def pgSslFilter(name: String):Boolean = name endsWith "SslSpec"
@@ -100,8 +101,11 @@ object Dependencies {
   private val powerscalaVersion = "1.6.11"
 
   object powerscala {
-    val property = "org.powerscala" %% "powerscala-property" % powerscalaVersion
+    val enum = "org.powerscala" %% "powerscala-enum" % powerscalaVersion
+    val reflect = "org.powerscala" %% "powerscala-reflect" % powerscalaVersion
+    val log = "org.powerscala" %% "powerscala-log" % powerscalaVersion
   }
+
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
   val h2database = "com.h2database" % "h2" % "1.4.190"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"

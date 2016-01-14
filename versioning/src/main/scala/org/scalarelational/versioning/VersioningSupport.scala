@@ -2,7 +2,6 @@ package org.scalarelational.versioning
 
 import pl.metastack.metarx._
 import org.powerscala.concurrent.Time
-import org.powerscala.property.Property
 import org.scalarelational.extra.PersistentProperties
 
 trait VersioningSupport extends PersistentProperties {
