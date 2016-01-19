@@ -1,8 +1,7 @@
 package org.scalarelational.instruction
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
+import enumeratum._
 import org.scalarelational.op.Condition
-
 
 case class Join(joinable: Joinable, joinType: JoinType = JoinType.Join, condition: Condition)
 
@@ -15,7 +14,7 @@ case class PartialJoin[E, R](query: Query[E, R], joinable: Joinable, joinType: J
 
 sealed abstract class JoinType extends EnumEntry
 
-object JoinType extends Enumerated[JoinType] {
+object JoinType extends Enum[JoinType] {
   case object Join extends JoinType
   case object Left extends JoinType
   case object LeftOuter extends JoinType

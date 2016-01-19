@@ -9,7 +9,7 @@ object ScalaRelationalBuild extends Build {
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
    .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
-  lazy val core = project("core").withDependencies(powerscala.enum, powerscala.reflect, powerscala.log, hikariCP, scalaTest, metaRx).settings(
+  lazy val core = project("core").withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val macros = project("macros").withDependencies(scalaTest).dependsOn(core)
@@ -98,18 +98,12 @@ object Details {
 }
 
 object Dependencies {
-  private val powerscalaVersion = "1.6.11"
-
-  object powerscala {
-    val enum = "org.powerscala" %% "powerscala-enum" % powerscalaVersion
-    val reflect = "org.powerscala" %% "powerscala-reflect" % powerscalaVersion
-    val log = "org.powerscala" %% "powerscala-log" % powerscalaVersion
-  }
-
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
   val h2database = "com.h2database" % "h2" % "1.4.190"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1206-jdbc42"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
+  val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
+  val logging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
 }

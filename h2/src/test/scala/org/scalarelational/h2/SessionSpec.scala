@@ -1,12 +1,10 @@
 package org.scalarelational.h2
 
-import org.powerscala.concurrent.Time
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.extra.StickySessionSupport
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
-
 
 class SessionSpec extends WordSpec with Matchers {
   "Session" when {
@@ -78,9 +76,8 @@ class SessionSpec extends WordSpec with Matchers {
       s1.disposed should equal(false)
       s2.disposed should equal(false)
       s1 should be theSameInstanceAs s2
-      Time.waitFor(1.0, errorOnTimeout = true) {
-        s1.disposed
-      }
+      Thread.sleep(1000L)
+      s1.disposed should equal(true)
     }
   }
 }

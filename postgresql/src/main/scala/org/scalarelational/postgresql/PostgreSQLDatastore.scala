@@ -4,7 +4,6 @@ import java.sql.Types
 import javax.sql.DataSource
 
 import org.postgresql.ds.PGSimpleDataSource
-import org.powerscala.log.{Level, Logging}
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
@@ -17,17 +16,13 @@ import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
 
-/**
- * @author Robert Djubek <envy1988@gmail.com>
- */
-abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging with SQLLogging {
+abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLogging {
   protected def this(pgConfig: PostgreSQL.Config) = {
     this()
-    sqlLogLevel := Level.Warn
     config := pgConfig
   }
 
-  override def supportsMerge = false
+  override def supportsMerge: Boolean = false
 
   protected def this(dataSource: DataSource) = {
     this()
@@ -38,17 +33,17 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
 
   val config = Opt[PostgreSQL.Config]()
 
-  dataTypeInstanceProcessor.on { instance =>
-    instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
-      case _ if instance.dataType.jdbcType == Types.BLOB => {
-        instance.dataType.copy(sqlType = new BlobSQLType("BYTEA"))
-      }
-      case _ => instance.dataType
-    }
-  }
-
   // Update the data source if the mode changes
   config.values.attach(updateDataSource)
+
+  private lazy val blobSQLType = new BlobSQLType("BYTEA")
+  override def dataTypeForInstance[T, S](dataTypeInstance: DataTypeInstance[T, S]): DataType[T, S] = {
+    if (dataTypeInstance.dataType.jdbcType == Types.BLOB) {
+      dataTypeInstance.dataType.copy(sqlType = blobSQLType)
+    } else {
+      super.dataTypeForInstance(dataTypeInstance)
+    }
+  }
 
   def updateDataSource(config: PostgreSQL.Config): Unit = {
     dispose() // Make sure to shut down the previous DataSource if possible
@@ -91,7 +86,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
       super.columnSQLType(create)
     }
 
-  override def jdbcTables(implicit session: Session) = {
+  override def jdbcTables(implicit session: Session): Set[String] = {
     val meta = session.connection.getMetaData
     val results = meta.getTables(null, "public", "%", null)
     try {
@@ -101,7 +96,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def jdbcColumns(tableName: String)(implicit session: Session) = {
+  override def jdbcColumns(tableName: String)(implicit session: Session): Set[String] = {
     val meta = session.connection.getMetaData
     val results = meta.getColumns(null, "public", tableName, null)
     try {
@@ -111,7 +106,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  override def tableExists(name: String)(implicit session: Session) = {
+  override def tableExists(name: String)(implicit session: Session): Boolean = {
     val meta = session.connection.getMetaData
     val results = meta.getTables(null, "public", name.toLowerCase, null)
     try {

@@ -1,12 +1,12 @@
 package org.scalarelational.h2.trigger
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
+import enumeratum._
 
 sealed abstract class TriggerType extends EnumEntry {
-  def is(types: TriggerType*) = types.contains(this)
+  def is(types: TriggerType*): Boolean = types.contains(this)
 }
 
-object TriggerType extends Enumerated[TriggerType] {
+object TriggerType extends Enum[TriggerType] {
   case object Insert extends TriggerType
   case object Update extends TriggerType
   case object Delete extends TriggerType

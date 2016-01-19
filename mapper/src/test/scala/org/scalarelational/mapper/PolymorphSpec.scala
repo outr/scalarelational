@@ -2,10 +2,12 @@ package org.scalarelational.mapper
 
 import java.sql.Types
 
+import org.scalarelational.SelectExpression
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.{AutoIncrement, Polymorphic, PrimaryKey}
 import org.scalarelational.datatype.{DataType, SQLConversion, SQLType}
 import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.instruction.Query
 import org.scalatest.{Matchers, WordSpec}
 
 /**
@@ -43,10 +45,7 @@ class PolymorphSpec extends WordSpec with Matchers {
     "query users" in {
       withSession { implicit session =>
         val query = users.q
-        val x = query.asCase[User] { row =>
-          if (row(users.isGuest)) classOf[UserGuest]
-          else classOf[UserAdmin]
-        }
+        val x = query.poly[User](qr => if (qr(users.isGuest)) converter[UserGuest](users) else converter[UserAdmin](users))
         insertUsers should equal (x.converted.toList.map(_.withoutId))
       }
     }
@@ -71,10 +70,7 @@ class PolymorphSpec extends WordSpec with Matchers {
     "query content" in {
       withSession { implicit session =>
         val query = content.q
-        val x = query.asCase[Content] { row =>
-          if (row(content.isString)) classOf[ContentString]
-          else classOf[ContentList]
-        }
+        val x = query.poly(qr => if (qr(content.isString)) converter[ContentString](content) else converter[ContentList](content))
         insertContent should equal (x.converted.toList.map(_.withoutId))
       }
     }
@@ -135,7 +131,7 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
 
-    override def query = q.to[User]
+    override def query: Query[scala.Vector[SelectExpression[_]], User] = q.to[User](this)
   }
 
   object content extends MappedTable[Content]("content") {
@@ -143,13 +139,17 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
       override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
       override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
     }
-    implicit def listDataType = new DataType[List[String], String](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
+    implicit def listDataType: DataType[List[String], String] = new DataType[List[String], String](
+      Types.VARCHAR,
+      SQLType("VARCHAR(1024)"),
+      ListConverter
+    )
 
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val string = column[String]("string", Polymorphic)
     val entries = column[List[String], String]("entries", Polymorphic)
     val isString = column[Boolean]("isString")
 
-    override def query = q.to[Content]
+    override def query: Query[scala.Vector[SelectExpression[_]], Content] = q.to[Content](this)
   }
 }

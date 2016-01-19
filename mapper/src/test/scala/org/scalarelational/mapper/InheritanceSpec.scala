@@ -37,7 +37,7 @@ class InheritanceSpec extends WordSpec with Matchers {
     "query content with mapper" in {
       withSession { implicit session =>
         val query = Content.q where Content.id === Some(2)
-        query.to[InheritanceDatastore.Content].converted.head should equal (Content("content2", Some(2)))
+        query.to[InheritanceDatastore.Content](Content).converted.head should equal (Content("content2", Some(2)))
       }
     }
   }

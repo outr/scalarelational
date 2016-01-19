@@ -3,18 +3,15 @@ package org.scalarelational.h2
 import javax.sql.DataSource
 
 import org.h2.jdbcx.JdbcConnectionPool
-
-import pl.metastack.metarx.{Var, Opt, Channel}
-
-import org.powerscala.log.Logging
-
-import org.scalarelational.model._
 import org.scalarelational.Session
-import org.scalarelational.table.Table
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
+import org.scalarelational.model._
+import org.scalarelational.table.Table
+import org.scalarelational.util.StringUtil
+import pl.metastack.metarx.{Channel, Opt, Var}
 
-abstract class H2Datastore private() extends SQLDatastore with Logging {
-  protected def this(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
+abstract class H2Datastore private() extends SQLDatastore {
+  protected def this(mode: H2ConnectionMode = H2Memory(StringUtil.randomString()),
                      username: String = "sa",
                      password: String = "sa") {
     this()
@@ -35,7 +32,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
   val dbPassword = Var("sa")
   val trigger = Channel[TriggerEvent]()
 
-  override def supportsBatchInsertResponse = false
+  override def supportsBatchInsertResponse: Boolean = false
 
   private var functions = Set.empty[H2Function]
 
@@ -48,7 +45,7 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
       mode.url, dbUsername.get, dbPassword.get)
   }
 
-  def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {
+  def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None): H2Function = synchronized {
     val f = H2Function(this, obj, methodName, functionName)
     functions += f
     f

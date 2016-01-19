@@ -1,11 +1,10 @@
 package org.scalarelational
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
-
+import enumeratum._
 
 sealed abstract class TransactionMode(val value: Int) extends EnumEntry
 
-object TransactionMode extends Enumerated[TransactionMode] {
+object TransactionMode extends Enum[TransactionMode] {
   /**
    * A constant indicating that transactions are not supported.
    */
@@ -50,7 +49,9 @@ object TransactionMode extends Enumerated[TransactionMode] {
    */
   case object Serializable extends TransactionMode(8)
 
-  def byValue(value: Int) = values.find(m => m.value == value).getOrElse(throw new RuntimeException(s"Unable to find TransactionMode by value: $value"))
+  def byValue(value: Int): TransactionMode = {
+    values.find(m => m.value == value) getOrElse(throw new RuntimeException(s"Unable to find TransactionMode by value: $value"))
+  }
 
   val values = findValues.toVector
 }

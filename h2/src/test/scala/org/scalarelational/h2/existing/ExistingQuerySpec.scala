@@ -1,5 +1,7 @@
 package org.scalarelational.h2.existing
 
+import java.sql.ResultSet
+
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.datatype.DataTypes
 import org.scalarelational.existing.{ExistingQuery, NamedArgument}
@@ -16,8 +18,14 @@ class ExistingQuerySpec extends WordSpec with Matchers {
   "ExistingQuery" should {
     val queryString1 = "SELECT id, name, language FROM users WHERE id = ?"
     val queryString2 = "SELECT id, name, language FROM users WHERE id = :id"
-    val existingQuery1 = new ExistingQuery[ExistingResult](TestDatastore, queryString1)
-    val existingQuery2 = new ExistingQuery[ExistingResult](TestDatastore, queryString2)
+    val converter = (rs: ResultSet) => {
+      val id = rs.getInt("id")
+      val name = rs.getString("name")
+      val language = rs.getString("language")
+      ExistingResult(id, name, language)
+    }
+    val existingQuery1 = new ExistingQuery[ExistingResult](TestDatastore, queryString1, converter)
+    val existingQuery2 = new ExistingQuery[ExistingResult](TestDatastore, queryString2, converter)
     "create the database" in {
       withSession { implicit session =>
         create(users)

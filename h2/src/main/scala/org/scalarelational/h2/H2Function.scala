@@ -1,8 +1,9 @@
 package org.scalarelational.h2
 
-import org.powerscala.StringUtil
-import org.scalarelational.Session
+import java.sql.ResultSet
 
+import org.scalarelational.Session
+import org.scalarelational.util.StringUtil
 
 case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, functionName: Option[String] = None) {
   lazy val name = functionName match {
@@ -10,7 +11,7 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
     case None => StringUtil.generateLabel(methodName).toUpperCase.replace(' ', '_')
   }
 
-  def apply[F](caller: H2Function => F) = caller(this)
+  def apply[F](caller: H2Function => F): F = caller(this)
 
   private def buildStatement(args: Any*)(implicit session: Session) = {
     val argEntries = (0 until args.length).map(i => "?").mkString(", ")
@@ -21,11 +22,11 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
     s
   }
 
-  def call(args: Any*) = datastore.withSession { implicit session =>
+  def call(args: Any*): Boolean = datastore.withSession { implicit session =>
     buildStatement(args: _*).execute()
   }
 
-  def query(args: Any*) = datastore.withSession { implicit session =>
+  def query(args: Any*): ResultSet = datastore.withSession { implicit session =>
     buildStatement(args: _*).executeQuery()
   }
 }

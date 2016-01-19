@@ -1,9 +1,10 @@
 package org.scalarelational
 
+import java.io.{BufferedReader, InputStreamReader}
 import java.sql.{Blob, Timestamp, Types}
+import java.util.stream.Collectors
 import javax.sql.rowset.serial.SerialBlob
 
-import org.powerscala.IO
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property._
 import org.scalarelational.datatype._
@@ -17,7 +18,6 @@ import org.scalatest.{Matchers, WordSpec}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
 
 trait AbstractTableSpec extends WordSpec with Matchers {
   val currentTime = System.currentTimeMillis()
@@ -504,8 +504,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         val result = results.head
         result(data.id) should equal (Some(dataId))
         val content = result(data.content)
-        val s = IO.copy(content.getBinaryStream)
-        s should equal("test using blob")
+        val reader = new BufferedReader(new InputStreamReader(content.getBinaryStream))
+        try {
+          val s = reader.lines().collect(Collectors.joining("\n"))
+          s should equal("test using blob")
+        } finally {
+          reader.close()
+        }
       }
     }
     "insert John Doe into combinedUnique" in {

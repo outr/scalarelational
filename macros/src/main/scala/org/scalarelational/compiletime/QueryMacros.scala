@@ -1,7 +1,7 @@
 package org.scalarelational.compiletime
 
 import org.scalarelational.SelectExpression
-import org.scalarelational.instruction.Query
+import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.table.Table
 
 import scala.annotation.compileTimeOnly
@@ -10,6 +10,22 @@ import scala.reflect.macros.blackbox
 
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object QueryMacros {
+  def converter1[R](c: blackbox.Context)
+                   (table: c.Expr[Table])
+                   (implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
+    import c.universe._
+
+    val instance = typeWrapper[R](c)(weakTypeOf[R], table)
+    val converter = q"""
+       new org.scalarelational.instruction.ResultConverter[$r] {
+         def apply(result: org.scalarelational.result.QueryResult): $r = {
+           $instance
+         }
+       }
+    """
+    c.Expr[ResultConverter[R]](converter)
+  }
+
   def to1[R](c: blackbox.Context)
             (table: c.Expr[Table])
             (implicit r: c.WeakTypeTag[R]): c.Expr[Query[Vector[SelectExpression[_]], R]] = {
@@ -19,17 +35,11 @@ object QueryMacros {
       case Apply(_, List(qry)) => qry
     }
 
-    val instance = typeWrapper[R](c)(weakTypeOf[R], table)
-
-    val conv = q"""
-       val converter = new org.scalarelational.instruction.ResultConverter[$r] {
-         def apply(result: org.scalarelational.result.QueryResult): $r = {
-           $instance
-         }
-       }
-       $query.convert[$r](converter)
+    val converter = converter1[R](c)(table)(r)
+    val converted = q"""
+       $query.convert[$r]($converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], R]](conv)
+    c.Expr[Query[Vector[SelectExpression[_]], R]](converted)
   }
 
   def to2[R1, R2](c: blackbox.Context)

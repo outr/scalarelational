@@ -1,22 +1,16 @@
 package org.scalarelational.model
 
-import scala.collection.mutable.ArrayBuffer
-
-import org.powerscala.event.Listenable
-import org.powerscala.event.processor.{ModifiableProcessor, UnitProcessor}
 import org.scalarelational.datatype.DataTypeSupport
-
+import org.scalarelational.instruction._
 import pl.metastack.metarx.Channel
 
-import org.scalarelational.instruction._
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * ModularSupport can be optionally mixed into a Datastore and/or Table to
  * receive and even modify calls to the the database.
- *
- * @author Matt Hicks <matt@outr.com>
  */
-trait ModularSupport extends SQLContainer with Listenable with DataTypeSupport {
+trait ModularSupport extends SQLContainer with DataTypeSupport {
   class Processor[T] {
     val functions = ArrayBuffer.empty[T => T]
     def fire(value: T): T =

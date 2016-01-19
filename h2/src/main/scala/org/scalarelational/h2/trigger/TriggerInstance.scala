@@ -3,19 +3,17 @@ package org.scalarelational.h2.trigger
 import java.sql.Connection
 
 import org.h2.api.Trigger
-import org.powerscala.log.Logging
 import org.scalarelational.h2.H2Datastore
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 
-
-class TriggerInstance extends Trigger with Logging {
+class TriggerInstance extends Trigger {
   private var table: Table = _
   private var triggerType: TriggerType = _
   private var triggerState: TriggerState = _
   private def datastore = table.datastore.asInstanceOf[H2Datastore]
 
-  override def init(conn: Connection, schemaName: String, triggerName: String, tableName: String, before: Boolean, `type`: Int) = {
+  override def init(conn: Connection, schemaName: String, triggerName: String, tableName: String, before: Boolean, `type`: Int): Unit = {
     Datastore().tableByName(tableName) match {
       case Some(t) => table = t
       case None => throw new RuntimeException(s"Unable to find $tableName in ${Datastore()}.")
@@ -32,7 +30,7 @@ class TriggerInstance extends Trigger with Logging {
   override def fire(conn: Connection, oldRow: Array[AnyRef], newRow: Array[AnyRef]): Unit =
     datastore.trigger := TriggerEvent(table, triggerType, triggerState, oldRow, newRow)
 
-  override def remove() = {}
+  override def remove(): Unit = {}
 
-  override def close() = {}
+  override def close(): Unit = {}
 }

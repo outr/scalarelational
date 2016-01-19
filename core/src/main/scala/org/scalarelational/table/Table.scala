@@ -67,8 +67,8 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
     add(new Column[T, S](name, dt(dataType, properties), this, properties))
 
   private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty]): DataType[T, S] = {
-    val instance = DataTypeInstance[Any, Any](dt.asInstanceOf[DataType[Any, Any]], properties)
-    datastore.dataTypeInstanceProcessor.fire(instance).asInstanceOf[DataType[T, S]]
+    val instance = DataTypeInstance[T, S](dt.asInstanceOf[DataType[T, S]], properties)
+    datastore.dataTypeForInstance[T, S](instance)
   }
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = tpe.getSuperclass match {

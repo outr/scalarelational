@@ -1,11 +1,10 @@
 package org.scalarelational.op
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
-
+import enumeratum._
 
 sealed abstract class Operator(val symbol: String) extends EnumEntry
 
-object Operator extends Enumerated[Operator] {
+object Operator extends Enum[Operator] {
   case object Equal extends Operator("=")
   case object NotEqual extends Operator("!=")
   case object GreaterThan extends Operator(">")
