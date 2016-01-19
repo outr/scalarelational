@@ -5,7 +5,6 @@ import javax.sql.DataSource
 
 import org.postgresql.ds.PGSimpleDataSource
 import org.powerscala.log.{Level, Logging}
-import org.powerscala.property.Property
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
@@ -14,6 +13,7 @@ import org.scalarelational.instruction.ddl.CreateColumn
 import org.scalarelational.model._
 import org.scalarelational.op.{Condition, DirectCondition, Operator, RegexCondition}
 import org.scalarelational.result.ResultSetIterator
+import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
 
@@ -36,7 +36,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
 
   Class.forName("org.postgresql.Driver")
 
-  val config = Property[PostgreSQL.Config]()
+  val config = Opt[PostgreSQL.Config]()
 
   dataTypeInstanceProcessor.on { instance =>
     instance.dataType.converter.asInstanceOf[SQLConversion[_, _]] match {
@@ -47,24 +47,19 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with Logging w
     }
   }
 
-  init()
+  // Update the data source if the mode changes
+  config.values.attach(updateDataSource)
 
-  protected def init() = {
-    config.change.on {
-      case evt => updateDataSource() // Update the data source if the mode changes
-    }
-  }
-
-  def updateDataSource() = {
+  def updateDataSource(config: PostgreSQL.Config): Unit = {
     dispose() // Make sure to shut down the previous DataSource if possible
 
     val source = new PGSimpleDataSource()
-    source.setPortNumber(config().port)
-    source.setServerName(config().host)
-    source.setDatabaseName(config().schema)
-    source.setUser(config().user)
-    source.setPassword(config().password)
-    config().ssl.foreach{s =>
+    source.setPortNumber(config.port)
+    source.setServerName(config.host)
+    source.setDatabaseName(config.schema)
+    source.setUser(config.user)
+    source.setPassword(config.password)
+    config.ssl.foreach { s =>
       source.setSsl(true)
       s.sslFactory.foreach { source.setSslfactory }
       s.sslFactoryArg.foreach { source.setSslFactoryArg }

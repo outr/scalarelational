@@ -3,19 +3,20 @@ package org.scalarelational.h2
 import javax.sql.DataSource
 
 import org.h2.jdbcx.JdbcConnectionPool
-import org.powerscala.event.processor.UnitProcessor
-import org.powerscala.log.Logging
-import org.powerscala.property.Property
-import org.scalarelational.Session
-import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
-import org.scalarelational.model._
-import org.scalarelational.table.Table
 
+import pl.metastack.metarx.{Var, Opt, Channel}
+
+import org.powerscala.log.Logging
+
+import org.scalarelational.model._
+import org.scalarelational.Session
+import org.scalarelational.table.Table
+import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
 
 abstract class H2Datastore private() extends SQLDatastore with Logging {
   protected def this(mode: H2ConnectionMode = H2Memory(org.powerscala.Unique()),
                      username: String = "sa",
-                     password: String = "sa") = {
+                     password: String = "sa") {
     this()
     dbUsername := username
     dbPassword := password
@@ -29,26 +30,22 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
 
   Class.forName("org.h2.Driver")
 
-  val modeProperty = Property[H2ConnectionMode]()
-  val dbUsername = Property[String](default = Some("sa"))
-  val dbPassword = Property[String](default = Some("sa"))
-  val trigger = new UnitProcessor[TriggerEvent]("trigger")
+  val modeProperty = Opt[H2ConnectionMode]()
+  val dbUsername = Var("sa")
+  val dbPassword = Var("sa")
+  val trigger = Channel[TriggerEvent]()
 
   override def supportsBatchInsertResponse = false
 
   private var functions = Set.empty[H2Function]
 
-  init()
+  // Update the data source if the mode changes
+  modeProperty.values.attach(updateDataSource)
 
-  protected def init(): Unit = {
-    modeProperty.change.on {
-      case evt => updateDataSource()      // Update the data source if the mode changes
-    }
-  }
-
-  def updateDataSource() = {
-    dispose()     // Make sure to shut down the previous DataSource if possible
-    dataSourceProperty := JdbcConnectionPool.create(modeProperty().url, dbUsername(), dbPassword())
+  private def updateDataSource(mode: H2ConnectionMode): Unit = {
+    dispose()  // Make sure to shut down the previous DataSource if possible
+    dataSourceProperty := JdbcConnectionPool.create(
+      mode.url, dbUsername.get, dbPassword.get)
   }
 
   def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None) = synchronized {
@@ -57,10 +54,10 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     f
   }
 
-  override def create(tables: Table*)(implicit session: Session) = {
+  override def create(tables: Table*)(implicit session: Session): Int = {
     val created = super.create(tables: _*)
 
-    // TODO: convert this to use CallableInstructions
+    // TODO convert this to use CallableInstructions
     val b = new StringBuilder
     tables.foreach {
       case table => createTableTriggers(table, b)
@@ -91,21 +88,17 @@ abstract class H2Datastore private() extends SQLDatastore with Logging {
     }
   }
 
-  private def createFunctions(b: StringBuilder) = {
+  private def createFunctions(b: StringBuilder): Unit =
     functions.foreach {
       case f => b.append(s"""CREATE ALIAS IF NOT EXISTS ${f.name} FOR "${f.obj.getClass.getName.replaceAll("[$]", "")}.${f.methodName}";\r\n\r\n""")
     }
-  }
 
-  override def dispose() = {
+  override def dispose(): Unit = {
     super.dispose()
 
-    dataSourceProperty.get match {
-      case Some(ds) => ds match {
-        case pool: JdbcConnectionPool => pool.dispose()
-        case _ => // Not a JdbcConnectionPool
-      }
-      case None => // No previous dataSource
+    dataSource.foreach {
+      case pool: JdbcConnectionPool => pool.dispose()
+      case _ =>
     }
   }
 }

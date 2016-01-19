@@ -18,7 +18,7 @@ class VersioningSpec extends WordSpec with Matchers {
     }
     "have version at 0" in {
       withSession { implicit session =>
-        version() should equal(0)
+        version.get should equal(None)
         persistence.get("databaseVersion") should equal(None)
       }
     }
@@ -34,7 +34,7 @@ class VersioningSpec extends WordSpec with Matchers {
     }
     "have version at 1" in {
       withSession { implicit session =>
-        version() should equal(1)
+        version.get should equal(Some(1))
         persistence.get("databaseVersion") should equal(Some("1"))
       }
     }
@@ -49,7 +49,7 @@ class VersioningSpec extends WordSpec with Matchers {
       withSession { implicit session =>
         Upgrade2.invoked should equal(true)
         Upgrade3.invoked should equal(true)
-        version() should equal(3)
+        version.get should equal(Some(3))
         persistence.get("databaseVersion") should equal(Some("3"))
       }
     }
@@ -68,7 +68,7 @@ class VersioningSpec extends WordSpec with Matchers {
     }
     "have version at 4" in {
       withSession { implicit session =>
-        version() should equal(4)
+        version.get should equal(Some(4))
         persistence.get("databaseVersion") should equal(Some("4"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
         jdbcColumns("TEST2") should equal(Set("ID", "NAME", "AGE"))
@@ -84,7 +84,7 @@ class VersioningSpec extends WordSpec with Matchers {
     }
     "have version at 5" in {
       withSession { implicit session =>
-        version() should equal(5)
+        version.get should equal(Some(5))
         persistence.get("databaseVersion") should equal(Some("5"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
         jdbcColumns("TEST2") should equal(Set("ID", "AGE"))
@@ -100,7 +100,7 @@ class VersioningSpec extends WordSpec with Matchers {
     }
     "have version at 6" in {
       withSession { implicit session =>
-        version() should equal(6)
+        version.get should equal(Some(6))
         persistence.get("databaseVersion") should equal(Some("6"))
         jdbcTables should equal(Set("TEST", "TEST2", "PERSISTENT_PROPERTIES"))
         jdbcColumns("TEST2") should equal(Set("ID", "YEARSOLD"))

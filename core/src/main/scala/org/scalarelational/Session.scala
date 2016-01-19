@@ -10,15 +10,15 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   private var _disposed = false
   private var _connection: Option[Connection] = None
 
-  def hasConnection = _connection.nonEmpty
-  def connection = _connection match {
+  def hasConnection: Boolean = _connection.nonEmpty
+
+  def connection: Connection = _connection match {
     case _ if disposed => throw new RuntimeException("Session is disposed.")
     case Some(c) => c
-    case None => {
-      val c = datastore.dataSource.getConnection
-      _connection = Option(c)
-      c
-    }
+    case None =>
+      val c = datastore.dataSource.map(_.getConnection)
+      _connection = c
+      c.get
   }
 
   def execute(sql: String) = {

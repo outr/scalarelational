@@ -21,14 +21,14 @@ class TriggerSpec extends WordSpec with Matchers {
       }
     }
     "add a trigger" in {
-      trigger.on {
+      trigger.attach {
         case evt => evt.triggerType match {
           case TriggerType.Insert => inserted += 1
           case TriggerType.Update => updated += 1
           case TriggerType.Delete => deleted += 1
           case TriggerType.Select => selected += 1
         }
-      } shouldNot equal(null)
+      }
     }
     "validate no trigger has been invoked" in {
       inserted should equal(0)
