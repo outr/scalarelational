@@ -158,6 +158,24 @@ class MapperSpec extends WordSpec with Matchers {
           coffees.by(coffees.id, Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
         }
       }
+      "query back coffee and supplier into one case class" in {
+        withSession { implicit session =>
+          val query = (
+            select
+              (coffees.name, coffees.price, suppliers.name.as("supplierName"))
+            from
+              coffees
+            innerJoin
+              suppliers
+            on
+              coffees.supId === suppliers.ref.opt
+            where
+              coffees.name === "French Roast"
+          ).to[CoffeeAndSupplier](coffees)
+          val entry = query.converted.head
+          entry should be(CoffeeAndSupplier("French Roast", 8.99, "Superior Coffee"))
+        }
+      }
       "query multiple with left join" in {
         withSession { implicit session =>
           val query = (
@@ -265,6 +283,8 @@ case class Supplier(name: String, street: String, city: String, state: String, z
 case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None) extends Entity[Coffee] {
   def columns = mapTo[Coffee](Datastore.coffees)
 }
+
+case class CoffeeAndSupplier(name: String, price: Double, supplierName: String)
 
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends MappedTable[Person]("person") {

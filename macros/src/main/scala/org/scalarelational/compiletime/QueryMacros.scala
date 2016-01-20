@@ -2,7 +2,6 @@ package org.scalarelational.compiletime
 
 import java.sql.ResultSet
 
-import org.scalarelational.SelectExpression
 import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.table.Table
 
@@ -21,9 +20,17 @@ object QueryMacros {
         q"resultSet.getString($name)"
       } else if (fieldType.baseType(typeOf[Int].typeSymbol) != NoType) {
         q"resultSet.getInt($name)"
+      } else if (fieldType.baseType(typeOf[Long].typeSymbol) != NoType) {
+        q"resultSet.getLong($name)"
+      } else if (fieldType.baseType(typeOf[java.math.BigDecimal].typeSymbol) != NoType) {
+        q"resultSet.getBigDecimal($name)"
+      } else if (fieldType.baseType(typeOf[scala.math.BigDecimal].typeSymbol) != NoType) {
+        q"BigDecimal(resultSet.getBigDecimal($name))"
       } else if (fieldType.baseType(typeOf[Option[_]].typeSymbol) != NoType) {
         val TypeRef(_, _, targ :: Nil) = fieldType.baseType(typeOf[Option[_]].typeSymbol)
         q"Option(${resultSetGet(field, Some(targ))})"
+      } else if (fieldType.baseType(typeOf[java.sql.Timestamp].typeSymbol) != NoType) {
+        q"resultSet.getTimestamp($name)"
       } else {
         c.abort(c.enclosingPosition, s"Unsupported ResultSet conversion type: $fieldType.")
       }
@@ -57,9 +64,9 @@ object QueryMacros {
     c.Expr[ResultConverter[R]](converter)
   }
 
-  def to1[R](c: blackbox.Context)
+  def to1[E, R](c: blackbox.Context)
             (table: c.Expr[Table])
-            (implicit r: c.WeakTypeTag[R]): c.Expr[Query[Vector[SelectExpression[_]], R]] = {
+            (implicit r: c.WeakTypeTag[R]): c.Expr[Query[E, R]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
@@ -70,12 +77,12 @@ object QueryMacros {
     val converted = q"""
        $query.convert[$r]($converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], R]](converted)
+    c.Expr[Query[E, R]](converted)
   }
 
-  def to2[R1, R2](c: blackbox.Context)
+  def to2[E, R1, R2](c: blackbox.Context)
                  (table1: c.Expr[Table], table2: c.Expr[Table])
-                 (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2]): c.Expr[Query[Vector[SelectExpression[_]], (R1, R2)]] = {
+                 (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2]): c.Expr[Query[E, (R1, R2)]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
@@ -93,12 +100,12 @@ object QueryMacros {
        }
        $query.convert[($r1, $r2)](converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], (R1, R2)]](conv)
+    c.Expr[Query[E, (R1, R2)]](conv)
   }
 
-  def to3[R1, R2, R3](c: blackbox.Context)
+  def to3[E, R1, R2, R3](c: blackbox.Context)
                      (table1: c.Expr[Table], table2: c.Expr[Table], table3: c.Expr[Table])
-                     (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2], r3: c.WeakTypeTag[R3]): c.Expr[Query[Vector[SelectExpression[_]], (R1, R2, R3)]] = {
+                     (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2], r3: c.WeakTypeTag[R3]): c.Expr[Query[E, (R1, R2, R3)]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
@@ -117,7 +124,7 @@ object QueryMacros {
        }
        $query.convert[($r1, $r2, $r3)](converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], (R1, R2, R3)]](conv)
+    c.Expr[Query[E, (R1, R2, R3)]](conv)
   }
 
   private def typeWrapper[T](c: blackbox.Context)(tpe: c.universe.Type, table: c.Expr[Table]) = {
