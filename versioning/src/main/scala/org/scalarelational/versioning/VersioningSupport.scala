@@ -1,8 +1,8 @@
 package org.scalarelational.versioning
 
-import pl.metastack.metarx._
-import org.powerscala.concurrent.Time
 import org.scalarelational.extra.PersistentProperties
+import org.scalarelational.util.Time
+import pl.metastack.metarx._
 
 trait VersioningSupport extends PersistentProperties {
   def version: Opt[Int] =
@@ -22,7 +22,7 @@ trait VersioningSupport extends PersistentProperties {
    * and iterates over all unapplied versions upgrading to the latest.
    */
   def upgrade(): Unit = synchronized {
-    info("Checking for Database Upgrades...")
+    logger.info("Checking for Database Upgrades...")
 
     withSession { implicit session =>
       val latestVersion = upgrades.keys.toList match {
@@ -34,25 +34,25 @@ trait VersioningSupport extends PersistentProperties {
 
       if (latestVersion == 0) {
         // Make sure the value is created in the database
-        info(s"New database created. Setting version to latest (version $latestVersion) without running upgrades.")
+        logger.info(s"New database created. Setting version to latest (version $latestVersion) without running upgrades.")
         version := latestVersion // New database created, we don't have to run upgrades
       } else {
-        info(s"Current Version: ${version.get}, Latest Version: $latestVersion")
+        logger.info(s"Current Version: ${version.get}, Latest Version: $latestVersion")
         (version.get.getOrElse(0) until latestVersion).foreach { currentVersion =>
           transaction { implicit session =>
             val nextVersion = currentVersion + 1
-            info(s"Upgrading from version $currentVersion to $nextVersion...")
+            logger.info(s"Upgrading from version $currentVersion to $nextVersion...")
             val upgrade = upgrades.getOrElse(nextVersion,
               throw new RuntimeException(s"No version registered for $nextVersion."))
             if (newDatabase && !upgrade.runOnNewDatabase) {
               version := nextVersion
-              info(s"Skipping version $currentVersion to $nextVersion because it's a new database.")
+              logger.info(s"Skipping version $currentVersion to $nextVersion because it's a new database.")
             } else {
               val elapsed = Time.elapsed {
                 upgrade.upgrade(session)
               }
               version := nextVersion
-              info(s"$nextVersion upgrade finished successfully in $elapsed seconds.")
+              logger.info(s"$nextVersion upgrade finished successfully in $elapsed seconds.")
             }
           }
         }

@@ -43,6 +43,15 @@ object Time {
   }
 
   /**
+    * Invokes the wrapped function and returns the time in seconds it took to complete as a Double.
+    */
+  def elapsed(f: => Any): Double = {
+    val time = System.nanoTime
+    f
+    (System.nanoTime - time) / 1000000000.0
+  }
+
+  /**
     * Converts time in seconds to milliseconds.
     */
   def millis(time: Double): Long = math.round(time * 1000.0)

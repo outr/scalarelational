@@ -44,9 +44,8 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "query users" in {
       withSession { implicit session =>
-        val query = users.q
-        val x = query.poly[User](qr => if (qr(users.isGuest)) converter[UserGuest](users) else converter[UserAdmin](users))
-        insertUsers should equal (x.converted.toList.map(_.withoutId))
+        val query = users.query
+        insertUsers should equal (query.converted.toList.map(_.withoutId))
       }
     }
   }
@@ -69,9 +68,8 @@ class PolymorphSpec extends WordSpec with Matchers {
     }
     "query content" in {
       withSession { implicit session =>
-        val query = content.q
-        val x = query.poly(qr => if (qr(content.isString)) converter[ContentString](content) else converter[ContentList](content))
-        insertContent should equal (x.converted.toList.map(_.withoutId))
+        val query = content.query
+        insertContent should equal (query.converted.toList.map(_.withoutId))
       }
     }
   }
@@ -131,7 +129,9 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
     val canDelete = column[Boolean]("canDelete", Polymorphic)
     val isGuest = column[Boolean]("isGuest")
 
-    override def query: Query[scala.Vector[SelectExpression[_]], User] = q.to[User](this)
+    override def query: Query[scala.Vector[SelectExpression[_]], User] = {
+      q.poly[User](qr => if (qr(users.isGuest)) converter[UserGuest](users) else converter[UserAdmin](users))
+    }
   }
 
   object content extends MappedTable[Content]("content") {
@@ -150,6 +150,8 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
     val entries = column[List[String], String]("entries", Polymorphic)
     val isString = column[Boolean]("isString")
 
-    override def query: Query[scala.Vector[SelectExpression[_]], Content] = q.to[Content](this)
+    override def query: Query[scala.Vector[SelectExpression[_]], Content] = {
+      q.poly[Content](qr => if (qr(content.isString)) converter[ContentString](content) else converter[ContentList](content))
+    }
   }
 }

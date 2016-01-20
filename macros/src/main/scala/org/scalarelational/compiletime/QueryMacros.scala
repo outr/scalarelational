@@ -121,7 +121,7 @@ object QueryMacros {
     import c.universe._
 
     val members = tpe.decls
-    val fields = members.filter(_.asTerm.isVal)
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
     val args = fields.map { field =>
       val name = TermName(Macros.simpleName(field.fullName))
       q"result($table.$name)"

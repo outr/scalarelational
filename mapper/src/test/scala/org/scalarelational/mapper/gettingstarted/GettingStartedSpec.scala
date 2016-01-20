@@ -1,13 +1,12 @@
 package org.scalarelational.mapper.gettingstarted
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
+import enumeratum._
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.mapper._
 import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
-
 
 class GettingStartedSpec extends WordSpec with Matchers {
   import GettingStartedDatastore._
@@ -111,7 +110,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
         import suppliers._
 
         val query = select (*) from suppliers where name === "Starbucks"
-        val starbucks = query.to[Supplier].converted.head
+        val starbucks = query.to[Supplier](suppliers).converted.head
         starbucks should equal (Supplier("Starbucks", "123 Everywhere Rd.", "Lotsaplaces", Some("CA"), "93966", Status.Enabled, Some(4)))
       }
     }
@@ -153,7 +152,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
 
 sealed abstract class Status extends EnumEntry
 
-object Status extends Enumerated[Status] {
+object Status extends Enum[Status] {
   case object Unconfirmed extends Status
   case object Disabled extends Status
   case object Enabled extends Status
@@ -162,16 +161,18 @@ object Status extends Enumerated[Status] {
 }
 
 object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_started")) {
+  implicit def statusEnum: Enum[Status] = Status
+
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
     val name = column[String]("SUP_NAME", Unique)
     val street = column[String]("STREET")
     val city = column[String]("CITY")
     val state = column[Option[String], String]("STATE")
     val zip = column[String]("ZIP")
-    val status = column[Status, String]("STATUS")
+    val status = column[Status, String]("STATUS", enum[Status])
     val id = column[Option[Int], Int]("SUP_ID", PrimaryKey, AutoIncrement)
 
-    override def query = q.to[Supplier]
+    override def query = q.to[Supplier](this)
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
@@ -182,7 +183,7 @@ object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_star
     val total = column[Int]("TOTAL")
     val id = column[Option[Int], Int]("COF_ID", PrimaryKey, AutoIncrement)
 
-    override def query = q.to[Coffee]
+    override def query = q.to[Coffee](this)
   }
 }
 

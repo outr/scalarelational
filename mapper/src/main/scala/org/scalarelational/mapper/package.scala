@@ -1,7 +1,7 @@
 package org.scalarelational
 
 import org.scalarelational.compiletime.QueryMacros
-import org.scalarelational.instruction.{ResultConverter, Query}
+import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.result.QueryResult
 import org.scalarelational.table.Table
 
@@ -18,7 +18,7 @@ package object mapper {
     def to[R1, R2, R3](table1: Table, table2: Table, table3: Table): Query[Vector[SelectExpression[_]], (R1, R2, R3)] =
       macro QueryMacros.to3[R1, R2, R3]
 
-    def poly[R](result2Converter: QueryResult => ResultConverter[R]): Query[Expressions, R] = {
+    def poly[R](result2Converter: QueryResult => ResultConverter[_ <: R]): Query[Expressions, R] = {
       val polyConverter = new ResultConverter[R] {
         override def apply(result: QueryResult): R = result2Converter(result).apply(result)
       }
