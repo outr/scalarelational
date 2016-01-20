@@ -48,6 +48,35 @@ object QueryMacros {
     c.Expr[ResultSet => R](function)
   }
 
+  def converterLoose[R](c: blackbox.Context)(implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
+    import c.universe._
+
+    val instance = type2InstanceByName[R](c)(weakTypeOf[R])
+    val converter = q"""
+       new org.scalarelational.instruction.ResultConverter[$r] {
+         def apply(result: org.scalarelational.result.QueryResult): $r = {
+           $instance
+         }
+       }
+    """
+    c.Expr[ResultConverter[R]](converter)
+  }
+
+  def loose[E, R](c: blackbox.Context)
+               (implicit r: c.WeakTypeTag[R]): c.Expr[Query[E, R]] = {
+    import c.universe._
+
+    val query = c.prefix.tree match {
+      case Apply(_, List(qry)) => qry
+    }
+
+    val converter = converterLoose[R](c)(r)
+    val converted = q"""
+       $query.convert[$r]($converter)
+    """
+    c.Expr[Query[E, R]](converted)
+  }
+
   def converter1[R](c: blackbox.Context)
                    (table: c.Expr[Table])
                    (implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
@@ -163,6 +192,20 @@ object QueryMacros {
     val args = fields.map { field =>
       val name = TermName(Macros.simpleName(field.fullName))
       q"result($table.$name)"
+    }
+    val companion = tpe.typeSymbol.companion
+    q"$companion(..$args)"
+  }
+
+  private def type2InstanceByName[T](c: blackbox.Context)(tpe: c.universe.Type) = {
+    import c.universe._
+
+    val members = tpe.decls
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
+    val args = fields.map { field =>
+      val name = Macros.simpleName(field.fullName)
+      val fieldType = field.info
+      q"result.byName[$fieldType]($name)"
     }
     val companion = tpe.typeSymbol.companion
     q"$companion(..$args)"

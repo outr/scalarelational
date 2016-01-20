@@ -26,6 +26,9 @@ package object mapper {
       }
       query.convert(polyConverter)
     }
+
+    def loose[R]: Query[Expressions, R] =
+      macro QueryMacros.loose[Expressions, R]
   }
 
   def converter[R](table: Table): ResultConverter[R] = macro QueryMacros.converter1[R]

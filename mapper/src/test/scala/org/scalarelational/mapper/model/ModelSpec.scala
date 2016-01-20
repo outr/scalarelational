@@ -42,7 +42,7 @@ class ModelSpec extends WordSpec with Matchers {
       "handle a simple alias column query" in {
         val q = select(t1.name as "test1") from t1
         val (sql, args) = describe(q)
-        sql should equal("SELECT t1.name AS [test1] FROM t1")
+        sql should equal("SELECT t1.name AS test1 FROM t1")
         args should equal(Nil)
       }
       "handle a simple alias table query" in {

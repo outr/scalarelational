@@ -162,7 +162,7 @@ class MapperSpec extends WordSpec with Matchers {
         withSession { implicit session =>
           val query = (
             select
-              (coffees.name, coffees.price, suppliers.name.as("supplierName"))
+              (coffees.name as "name", coffees.price as "price", suppliers.name as "supplierName")
             from
               coffees
             innerJoin
@@ -171,7 +171,7 @@ class MapperSpec extends WordSpec with Matchers {
               coffees.supId === suppliers.ref.opt
             where
               coffees.name === "French Roast"
-          ).to[CoffeeAndSupplier](coffees)
+          ).loose[CoffeeAndSupplier]
           val entry = query.converted.head
           entry should be(CoffeeAndSupplier("French Roast", 8.99, "Superior Coffee"))
         }

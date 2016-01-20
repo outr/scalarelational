@@ -5,8 +5,8 @@ case class ColumnAlias[T, S](column: ColumnLike[T, S],
                              alias: Option[String],
                              as: Option[String]
                             ) extends ColumnLike[T, S] {
-  val name = columnName
-  val longName = as.fold(s"$tableName.$columnName")(s => s"$tableName.$columnName AS [$s]")
+  val name = as.getOrElse(columnName)
+  val longName = as.fold(s"$tableName.$columnName")(s => s"$tableName.$columnName AS $s")
 
   def dataType = column.dataType
   def table = column.table
