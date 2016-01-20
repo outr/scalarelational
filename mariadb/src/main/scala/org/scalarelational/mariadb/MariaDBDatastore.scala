@@ -3,7 +3,6 @@ package org.scalarelational.mariadb
 import javax.sql.DataSource
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-import org.powerscala.log.Logging
 import org.scalarelational.instruction.CallableInstruction
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.model._
@@ -16,7 +15,7 @@ case class MariaDBConfig(host: String,
                          profileSQL: Boolean = false,
                          port: Int = 3306)
 
-abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
+abstract class MariaDBDatastore private() extends SQLDatastore {
   protected def this(mariadbConfig: MariaDBConfig) = {
     this()
     config := mariadbConfig
@@ -28,10 +27,10 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
   }
 
   /* MariaDB does not support the `MERGE INTO` syntax.*/
-  override def supportsMerge = false
+  override def supportsMerge: Boolean = false
   /* This is kind of abitrary, but `DataSource.DefaultVarCharLength` does not
    * work here as it is the row size limit for MariaDB */
-  override def DefaultVarCharLength = 200
+  override def DefaultVarCharLength: Int = 200
 
   Class.forName("com.mysql.jdbc.Driver")
 
@@ -41,11 +40,15 @@ abstract class MariaDBDatastore private() extends SQLDatastore with Logging {
   config.values.attach(updateDataSource)
 
   override def ddl(drop: DropTable): List[CallableInstruction] =
-    if (drop.cascade) List(
-      CallableInstruction("SET foreign_key_checks = 0;"),
-      super.ddl(drop).head,
-      CallableInstruction("SET foreign_key_checks = 1;")
-    ) else super.ddl(drop)
+    if (drop.cascade) {
+      List(
+        CallableInstruction("SET foreign_key_checks = 0;"),
+        super.ddl(drop).head,
+        CallableInstruction("SET foreign_key_checks = 1;")
+      )
+    } else {
+      super.ddl(drop)
+    }
 
   def updateDataSource(config: MariaDBConfig): Unit = {
     dispose() // Make sure to shut down the previous DataSource if possible
