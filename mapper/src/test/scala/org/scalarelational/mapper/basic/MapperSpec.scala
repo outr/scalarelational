@@ -63,6 +63,16 @@ class MapperSpec extends WordSpec with Matchers {
           jane should equal(PartialPerson("Jane", 19, Some(2)))
         }
       }
+      "map a ResultSet via Macro" in {
+        withSession { implicit session =>
+          val query = select(*) from people where name === "Jane"
+          val resultSet = query.result.rs
+          resultSet.next()
+          val converter = rsConverter[Person]
+          val jane = converter(resultSet)
+          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
+        }
+      }
     }
     "dealing with inserts" should {
       "automatically convert a case class to an insert" in {

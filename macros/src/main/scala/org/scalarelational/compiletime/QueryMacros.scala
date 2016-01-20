@@ -1,5 +1,7 @@
 package org.scalarelational.compiletime
 
+import java.sql.ResultSet
+
 import org.scalarelational.SelectExpression
 import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.table.Table
@@ -7,9 +9,38 @@ import org.scalarelational.table.Table
 import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox
 
-
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object QueryMacros {
+  def resultSetToR[R](c: blackbox.Context)(implicit r: c.WeakTypeTag[R]): c.Expr[ResultSet => R] = {
+    import c.universe._
+
+    def resultSetGet(field: c.universe.Symbol, tpe: Option[c.universe.Type] = None): c.universe.Tree = {
+      val name = Macros.simpleName(field.fullName)
+      val fieldType = tpe.getOrElse(field.info)
+      if (fieldType.baseType(typeOf[String].typeSymbol) != NoType) {
+        q"resultSet.getString($name)"
+      } else if (fieldType.baseType(typeOf[Int].typeSymbol) != NoType) {
+        q"resultSet.getInt($name)"
+      } else if (fieldType.baseType(typeOf[Option[_]].typeSymbol) != NoType) {
+        val TypeRef(_, _, targ :: Nil) = fieldType.baseType(typeOf[Option[_]].typeSymbol)
+        q"Option(${resultSetGet(field, Some(targ))})"
+      } else {
+        c.abort(c.enclosingPosition, s"Unsupported ResultSet conversion type: $fieldType.")
+      }
+    }
+
+    val tpe = weakTypeOf[R]
+    val members = tpe.decls
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
+    val args = fields.map(field => resultSetGet(field))
+    val companion = tpe.typeSymbol.companion
+    val function = q"""(resultSet: java.sql.ResultSet) => {
+      $companion(..$args)
+    }
+    """
+    c.Expr[ResultSet => R](function)
+  }
+
   def converter1[R](c: blackbox.Context)
                    (table: c.Expr[Table])
                    (implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
@@ -109,7 +140,7 @@ object QueryMacros {
     import c.universe._
 
     val members = tpe.decls
-    val fields = members.filter(_.asTerm.isVal)
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
     val args = fields.map { field =>
       val name = TermName(Macros.simpleName(field.fullName))
       q"result.has($table.$name)"

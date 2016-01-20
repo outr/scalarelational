@@ -13,7 +13,7 @@ import org.scalarelational.{ExpressionValue, SelectExpression}
 import scala.annotation.tailrec
 
 
-class QueryResultsIterator[E, R](rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult] {
+class QueryResultsIterator[E, R](val rs: ResultSet, val query: Query[E, R]) extends Iterator[QueryResult] {
   private val NextNotCalled = 0
   private val HasNext = 1
   private val NothingLeft = 2

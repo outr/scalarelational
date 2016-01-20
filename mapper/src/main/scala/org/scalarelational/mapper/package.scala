@@ -1,5 +1,7 @@
 package org.scalarelational
 
+import java.sql.ResultSet
+
 import org.scalarelational.compiletime.QueryMacros
 import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.result.QueryResult
@@ -27,4 +29,6 @@ package object mapper {
   }
 
   def converter[R](table: Table): ResultConverter[R] = macro QueryMacros.converter1[R]
+
+  def rsConverter[R]: ResultSet => R = macro QueryMacros.resultSetToR[R]
 }
