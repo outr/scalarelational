@@ -23,9 +23,9 @@ object QueryMacros {
       } else if (fieldType.baseType(typeOf[Long].typeSymbol) != NoType) {
         q"resultSet.getLong($name)"
       } else if (fieldType.baseType(typeOf[java.math.BigDecimal].typeSymbol) != NoType) {
-        q"resultSet.getBigDecimal($name)"
+        q"Option(resultSet.getBigDecimal($name)).getOrElse(new java.math.BigDecimal(0))"
       } else if (fieldType.baseType(typeOf[scala.math.BigDecimal].typeSymbol) != NoType) {
-        q"BigDecimal(resultSet.getBigDecimal($name))"
+        q"BigDecimal(Option(resultSet.getBigDecimal($name)).getOrElse(new java.math.BigDecimal(0)))"
       } else if (fieldType.baseType(typeOf[Option[_]].typeSymbol) != NoType) {
         val TypeRef(_, _, targ :: Nil) = fieldType.baseType(typeOf[Option[_]].typeSymbol)
         q"Option(${resultSetGet(field, Some(targ))})"

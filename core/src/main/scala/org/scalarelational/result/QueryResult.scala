@@ -9,7 +9,7 @@ import scala.language.existentials
 
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
   def getByName[T](name: String): Option[T] = values.collectFirst {
-    case cv: ColumnValue[_, _] if cv.column.name == name => cv.value.asInstanceOf[T]
+    case cv: ColumnValue[_, _] if cv.column.name.equalsIgnoreCase(name) => cv.value.asInstanceOf[T]
   }
 
   def byName[T](name: String): T = {
