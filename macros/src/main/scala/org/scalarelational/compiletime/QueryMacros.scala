@@ -1,40 +1,117 @@
 package org.scalarelational.compiletime
 
-import org.scalarelational.SelectExpression
-import org.scalarelational.instruction.Query
+import java.sql.ResultSet
+
+import org.scalarelational.instruction.{Query, ResultConverter}
 import org.scalarelational.table.Table
 
 import scala.annotation.compileTimeOnly
 import scala.reflect.macros.blackbox
 
-
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object QueryMacros {
-  def to1[R](c: blackbox.Context)
-            (table: c.Expr[Table])
-            (implicit r: c.WeakTypeTag[R]): c.Expr[Query[Vector[SelectExpression[_]], R]] = {
+  def resultSetToR[R](c: blackbox.Context)(implicit r: c.WeakTypeTag[R]): c.Expr[ResultSet => R] = {
+    import c.universe._
+
+    def resultSetGet(field: c.universe.Symbol, tpe: Option[c.universe.Type] = None): c.universe.Tree = {
+      val name = Macros.simpleName(field.fullName)
+      val fieldType = tpe.getOrElse(field.info)
+      if (fieldType.baseType(typeOf[String].typeSymbol) != NoType) {
+        q"resultSet.getString($name)"
+      } else if (fieldType.baseType(typeOf[Int].typeSymbol) != NoType) {
+        q"resultSet.getInt($name)"
+      } else if (fieldType.baseType(typeOf[Long].typeSymbol) != NoType) {
+        q"resultSet.getLong($name)"
+      } else if (fieldType.baseType(typeOf[java.math.BigDecimal].typeSymbol) != NoType) {
+        q"Option(resultSet.getBigDecimal($name)).getOrElse(new java.math.BigDecimal(0))"
+      } else if (fieldType.baseType(typeOf[scala.math.BigDecimal].typeSymbol) != NoType) {
+        q"BigDecimal(Option(resultSet.getBigDecimal($name)).getOrElse(new java.math.BigDecimal(0)))"
+      } else if (fieldType.baseType(typeOf[Option[_]].typeSymbol) != NoType) {
+        val TypeRef(_, _, targ :: Nil) = fieldType.baseType(typeOf[Option[_]].typeSymbol)
+        q"Option(${resultSetGet(field, Some(targ))})"
+      } else if (fieldType.baseType(typeOf[java.sql.Timestamp].typeSymbol) != NoType) {
+        q"resultSet.getTimestamp($name)"
+      } else {
+        c.abort(c.enclosingPosition, s"Unsupported ResultSet conversion type: $fieldType.")
+      }
+    }
+
+    val tpe = weakTypeOf[R]
+    val members = tpe.decls
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
+    val args = fields.map(field => resultSetGet(field))
+    val companion = tpe.typeSymbol.companion
+    val function = q"""(resultSet: java.sql.ResultSet) => {
+      $companion(..$args)
+    }
+    """
+    c.Expr[ResultSet => R](function)
+  }
+
+  def converterLoose[R](c: blackbox.Context)(implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
+    import c.universe._
+
+    val instance = type2InstanceByName[R](c)(weakTypeOf[R])
+    val converter = q"""
+       new org.scalarelational.instruction.ResultConverter[$r] {
+         def apply(result: org.scalarelational.result.QueryResult): $r = {
+           $instance
+         }
+       }
+    """
+    c.Expr[ResultConverter[R]](converter)
+  }
+
+  def loose[E, R](c: blackbox.Context)
+               (implicit r: c.WeakTypeTag[R]): c.Expr[Query[E, R]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
       case Apply(_, List(qry)) => qry
     }
 
-    val instance = typeWrapper[R](c)(weakTypeOf[R], table)
+    val converter = converterLoose[R](c)(r)
+    val converted = q"""
+       $query.convert[$r]($converter)
+    """
+    c.Expr[Query[E, R]](converted)
+  }
 
-    val conv = q"""
-       val converter = new org.scalarelational.instruction.ResultConverter[$r] {
+  def converter1[R](c: blackbox.Context)
+                   (table: c.Expr[Table])
+                   (implicit r: c.WeakTypeTag[R]): c.Expr[ResultConverter[R]] = {
+    import c.universe._
+
+    val instance = typeWrapper[R](c)(weakTypeOf[R], table)
+    val converter = q"""
+       new org.scalarelational.instruction.ResultConverter[$r] {
          def apply(result: org.scalarelational.result.QueryResult): $r = {
            $instance
          }
        }
-       $query.convert[$r](converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], R]](conv)
+    c.Expr[ResultConverter[R]](converter)
   }
 
-  def to2[R1, R2](c: blackbox.Context)
+  def to1[E, R](c: blackbox.Context)
+            (table: c.Expr[Table])
+            (implicit r: c.WeakTypeTag[R]): c.Expr[Query[E, R]] = {
+    import c.universe._
+
+    val query = c.prefix.tree match {
+      case Apply(_, List(qry)) => qry
+    }
+
+    val converter = converter1[R](c)(table)(r)
+    val converted = q"""
+       $query.convert[$r]($converter)
+    """
+    c.Expr[Query[E, R]](converted)
+  }
+
+  def to2[E, R1, R2](c: blackbox.Context)
                  (table1: c.Expr[Table], table2: c.Expr[Table])
-                 (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2]): c.Expr[Query[Vector[SelectExpression[_]], (R1, R2)]] = {
+                 (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2]): c.Expr[Query[E, (R1, R2)]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
@@ -52,12 +129,12 @@ object QueryMacros {
        }
        $query.convert[($r1, $r2)](converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], (R1, R2)]](conv)
+    c.Expr[Query[E, (R1, R2)]](conv)
   }
 
-  def to3[R1, R2, R3](c: blackbox.Context)
+  def to3[E, R1, R2, R3](c: blackbox.Context)
                      (table1: c.Expr[Table], table2: c.Expr[Table], table3: c.Expr[Table])
-                     (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2], r3: c.WeakTypeTag[R3]): c.Expr[Query[Vector[SelectExpression[_]], (R1, R2, R3)]] = {
+                     (implicit r1: c.WeakTypeTag[R1], r2: c.WeakTypeTag[R2], r3: c.WeakTypeTag[R3]): c.Expr[Query[E, (R1, R2, R3)]] = {
     import c.universe._
 
     val query = c.prefix.tree match {
@@ -76,7 +153,7 @@ object QueryMacros {
        }
        $query.convert[($r1, $r2, $r3)](converter)
     """
-    c.Expr[Query[Vector[SelectExpression[_]], (R1, R2, R3)]](conv)
+    c.Expr[Query[E, (R1, R2, R3)]](conv)
   }
 
   private def typeWrapper[T](c: blackbox.Context)(tpe: c.universe.Type, table: c.Expr[Table]) = {
@@ -99,7 +176,7 @@ object QueryMacros {
     import c.universe._
 
     val members = tpe.decls
-    val fields = members.filter(_.asTerm.isVal)
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
     val args = fields.map { field =>
       val name = TermName(Macros.simpleName(field.fullName))
       q"result.has($table.$name)"
@@ -111,10 +188,24 @@ object QueryMacros {
     import c.universe._
 
     val members = tpe.decls
-    val fields = members.filter(_.asTerm.isVal)
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
     val args = fields.map { field =>
       val name = TermName(Macros.simpleName(field.fullName))
       q"result($table.$name)"
+    }
+    val companion = tpe.typeSymbol.companion
+    q"$companion(..$args)"
+  }
+
+  private def type2InstanceByName[T](c: blackbox.Context)(tpe: c.universe.Type) = {
+    import c.universe._
+
+    val members = tpe.decls
+    val fields = members.filter(s => s.asTerm.isVal && s.asTerm.isCaseAccessor)
+    val args = fields.map { field =>
+      val name = Macros.simpleName(field.fullName)
+      val fieldType = field.info
+      q"result.byName[$fieldType]($name)"
     }
     val companion = tpe.typeSymbol.companion
     q"$companion(..$args)"

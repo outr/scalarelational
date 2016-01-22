@@ -8,6 +8,14 @@ import org.scalarelational.table.Table
 import scala.language.existentials
 
 case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
+  def getByName[T](name: String): Option[T] = values.collectFirst {
+    case cv: ColumnValue[_, _] if cv.column.name.equalsIgnoreCase(name) => cv.value.asInstanceOf[T]
+  }
+
+  def byName[T](name: String): T = {
+    getByName[T](name).getOrElse(throw new NullPointerException(s"Unable to find value by name: $name for $toSimpleMap"))
+  }
+
   def get[T, S](column: ColumnLike[T, S]): Option[T] = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column == column => Option(cv.value.asInstanceOf[T])
   }.flatten

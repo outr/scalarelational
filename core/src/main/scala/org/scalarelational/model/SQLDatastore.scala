@@ -209,7 +209,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
       s"${c.column.longName} ${c.operator.symbol}$entries"
     }
     case c: Conditions => {
-      val sql = c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.name.toUpperCase} ")
+      val sql = c.list.map(condition => condition2String(condition, args)).mkString(s" ${c.connectType.entryName.toUpperCase} ")
       s"($sql)"
     }
   }

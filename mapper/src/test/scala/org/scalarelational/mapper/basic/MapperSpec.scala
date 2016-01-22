@@ -52,22 +52,25 @@ class MapperSpec extends WordSpec with Matchers {
       "automatically map to a case class" in {
         withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[Person].converted.head
-          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
-        }
-      }
-      "automatically map to a case class with Macro" in {
-        withSession { implicit session =>
-          val query = select(*) from people where name === "Jane"
-          val jane = query.toMacro[Person](people).converted.head
+          val jane = query.to[Person](people).converted.head
           jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
       "automatically map a subset of columns to a case class" in {
         withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[PartialPerson].converted.head
+          val jane = query.to[PartialPerson](people).converted.head
           jane should equal(PartialPerson("Jane", 19, Some(2)))
+        }
+      }
+      "map a ResultSet via Macro" in {
+        withSession { implicit session =>
+          val query = select(*) from people where name === "Jane"
+          val resultSet = query.result.rs
+          resultSet.next()
+          val converter = rsConverter[Person]
+          val jane = converter(resultSet)
+          jane should equal(Person("Jane", 19, Some("Doe"), Some(2)))
         }
       }
     }
@@ -96,7 +99,7 @@ class MapperSpec extends WordSpec with Matchers {
 
         withSession { implicit session =>
           val query = select(*) from people where name === "Ray"
-          val ray = query.to[Person].converted.head
+          val ray = query.to[Person](people).converted.head
           ray should equal(Person("Ray", 30, None, Some(4)))
         }
       }
@@ -110,9 +113,9 @@ class MapperSpec extends WordSpec with Matchers {
 
         withSession { implicit session =>
           val query1 = select(*) from people where name === "Ray"
-          query1.to[Person].result.headOption should equal(None)
+          query1.to[Person](people).result.headOption should equal(None)
           val query2 = select(*) from people where name === "Jay"
-          val jay = query2.to[Person].converted.head
+          val jay = query2.to[Person](people).converted.head
           jay should equal(Person("Jay", 30, None, Some(4)))
         }
       }
@@ -146,13 +149,31 @@ class MapperSpec extends WordSpec with Matchers {
         withSession { implicit session =>
           import coffees._
           val query = select (*) from coffees where name === "Caffè American"
-          val caffe = query.to[Coffee].converted.head
+          val caffe = query.to[Coffee](coffees).converted.head
           caffe should equal(Coffee("Caffè American", None, 12.99, 0, 0, Some(6)))
         }
       }
       "query back an item using MapTo" in {
         withSession { implicit session =>
           coffees.by(coffees.id, Some(1)) should equal(Some(Coffee("Colombian", Some(Ref[Supplier](1)), 7.99, 0, 0, Some(1))))
+        }
+      }
+      "query back coffee and supplier into one case class" in {
+        withSession { implicit session =>
+          val query = (
+            select
+              (coffees.name as "name", coffees.price as "price", suppliers.name as "supplierName")
+            from
+              coffees
+            innerJoin
+              suppliers
+            on
+              coffees.supId === suppliers.ref.opt
+            where
+              coffees.name === "French Roast"
+          ).loose[CoffeeAndSupplier]
+          val entry = query.converted.head
+          entry should be(CoffeeAndSupplier("French Roast", 8.99, "Superior Coffee"))
         }
       }
       "query multiple with left join" in {
@@ -221,14 +242,14 @@ class MapperSpec extends WordSpec with Matchers {
       "find and delete Jane Doe" in {
         withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
-          val jane = query.to[Person].converted.head
+          val jane = query.to[Person](people).converted.head
           jane.delete.result
         }
       }
       "no longer find Jane Doe" in {
         withSession { implicit session =>
           val query = select(*) from people where name === "Jane"
-          query.to[Person].converted.headOption should equal(None)
+          query.to[Person](people).converted.headOption should equal(None)
         }
       }
     }
@@ -263,6 +284,8 @@ case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sal
   def columns = mapTo[Coffee](Datastore.coffees)
 }
 
+case class CoffeeAndSupplier(name: String, price: Double, supplierName: String)
+
 object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
   object people extends MappedTable[Person]("person") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
@@ -270,7 +293,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val age = column[Int]("age")
     val surname = column[Option[String], String]("surname")
 
-    override def query = q.to[Person]
+    override def query = q.to[Person](this)
   }
 
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
@@ -281,7 +304,7 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val state = column[String]("STATE")
     val zip = column[String]("ZIP")
 
-    override def query = q.to[Supplier]
+    override def query = q.to[Supplier](this)
   }
 
   object coffees extends MappedTable[Coffee]("COFFEES") {
@@ -292,6 +315,6 @@ object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
     val sales = column[Int]("SALES")
     val total = column[Int]("TOTAL")
 
-    override def query = q.to[Coffee]
+    override def query = q.to[Coffee](this)
   }
 }

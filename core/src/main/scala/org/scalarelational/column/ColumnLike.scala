@@ -21,6 +21,8 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
 
   def opt: ColumnLike[Option[T], S] = ColumnOption(this)
 
+  def withDataType[R](implicit dataType: DataType[R, S]): ColumnLike[R, S] = ColumnOverride(this, dataType)
+
   def value(v: Any): T = {
     val toConvert = v match {
       case cv: ColumnValue[_, _] => cv.toSQL

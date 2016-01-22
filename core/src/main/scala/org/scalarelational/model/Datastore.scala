@@ -3,13 +3,9 @@ package org.scalarelational.model
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-import org.powerscala.event.processor.{EventProcessor, OptionProcessor}
-import org.powerscala.event.{EventState, Listenable}
-import org.powerscala.log.Logging
-import org.scalarelational.column.ColumnLike
+import com.typesafe.scalalogging.LazyLogging
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.{DataType, TypedValue}
-import org.powerscala.log.Logging
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
 import org.scalarelational.fun.BasicFunctionTypes
 import org.scalarelational.instruction._
@@ -21,8 +17,7 @@ import org.scalarelational.{PropertyContainer, Session, SessionSupport}
 import scala.concurrent.Future
 
 trait Datastore
-  extends Listenable
-  with Logging
+  extends LazyLogging
   with SessionSupport
   with DSLSupport
   with SQLContainer
@@ -39,9 +34,7 @@ trait Datastore
    * This processor receives all of those DataTypes before they are assigned to the column allowing modification by
    * database implementations or other customizations of how the datastore interacts with the database.
    */
-  val dataTypeInstanceProcessor = new DataTypeInstanceProcessor
-  val value2SQL = new OptionProcessor[(ColumnLike[_, _], Any), Any]("value2SQL")
-  val sql2Value = new OptionProcessor[(ColumnLike[_, _], Any), Any]("sql2Value")
+  def dataTypeForInstance[T, S](dataTypeInstance: DataTypeInstance[T, S]): DataType[T, S] = dataTypeInstance.dataType
 
   /**
    * True if this database implementation supports merges.
@@ -201,19 +194,6 @@ case class DataTypeInstance[T, S](dataType: DataType[T, S],
                                   columnProperties: Seq[ColumnProperty]
                                  ) extends PropertyContainer[ColumnProperty] {
   props(columnProperties: _*)
-}
-
-class DataTypeInstanceProcessor(implicit val listenable: Listenable)
-    extends EventProcessor[DataTypeInstance[Any, Any], DataType[Any, Any], DataType[Any, Any]] {
-  override def name: String = "dataTypeInstanceProcessor"
-
-  override def eventManifest: Manifest[DataTypeInstance[Any, Any]] = implicitly[Manifest[DataTypeInstance[Any, Any]]]
-
-  override protected def handleListenerResponse(value: DataType[Any, Any], state: EventState[DataTypeInstance[Any, Any]]): Unit = {
-    state.event = state.event.copy(dataType = value)
-  }
-
-  override protected def responseFor(state: EventState[DataTypeInstance[Any, Any]]): DataType[Any, Any] = state.event.dataType
 }
 
 object Datastore {

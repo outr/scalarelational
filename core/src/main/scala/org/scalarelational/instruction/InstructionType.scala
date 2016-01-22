@@ -1,11 +1,10 @@
 package org.scalarelational.instruction
 
-import org.powerscala.enum.{EnumEntry, Enumerated}
-
+import enumeratum._
 
 sealed trait InstructionType extends EnumEntry
 
-object InstructionType extends Enumerated[InstructionType] {
+object InstructionType extends Enum[InstructionType] {
   case object DDL extends InstructionType
   case object Delete extends InstructionType
   case object Insert extends InstructionType

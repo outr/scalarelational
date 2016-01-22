@@ -2,7 +2,7 @@ package org.scalarelational.datatype
 
 import java.sql.{Blob, Timestamp}
 
-import org.powerscala.enum.EnumEntry
+import enumeratum._
 import org.scalarelational.datatype.create.{EnumDataTypeCreator, OptionDataTypeCreator, RefDataTypeCreator}
 
 trait DataTypeSupport {
@@ -25,7 +25,7 @@ trait DataTypeSupport {
 
   implicit def reference[T]: DataType[Ref[T], Int] = RefDataTypeCreator.create[T]
 
-  implicit def enum[T <: EnumEntry](implicit manifest: Manifest[T]): DataType[T, String] = {
-    new EnumDataTypeCreator[T].create()
+  implicit def enum[T <: EnumEntry](implicit enumeration: Enum[T], manifest: Manifest[T]): DataType[T, String] = {
+    new EnumDataTypeCreator[T]()(enumeration, manifest).create()
   }
 }

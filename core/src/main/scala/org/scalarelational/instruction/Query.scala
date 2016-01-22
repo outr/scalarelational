@@ -1,6 +1,5 @@
 package org.scalarelational.instruction
 
-import org.powerscala.reflect._
 import org.scalarelational._
 import org.scalarelational.column.{ColumnAlias, ColumnLike}
 import org.scalarelational.instruction.query.{JoinSupport, SelectExpressions}
@@ -42,13 +41,6 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
   def converted(implicit session: Session): EnhancedIterator[Result] = new EnhancedIterator[Result](result.map(qr => converter(qr)))
   def async: Future[QueryResultsIterator[Types, Result]] = table.datastore.async { implicit session =>
     result
-  }
-
-  def asCase[R](classForRow: QueryResult => Class[_])(implicit manifest: Manifest[R]): Query[Types, R] = {
-    convert[R] { r =>
-      val clazz = classForRow(r)
-      clazz.create[R](r.toFieldMap)
-    }
   }
 }
 
