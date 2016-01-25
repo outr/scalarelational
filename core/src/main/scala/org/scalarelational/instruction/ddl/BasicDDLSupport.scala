@@ -3,14 +3,14 @@ package org.scalarelational.instruction.ddl
 import org.scalarelational.column.property._
 import org.scalarelational.column.{Column, ColumnPropertyContainer}
 import org.scalarelational.instruction.CallableInstruction
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.Index
 
 import scala.collection.mutable.ListBuffer
 
 
-trait BasicDDLSupport extends DDLSupport with Datastore {
+trait BasicDDLSupport extends DDLSupport with Database {
   override def table2Create(table: Table, ifNotExists: Boolean = true): CreateTable = {
     val createColumns = table.columns.map(c => column2Create(c))
     CreateTable(table.tableName, ifNotExists = ifNotExists, columns = createColumns, table.properties.values.toSeq)

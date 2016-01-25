@@ -6,7 +6,7 @@ import org.scalarelational.SelectExpression
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.column.property.{AutoIncrement, Polymorphic, PrimaryKey}
 import org.scalarelational.datatype.{DataType, SQLConversion, SQLType}
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.instruction.Query
 import org.scalatest.{Matchers, WordSpec}
 
@@ -14,7 +14,7 @@ import org.scalatest.{Matchers, WordSpec}
  * @author Tim Nieradzik <tim@kognit.io>
  */
 class PolymorphSpec extends WordSpec with Matchers {
-  import PolymorphDatastore._
+  import PolymorphDatabase._
 
   val insertUsers = Seq(
     UserGuest("guest"),
@@ -83,7 +83,7 @@ trait User extends BaseEntity[User] {
 
 case class UserGuest(name: String, id: Option[Int] = None)
   extends User with Entity[UserGuest] {
-  def columns = mapTo[UserGuest](PolymorphDatastore.users)
+  def columns = mapTo[UserGuest](PolymorphDatabase.users)
 
   val isGuest = true
   def withoutId = copy(id = None)
@@ -91,7 +91,7 @@ case class UserGuest(name: String, id: Option[Int] = None)
 
 case class UserAdmin(name: String, canDelete: Boolean, id: Option[Int] = None)
   extends User with Entity[UserAdmin] {
-  def columns = mapTo[UserAdmin](PolymorphDatastore.users)
+  def columns = mapTo[UserAdmin](PolymorphDatabase.users)
 
   val isGuest = false
   def withoutId = copy(id = None)
@@ -106,7 +106,7 @@ trait Content extends BaseEntity[Content] {
 
 case class ContentString(string: String, id: Option[Int] = None)
   extends Content with Entity[ContentString] {
-  def columns = mapTo[ContentString](PolymorphDatastore.content)
+  def columns = mapTo[ContentString](PolymorphDatabase.content)
 
   val isString = true
   def withoutId = copy(id = None)
@@ -114,7 +114,7 @@ case class ContentString(string: String, id: Option[Int] = None)
 
 case class ContentList(entries: List[String], id: Option[Int] = None)
   extends Content with Entity[ContentList] {
-  def columns = mapTo[ContentList](PolymorphDatastore.content)
+  def columns = mapTo[ContentList](PolymorphDatabase.content)
 
   val isString = false
   def withoutId = copy(id = None)
@@ -122,7 +122,7 @@ case class ContentList(entries: List[String], id: Option[Int] = None)
 
 // ---
 
-object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test")) {
+object PolymorphDatabase extends H2Database(mode = H2Memory("polymorph_test")) {
   object users extends MappedTable[User]("users") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")

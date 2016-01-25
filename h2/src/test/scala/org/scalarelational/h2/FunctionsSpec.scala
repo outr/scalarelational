@@ -8,7 +8,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 
 class FunctionsSpec extends WordSpec with Matchers {
-  import FunctionsDatastore._
+  import FunctionsDatabase._
 
   "FunctionsTest" should {
     "create the tables" in {
@@ -45,7 +45,7 @@ class FunctionsSpec extends WordSpec with Matchers {
   }
 }
 
-object FunctionsDatastore extends H2Datastore(mode = H2Memory("functions")) {
+object FunctionsDatabase extends H2Database(mode = H2Memory("functions")) {
   object users extends Table("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique)

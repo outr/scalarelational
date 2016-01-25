@@ -4,13 +4,13 @@ import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue, RefColumn}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.{InsertSingle, Query, Update}
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 import org.scalarelational.table.Table
 import org.scalarelational.table.property.TableProperty
 import org.scalarelational.{SelectExpression, Session}
 
 abstract class MappedTable[MappedType](name: String, tableProperties: TableProperty*)
-                                      (implicit val ds: Datastore)
+                                      (implicit val ds: Database)
   extends Table(name, tableProperties: _*)(ds) {
   def ref: ColumnLike[Ref[MappedType], Int] = RefColumn[MappedType](primaryKey.asInstanceOf[ColumnLike[MappedType, Int]])
 

@@ -12,7 +12,7 @@ case class InsertSingle[+ResultType](table: Table,
   extends Insert[ResultType] with Instruction[ResultType] {
   lazy val rows = Seq(values)
 
-  def result(implicit session: Session): ResultType = mapResult(table.datastore.exec(this))
+  def result(implicit session: Session): ResultType = mapResult(table.database.exec(this))
 
   def and(nextRow: ColumnValue[_, _]*): InsertMultiple =
     InsertMultiple(table, Seq(values, nextRow))

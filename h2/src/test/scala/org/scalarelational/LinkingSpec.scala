@@ -1,7 +1,7 @@
 package org.scalarelational
 
 import org.scalarelational.column.property.{AutoIncrement, IgnoreCase, PrimaryKey, Unique}
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.model.SQLLogging
 import org.scalarelational.table.{LinkingTable, Table}
 import org.scalatest.{Matchers, WordSpec}
@@ -10,7 +10,7 @@ import org.scalatest.{Matchers, WordSpec}
  * @author Tim Nieradzik <tim@kognit.io>
  */
 class LinkingSpec extends WordSpec with Matchers {
-  import LinkingDatastore._
+  import LinkingDatabase._
 
   "LinkingSpec" should {
     "create tables" in {
@@ -54,7 +54,7 @@ class LinkingSpec extends WordSpec with Matchers {
   }
 }
 
-object LinkingDatastore extends H2Datastore(mode = H2Memory("linking_test")) with SQLLogging {
+object LinkingDatabase extends H2Database(mode = H2Memory("linking_test")) with SQLLogging {
 
 
   object Content extends Table("Content") {

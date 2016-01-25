@@ -2,13 +2,13 @@ package org.scalarelational.versioning
 
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 
 class VersioningSpec extends WordSpec with Matchers {
-  import VersioningDatastore._
+  import VersioningDatabase._
 
   "Versioning" should {
     "create the database" in {
@@ -56,7 +56,7 @@ class VersioningSpec extends WordSpec with Matchers {
     "register a fourth upgrade" in {
       register(Upgrade4)
     }
-    "have only two tables in the datastore" in {
+    "have only two tables in the database" in {
       withSession { implicit session =>
         jdbcTables should equal(Set("TEST", "PERSISTENT_PROPERTIES"))
       }
@@ -139,7 +139,7 @@ object Upgrade3 extends UpgradableVersion {
 object Upgrade4 extends UpgradableVersion {
   override def version = 4
   override def upgrade(implicit session: Session): Unit = {
-    import VersioningDatastore._
+    import VersioningDatabase._
 
     createTable("test2").
       and(createColumn[Int]("test2", "id", PrimaryKey, AutoIncrement)).
@@ -151,7 +151,7 @@ object Upgrade4 extends UpgradableVersion {
 object Upgrade5 extends UpgradableVersion {
   override def version = 5
   override def upgrade(implicit session: Session) = {
-    import VersioningDatastore._
+    import VersioningDatabase._
 
     dropColumn("test2", "name").result
   }
@@ -160,13 +160,13 @@ object Upgrade5 extends UpgradableVersion {
 object Upgrade6 extends UpgradableVersion {
   override def version = 6
   override def upgrade(implicit session: Session) = {
-    import VersioningDatastore._
+    import VersioningDatabase._
 
     renameColumn("test2", "age", "yearsOld").result
   }
 }
 
-object VersioningDatastore extends H2Datastore(mode = H2Memory("versioning")) with VersioningSupport {
+object VersioningDatabase extends H2Database(mode = H2Memory("versioning")) with VersioningSupport {
   object test extends Table("test") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique)

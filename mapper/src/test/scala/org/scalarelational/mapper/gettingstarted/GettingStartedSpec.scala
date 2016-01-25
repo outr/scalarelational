@@ -3,13 +3,13 @@ package org.scalarelational.mapper.gettingstarted
 import enumeratum._
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.mapper._
 import org.scalarelational.result.QueryResult
 import org.scalatest.{Matchers, WordSpec}
 
 class GettingStartedSpec extends WordSpec with Matchers {
-  import GettingStartedDatastore._
+  import GettingStartedDatabase._
 
   var acmeId: Int = _
   var superiorCoffeeId: Int = _
@@ -69,7 +69,7 @@ class GettingStartedSpec extends WordSpec with Matchers {
       }
     }
     "Query all the Coffees explicitly" in {
-      import GettingStartedDatastore.{coffees => c}
+      import GettingStartedDatabase.{coffees => c}
 
       withSession { implicit session =>
         val query = select (c.name, c.supID, c.price, c.sales, c.total) from coffees
@@ -160,7 +160,7 @@ object Status extends Enum[Status] {
   val values = findValues.toVector
 }
 
-object GettingStartedDatastore extends H2Datastore(mode = H2Memory("getting_started")) {
+object GettingStartedDatabase extends H2Database(mode = H2Memory("getting_started")) {
   implicit def statusEnum: Enum[Status] = Status
 
   object suppliers extends MappedTable[Supplier]("SUPPLIERS") {
@@ -194,7 +194,7 @@ case class Supplier(name: String,
                     zip: String,
                     status: Status,
                     id: Option[Int] = None) extends Entity[Supplier] {
-  def columns = mapTo[Supplier](GettingStartedDatastore.suppliers)
+  def columns = mapTo[Supplier](GettingStartedDatabase.suppliers)
 }
 
 case class Coffee(name: String,
@@ -203,5 +203,5 @@ case class Coffee(name: String,
                   sales: Int,
                   total: Int,
                   id: Option[Int] = None) extends Entity[Coffee] {
-  def columns = mapTo[Coffee](GettingStartedDatastore.coffees)
+  def columns = mapTo[Coffee](GettingStartedDatabase.coffees)
 }

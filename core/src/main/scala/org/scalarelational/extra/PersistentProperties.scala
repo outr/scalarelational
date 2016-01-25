@@ -1,10 +1,10 @@
 package org.scalarelational.extra
 
-import pl.metastack.metarx.Opt
-import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
-import org.scalarelational.model.Datastore
-import org.scalarelational.table.Table
 import org.scalarelational.Session
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
+import org.scalarelational.model.Database
+import org.scalarelational.table.Table
+import pl.metastack.metarx.Opt
 
 /**
  * Persistent Properties allows key/value pairs to be persisted to a table for
@@ -14,7 +14,7 @@ import org.scalarelational.Session
  * property and to create a Property instance that can update the database in an
  * event-driven manner.
  */
-trait PersistentProperties extends Datastore {
+trait PersistentProperties extends Database {
   object persistentProperties extends Table("PERSISTENT_PROPERTIES") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val key = column[String]("name", Unique)

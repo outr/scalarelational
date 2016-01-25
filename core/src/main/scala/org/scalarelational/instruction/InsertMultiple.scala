@@ -7,7 +7,7 @@ import org.scalarelational.table.Table
 
 case class InsertMultiple(table: Table, rows: Seq[Seq[ColumnValue[_, _]]])
   extends Insert[List[Int]] with Instruction[List[Int]] {
-  def result(implicit session: Session): List[Int] = table.datastore.exec(this)
+  def result(implicit session: Session): List[Int] = table.database.exec(this)
 
   def and(nextRow: ColumnValue[_, _]*): InsertMultiple =
     InsertMultiple(table, rows ++ Seq(nextRow))

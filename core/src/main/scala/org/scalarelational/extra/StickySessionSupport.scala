@@ -1,6 +1,6 @@
 package org.scalarelational.extra
 
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 import org.scalarelational.{Session, SessionSupport}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -10,7 +10,7 @@ import scala.util.Try
 
 
 trait StickySessionSupport extends SessionSupport {
-  this: Datastore =>
+  this: Database =>
 
   def sessionTimeout: Double = 5.0
 

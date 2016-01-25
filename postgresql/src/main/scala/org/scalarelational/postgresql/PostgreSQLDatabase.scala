@@ -16,7 +16,7 @@ import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
 
-abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLogging {
+abstract class PostgreSQLDatabase private() extends SQLDatabase with SQLLogging {
   protected def this(pgConfig: PostgreSQL.Config) = {
     this()
     config := pgConfig

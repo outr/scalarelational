@@ -26,9 +26,9 @@ trait AbstractTableSpec extends WordSpec with Matchers {
   var superiorId: Int = _
   var highGroundId: Int = _
   
-  def testDatastore: AbstractTestDatastore
-  def testCrossReference: AbstractTestCrossReferenceDatastore
-  def specialTypes: AbstractSpecialTypesDatastore
+  def testDatastore: AbstractTestDatabase
+  def testCrossReference: AbstractTestCrossReferenceDatabase
+  def specialTypes: AbstractSpecialTypesDatabase
 
   protected def expectedNotNone: (String, Seq[TypedValue[_, _]]) = ("SELECT test_table.id FROM test_table WHERE test_table.id IS NOT ?", Seq(OptionDataTypeCreator.create[Int, Int](DataTypes.IntType).typed(null)))
 
@@ -592,7 +592,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
   }
 }
 
-trait AbstractTestDatastore extends Datastore {
+trait AbstractTestDatabase extends Database {
   object test extends Table("test_table") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique, ColumnLength(200))
@@ -627,7 +627,7 @@ trait AbstractTestDatastore extends Datastore {
   }
 }
 
-trait AbstractTestCrossReferenceDatastore extends Datastore {
+trait AbstractTestCrossReferenceDatabase extends Database {
   object first extends Table("first") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")
@@ -641,7 +641,7 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
   }
 }
 
-trait AbstractSpecialTypesDatastore extends Datastore {
+trait AbstractSpecialTypesDatabase extends Database {
   object lists extends Table("lists") {
     object ListConverter extends SQLConversion[List[String], String] {
       override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")

@@ -1,16 +1,16 @@
 package org.scalarelational.h2
 
 import org.scalarelational.extra.HikariSupport
-import org.scalarelational.{AbstractSpecialTypesDatastore, AbstractTableSpec, AbstractTestCrossReferenceDatastore, AbstractTestDatastore}
+import org.scalarelational.{AbstractSpecialTypesDatabase, AbstractTableSpec, AbstractTestCrossReferenceDatabase, AbstractTestDatabase}
 
 import scala.language.postfixOps
 
 class TableSpec extends AbstractTableSpec {
-  override def testDatastore: AbstractTestDatastore = TestDatastore
-  override def specialTypes: AbstractSpecialTypesDatastore = SpecialTypesDatastore
-  override def testCrossReference: AbstractTestCrossReferenceDatastore = TestCrossReferenceDatastore
+  override def testDatastore: AbstractTestDatabase = TestDatabase
+  override def specialTypes: AbstractSpecialTypesDatabase = SpecialTypesDatabase
+  override def testCrossReference: AbstractTestCrossReferenceDatabase = TestCrossReferenceDatabase
 }
 
-object TestDatastore extends H2Datastore(mode = H2Memory("tablespec")) with AbstractTestDatastore with HikariSupport
-object SpecialTypesDatastore extends H2Datastore(mode = H2Memory("special_types")) with AbstractSpecialTypesDatastore
-object TestCrossReferenceDatastore extends H2Datastore(mode = H2Memory("cross_reference")) with AbstractTestCrossReferenceDatastore
+object TestDatabase extends H2Database(mode = H2Memory("tablespec")) with AbstractTestDatabase with HikariSupport
+object SpecialTypesDatabase extends H2Database(mode = H2Memory("special_types")) with AbstractSpecialTypesDatabase
+object TestCrossReferenceDatabase extends H2Database(mode = H2Memory("cross_reference")) with AbstractTestCrossReferenceDatabase

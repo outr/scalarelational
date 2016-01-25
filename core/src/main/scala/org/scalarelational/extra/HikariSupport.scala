@@ -3,9 +3,9 @@ package org.scalarelational.extra
 import javax.sql.DataSource
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import org.scalarelational.model.SQLDatastore
+import org.scalarelational.model.SQLDatabase
 
-trait HikariSupport extends SQLDatastore {
+trait HikariSupport extends SQLDatabase {
   // Automatically converts DataSources to be wrapped by HikariDataSource
   dataSourceProperty.filterCycles.attach {
     case Some(ds: HikariDataSource) => // Ignore HikariDataSource

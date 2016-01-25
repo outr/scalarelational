@@ -1,12 +1,7 @@
 package org.scalarelational.model
 
 import java.io.File
-
 import javax.sql.DataSource
-
-import scala.collection.mutable.ListBuffer
-
-import pl.metastack.metarx.Opt
 
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
@@ -16,8 +11,11 @@ import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.op._
 import org.scalarelational.table.{Table, TableAlias}
 import org.scalarelational.{SelectExpression, Session}
+import pl.metastack.metarx.Opt
 
-abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
+import scala.collection.mutable.ListBuffer
+
+abstract class SQLDatabase protected() extends Database with BasicDDLSupport {
   protected def this(dataSource: DataSource) {
     this()
     dataSourceProperty := dataSource

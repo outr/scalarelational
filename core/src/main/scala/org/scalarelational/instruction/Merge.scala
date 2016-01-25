@@ -9,5 +9,5 @@ import scala.language.existentials
 
 case class Merge(table: Table, key: Column[_, _], values: List[ColumnValue[_, _]])
   extends Instruction[Int] {
-  def result(implicit session: Session): Int = table.datastore.exec(this)
+  def result(implicit session: Session): Int = table.database.exec(this)
 }

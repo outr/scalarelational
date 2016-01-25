@@ -5,7 +5,7 @@ import java.sql.{Blob, Timestamp, Types}
 
 import org.scalarelational.column.property.{ColumnLength, NumericStorage}
 import org.scalarelational.column.{ColumnLike, ColumnPropertyContainer}
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 
 object DataTypes {
   def simplify[T, S](dataType: DataType[T, S]): SimpleDataType[T] = new SimpleDataType[T](
@@ -16,7 +16,7 @@ object DataTypes {
   )
 
   val BigDecimalType = simplify(new DataType[BigDecimal, java.math.BigDecimal](Types.DECIMAL, new SQLType {
-    override def apply(datastore: Datastore, properties: ColumnPropertyContainer) = {
+    override def apply(database: Database, properties: ColumnPropertyContainer) = {
       val numericStorage = properties.get[NumericStorage](NumericStorage.Name).getOrElse(NumericStorage.DefaultBigDecimal)
       s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
     }
@@ -27,10 +27,10 @@ object DataTypes {
   object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
   object BlobType extends SimpleDataType[Blob](Types.BLOB, new BlobSQLType("BLOB"))
   object ByteArrayType extends SimpleDataType[Array[Byte]](Types.BINARY, new SQLType {
-    override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = {
+    override def apply(database: Database, properties: ColumnPropertyContainer): String = {
       val length = properties.get[ColumnLength](ColumnLength.Name)
         .map(_.length)
-        .getOrElse(datastore.DefaultBinaryLength)
+        .getOrElse(database.DefaultBinaryLength)
       s"BINARY($length)"
     }
   }, SQLConversion.identity)

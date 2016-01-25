@@ -6,7 +6,7 @@ import org.scalarelational.column.Column
 import org.scalarelational.column.property.{AutoIncrement, ColumnProperty, ForeignKey, PrimaryKey}
 import org.scalarelational.datatype._
 import org.scalarelational.instruction.Joinable
-import org.scalarelational.model.{DataTypeInstance, Datastore, SQLContainer}
+import org.scalarelational.model.{DataTypeInstance, Database, SQLContainer}
 import org.scalarelational.table.property.TableProperty
 
 import scala.collection.mutable.ListBuffer
@@ -14,10 +14,10 @@ import scala.language.existentials
 
 
 abstract class Table(val tableName: String, tableProperties: TableProperty*)
-                    (implicit val datastore: Datastore)
+                    (implicit val database: Database)
   extends Joinable with SQLContainer with DataTypeSupport with TablePropertyContainer {
 
-  datastore.add(this)   // Make sure the Datastore knows about this table
+  database.add(this)   // Make sure the Datastore knows about this table
 
   implicit def thisTable: Table = this
 
@@ -31,7 +31,7 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
   }
   lazy val autoIncrement = columns.find(c => c.has(AutoIncrement))
 
-  lazy val q = datastore.select(*) from this
+  lazy val q = database.select(*) from this
 
   props(tableProperties: _*)      // Add properties from constructor
 
@@ -68,7 +68,7 @@ abstract class Table(val tableName: String, tableProperties: TableProperty*)
 
   private def dt[T, S](dt: DataType[T, S], properties: Seq[ColumnProperty]): DataType[T, S] = {
     val instance = DataTypeInstance[T, S](dt.asInstanceOf[DataType[T, S]], properties)
-    datastore.dataTypeForInstance[T, S](instance)
+    database.dataTypeForInstance[T, S](instance)
   }
 
   protected[scalarelational] def allFields(tpe: Class[_]): Seq[Field] = tpe.getSuperclass match {

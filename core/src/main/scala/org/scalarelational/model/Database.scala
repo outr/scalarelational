@@ -16,7 +16,7 @@ import org.scalarelational.{PropertyContainer, Session, SessionSupport}
 
 import scala.concurrent.Future
 
-trait Datastore
+trait Database
   extends Logging
   with SessionSupport
   with DSLSupport
@@ -24,15 +24,15 @@ trait Datastore
   with DDLSupport
   with DDLDSLSupport
   with BasicFunctionTypes {
-  implicit def thisDatastore: Datastore = this
+  implicit def thisDatastore: Database = this
 
-  def DefaultVarCharLength: Int = Datastore.DefaultVarCharLength
-  def DefaultBinaryLength: Int  = Datastore.DefaultBinaryLength
+  def DefaultVarCharLength: Int = Database.DefaultVarCharLength
+  def DefaultBinaryLength: Int  = Database.DefaultBinaryLength
 
   /**
    * All columns that are created receive a DataType responsible for converting data between Scala and the database.
    * This processor receives all of those DataTypes before they are assigned to the column allowing modification by
-   * database implementations or other customizations of how the datastore interacts with the database.
+   * database implementations or other customizations of how the database interacts with the database.
    */
   def dataTypeForInstance[T, S](dataTypeInstance: DataTypeInstance[T, S]): DataType[T, S] = dataTypeInstance.dataType
 
@@ -53,8 +53,8 @@ trait Datastore
   def tableByName(name: String): Option[Table] = _tables.get(name.toLowerCase)
 
   /**
-   * Called when the datastore is being created for the first time. This does not mean the tables are being created but
-   * just the datastore.
+   * Called when the database is being created for the first time. This does not mean the tables are being created but
+   * just the database.
    */
   def creating(): Unit = {}
 
@@ -200,12 +200,12 @@ case class DataTypeInstance[T, S](dataType: DataType[T, S],
   props(columnProperties: _*)
 }
 
-object Datastore {
+object Database {
   val DefaultVarCharLength: Int = 65535
   val DefaultBinaryLength: Int  = 1000
 
-  private val instance = new ThreadLocal[Datastore]
+  private val instance = new ThreadLocal[Database]
 
-  protected[scalarelational] def current(d: Datastore) = instance.set(d)
-  def apply(): Datastore = instance.get()
+  protected[scalarelational] def current(d: Database) = instance.set(d)
+  def apply(): Database = instance.get()
 }

@@ -10,7 +10,7 @@ trait Instruction[+R] {
   def table: Table
 
   def result(implicit session: Session): R
-  final def async: Future[R] = table.datastore.async { implicit session =>
+  final def async: Future[R] = table.database.async { implicit session =>
     result
   }
 

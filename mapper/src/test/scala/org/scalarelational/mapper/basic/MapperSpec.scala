@@ -3,14 +3,14 @@ package org.scalarelational.mapper.basic
 import org.h2.jdbc.JdbcSQLException
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.mapper._
 import org.scalatest.{Matchers, WordSpec}
 
 
 class MapperSpec extends WordSpec with Matchers {
   "Mapper" when {
-    import Datastore._
+    import Database._
 
     "doing setup" should {
       "create the database" in {
@@ -257,7 +257,7 @@ class MapperSpec extends WordSpec with Matchers {
 }
 
 case class Person(name: String, age: Int, surname: Option[String] = None, id: Option[Int] = None) extends Entity[Person] {
-  def columns = mapTo[Person](Datastore.people)
+  def columns = mapTo[Person](Database.people)
 
   object Test { // Objects are ignored by mapper
     val value = 42
@@ -265,11 +265,11 @@ case class Person(name: String, age: Int, surname: Option[String] = None, id: Op
 }
 
 case class PartialPerson(name: String, age: Int, id: Option[Int] = None) extends Entity[PartialPerson] {
-  def columns = mapTo[PartialPerson](Datastore.people)
+  def columns = mapTo[PartialPerson](Database.people)
 }
 
 case class PartialPersonWithoutAge(name: String, id: Option[Int] = None) extends Entity[PartialPersonWithoutAge] {
-  def columns = mapTo[PartialPersonWithoutAge](Datastore.people)
+  def columns = mapTo[PartialPersonWithoutAge](Database.people)
 }
 
 case class Name(value: String)
@@ -277,16 +277,16 @@ case class Name(value: String)
 case class Age(value: Int)
 
 case class Supplier(name: String, street: String, city: String, state: String, zip: String, id: Option[Int] = None) extends Entity[Supplier] {
-  def columns = mapTo[Supplier](Datastore.suppliers)
+  def columns = mapTo[Supplier](Database.suppliers)
 }
 
 case class Coffee(name: String, supId: Option[Ref[Supplier]], price: Double, sales: Int, total: Int, id: Option[Int] = None) extends Entity[Coffee] {
-  def columns = mapTo[Coffee](Datastore.coffees)
+  def columns = mapTo[Coffee](Database.coffees)
 }
 
 case class CoffeeAndSupplier(name: String, price: Double, supplierName: String)
 
-object Datastore extends H2Datastore(mode = H2Memory("mapper")) {
+object Database extends H2Database(mode = H2Memory("mapper")) {
   object people extends MappedTable[Person]("person") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")

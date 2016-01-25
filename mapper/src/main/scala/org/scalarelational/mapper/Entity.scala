@@ -22,7 +22,7 @@ trait Entity[Mapped] extends Id[Mapped] {
   def delete: Delete = if (id.nonEmpty) {
     val table = columns.head.column.table
     val primaryKey = table.primaryKey.asInstanceOf[Column[Option[Int], Int]]
-    table.datastore.delete(table) where primaryKey === id
+    table.database.delete(table) where primaryKey === id
   } else {
     throw new RuntimeException("Cannot delete un-persisted entity.")
   }

@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
 import org.scalarelational.datatype.DataTypes
 import org.scalarelational.existing.{ExistingQuery, NamedArgument}
-import org.scalarelational.h2.H2Datastore
+import org.scalarelational.h2.H2Database
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
@@ -13,7 +13,7 @@ import scala.language.reflectiveCalls
 
 
 class ExistingQuerySpec extends WordSpec with Matchers {
-  import TestDatastore._
+  import TestDatabase._
 
   "ExistingQuery" should {
     val queryString1 = "SELECT id, name, language FROM users WHERE id = ?"
@@ -24,8 +24,8 @@ class ExistingQuerySpec extends WordSpec with Matchers {
       val language = rs.getString("language")
       ExistingResult(id, name, language)
     }
-    val existingQuery1 = new ExistingQuery[ExistingResult](TestDatastore, queryString1, converter)
-    val existingQuery2 = new ExistingQuery[ExistingResult](TestDatastore, queryString2, converter)
+    val existingQuery1 = new ExistingQuery[ExistingResult](TestDatabase, queryString1, converter)
+    val existingQuery2 = new ExistingQuery[ExistingResult](TestDatabase, queryString2, converter)
     "create the database" in {
       withSession { implicit session =>
         create(users)
@@ -62,7 +62,7 @@ class ExistingQuerySpec extends WordSpec with Matchers {
 
 case class ExistingResult(id: Int, name: String, language: String)
 
-object TestDatastore extends H2Datastore {
+object TestDatabase extends H2Database {
   val users = new Table("users") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")

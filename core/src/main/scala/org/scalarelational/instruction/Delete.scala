@@ -9,5 +9,5 @@ case class Delete(table: Table, whereCondition: Option[Condition] = None)
   extends WhereSupport[Delete] with Instruction[Int] {
 
   def where(condition: Condition): Delete = copy(whereCondition = Option(condition))
-  def result(implicit session: Session): Int = table.datastore.exec(this)
+  def result(implicit session: Session): Int = table.database.exec(this)
 }

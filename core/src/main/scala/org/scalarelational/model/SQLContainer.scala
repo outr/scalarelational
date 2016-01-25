@@ -22,59 +22,59 @@ trait SQLContainer {
 
 object SQLContainer {
   def beforeInvoke[T, E, R](table: Table, query: Query[E, R]): Query[E, R] =
-    table.datastore.beforeInvoke[E, R](table.beforeInvoke[E, R](query))
+    table.database.beforeInvoke[E, R](table.beforeInvoke[E, R](query))
 
   def beforeInvoke[T](table: Table, insert: InsertSingle[T]): InsertSingle[T] =
-    table.datastore.beforeInvoke(table.beforeInvoke(insert))
+    table.database.beforeInvoke(table.beforeInvoke(insert))
 
   def beforeInvoke(table: Table, insert: InsertMultiple): InsertMultiple =
-    table.datastore.beforeInvoke(table.beforeInvoke(insert))
+    table.database.beforeInvoke(table.beforeInvoke(insert))
 
   def beforeInvoke(table: Table, merge: Merge): Merge =
-    table.datastore.beforeInvoke(table.beforeInvoke(merge))
+    table.database.beforeInvoke(table.beforeInvoke(merge))
 
   def beforeInvoke[T](table: Table, update: Update[T]): Update[T] =
-    table.datastore.beforeInvoke(table.beforeInvoke(update))
+    table.database.beforeInvoke(table.beforeInvoke(update))
 
   def beforeInvoke(table: Table, delete: Delete): Delete =
-    table.datastore.beforeInvoke(table.beforeInvoke(delete))
+    table.database.beforeInvoke(table.beforeInvoke(delete))
 
   def calling(table: Table, instructionType: InstructionType, sql: String) {
     table.calling(instructionType, sql)
-    table.datastore.calling(instructionType, sql)
+    table.database.calling(instructionType, sql)
   }
 
-  def calling(datastore: Datastore, instructionType: InstructionType, sql: String) {
-    datastore.calling(instructionType, sql)
+  def calling(database: Database, instructionType: InstructionType, sql: String) {
+    database.calling(instructionType, sql)
   }
 
   def afterInvoke[T, E, R](table: Table, query: Query[E, R]) {
     table.afterInvoke[E, R](query)
-    table.datastore.afterInvoke[E, R](query)
+    table.database.afterInvoke[E, R](query)
   }
 
   def afterInvoke[T](table: Table, insert: InsertSingle[T]) {
     table.afterInvoke(insert)
-    table.datastore.afterInvoke(insert)
+    table.database.afterInvoke(insert)
   }
 
   def afterInvoke(table: Table, insert: InsertMultiple) {
     table.afterInvoke(insert)
-    table.datastore.afterInvoke(insert)
+    table.database.afterInvoke(insert)
   }
 
   def afterInvoke(table: Table, merge: Merge) {
     table.afterInvoke(merge)
-    table.datastore.afterInvoke(merge)
+    table.database.afterInvoke(merge)
   }
 
   def afterInvoke[T](table: Table, update: Update[T]) {
     table.afterInvoke(update)
-    table.datastore.afterInvoke(update)
+    table.database.afterInvoke(update)
   }
 
   def afterInvoke(table: Table, delete: Delete) {
     table.afterInvoke(delete)
-    table.datastore.afterInvoke(delete)
+    table.database.afterInvoke(delete)
   }
 }

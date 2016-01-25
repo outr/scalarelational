@@ -3,14 +3,14 @@ package org.scalarelational.h2.modular
 import java.sql.Timestamp
 
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
-import org.scalarelational.h2.H2Datastore
+import org.scalarelational.h2.H2Database
 import org.scalarelational.model.ModularSupport
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 
 class ModularSpec extends WordSpec with Matchers {
-  import ModularDatastore._
+  import ModularDatabase._
 
   private var inserting = 0
   private var merging = 0
@@ -194,7 +194,7 @@ class ModularSpec extends WordSpec with Matchers {
   }
 }
 
-object ModularDatastore extends H2Datastore {
+object ModularDatabase extends H2Database {
   object users extends Table("users") with ModularSupport {
     val name = column[String]("name", Unique)
     val age = column[Int]("age")

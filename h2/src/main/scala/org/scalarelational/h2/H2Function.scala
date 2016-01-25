@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import org.scalarelational.Session
 import org.scalarelational.util.StringUtil
 
-case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, functionName: Option[String] = None) {
+case class H2Function(database: H2Database, obj: AnyRef, methodName: String, functionName: Option[String] = None) {
   lazy val name = functionName match {
     case Some(fn) => fn
     case None => StringUtil.generateLabel(methodName).toUpperCase.replace(' ', '_')
@@ -22,11 +22,11 @@ case class H2Function(datastore: H2Datastore, obj: AnyRef, methodName: String, f
     s
   }
 
-  def call(args: Any*): Boolean = datastore.withSession { implicit session =>
+  def call(args: Any*): Boolean = database.withSession { implicit session =>
     buildStatement(args: _*).execute()
   }
 
-  def query(args: Any*): ResultSet = datastore.withSession { implicit session =>
+  def query(args: Any*): ResultSet = database.withSession { implicit session =>
     buildStatement(args: _*).executeQuery()
   }
 }

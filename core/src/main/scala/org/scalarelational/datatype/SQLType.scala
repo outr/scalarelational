@@ -2,11 +2,11 @@ package org.scalarelational.datatype
 
 import org.scalarelational.column.ColumnPropertyContainer
 import org.scalarelational.column.property.{ColumnLength, IgnoreCase}
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 
 
 trait SQLType {
-  def apply(datastore: Datastore, properties: ColumnPropertyContainer): String
+  def apply(database: Database, properties: ColumnPropertyContainer): String
 }
 
 object SQLType {
@@ -14,13 +14,13 @@ object SQLType {
 }
 
 class SimpleSQLType(value: String) extends SQLType {
-  def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = value
+  def apply(database: Database, properties: ColumnPropertyContainer): String = value
 }
 
 object StringSQLType extends SQLType {
-  override def apply(datastore: Datastore, properties: ColumnPropertyContainer): String = {
+  override def apply(database: Database, properties: ColumnPropertyContainer): String = {
     val length = properties.get[ColumnLength](ColumnLength.Name).map(_.length)
-      .getOrElse(datastore.DefaultVarCharLength)
+      .getOrElse(database.DefaultVarCharLength)
     if (properties.has(IgnoreCase)) {
       s"VARCHAR_IGNORECASE($length)"
     } else {

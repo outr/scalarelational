@@ -16,7 +16,7 @@ object CSVExporter {
     }
   }
 
-  def exportTable(file: File, table: Table): Unit = table.datastore.withSession { implicit session =>
+  def exportTable(file: File, table: Table): Unit = table.database.withSession { implicit session =>
     val writer = new FileWriter(file)
     try {
       val columnNames = table.columns.map(c => c.name).mkString(",")

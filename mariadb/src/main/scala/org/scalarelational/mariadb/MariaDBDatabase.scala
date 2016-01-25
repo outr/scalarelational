@@ -15,7 +15,7 @@ case class MariaDBConfig(host: String,
                          profileSQL: Boolean = false,
                          port: Int = 3306)
 
-abstract class MariaDBDatastore private() extends SQLDatastore {
+abstract class MariaDBDatabase private() extends SQLDatabase {
   protected def this(mariadbConfig: MariaDBConfig) = {
     this()
     config := mariadbConfig

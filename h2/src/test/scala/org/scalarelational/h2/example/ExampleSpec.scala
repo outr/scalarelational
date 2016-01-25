@@ -1,13 +1,13 @@
 package org.scalarelational.h2.example
 
 import org.scalarelational.column.property.{ForeignKey, PrimaryKey}
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 
 class ExampleSpec extends WordSpec with Matchers {
-  import ExampleDatastore._
+  import ExampleDatabase._
 
   "example" should {
     "create the database" in {
@@ -76,7 +76,7 @@ class ExampleSpec extends WordSpec with Matchers {
   }
 }
 
-object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
+object ExampleDatabase extends H2Database(mode = H2Memory("example")) {
   object suppliers extends Table("SUPPLIERS") {
     val id = column[Int]("SUP_ID", PrimaryKey)
     val name = column[String]("SUP_NAME")
@@ -88,7 +88,7 @@ object ExampleDatastore extends H2Datastore(mode = H2Memory("example")) {
 
   object coffees extends Table("COFFEES") {
     val name = column[String]("COF_NAME", PrimaryKey)
-    val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatastore.suppliers.id))
+    val supID = column[Int]("SUP_ID", new ForeignKey(ExampleDatabase.suppliers.id))
     val price = column[Double]("PRICE")
     val sales = column[Int]("SALES")
     val rating = column[Option[Double], Double]("RATING")

@@ -15,7 +15,7 @@ case class Update[+ResultType](table: Table,
   def where(condition: Condition): Update[ResultType] =
     copy(whereCondition = Option(condition))
 
-  def result(implicit session: Session): ResultType = mapResult(table.datastore.exec(this))
+  def result(implicit session: Session): ResultType = mapResult(table.database.exec(this))
 
   /**
    * Returns a new copy of this Update with an additional column value. Will

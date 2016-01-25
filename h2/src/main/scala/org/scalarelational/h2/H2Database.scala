@@ -10,7 +10,7 @@ import org.scalarelational.table.Table
 import org.scalarelational.util.StringUtil
 import pl.metastack.metarx.{Channel, Opt, Var}
 
-abstract class H2Datastore private() extends SQLDatastore {
+abstract class H2Database private() extends SQLDatabase {
   protected def this(mode: H2ConnectionMode = H2Memory(StringUtil.randomString()),
                      username: String = "sa",
                      password: String = "sa") {

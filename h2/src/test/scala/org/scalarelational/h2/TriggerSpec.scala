@@ -13,7 +13,7 @@ class TriggerSpec extends WordSpec with Matchers {
   var selected = 0
 
   "Triggers" should {
-    import TriggerTestDatastore._
+    import TriggerTestDatabase._
 
     "create tables" in {
       withSession { implicit session =>
@@ -85,7 +85,7 @@ class TriggerSpec extends WordSpec with Matchers {
   }
 }
 
-object TriggerTestDatastore extends H2Datastore(mode = H2Memory("trigger_test")) {
+object TriggerTestDatabase extends H2Database(mode = H2Memory("trigger_test")) {
   object triggerTest extends Table("trigger_test", Triggers.All) {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")

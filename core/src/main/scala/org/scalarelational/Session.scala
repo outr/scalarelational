@@ -3,10 +3,10 @@ package org.scalarelational
 import java.sql.{Blob, Connection, Statement}
 
 import org.scalarelational.datatype.TypedValue
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 
 
-case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
+case class Session(database: Database, var inTransaction: Boolean = false) {
   private var _disposed = false
   private var _connection: Option[Connection] = None
 
@@ -16,13 +16,13 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     case _ if disposed => throw new RuntimeException("Session is disposed.")
     case Some(c) => c
     case None =>
-      val c = datastore.dataSource.map(_.getConnection)
+      val c = database.dataSource.map(_.getConnection)
       _connection = c
       c.get
   }
 
   def execute(sql: String) = {
-    Datastore.current(datastore)
+    Database.current(database)
     val statement = connection.createStatement()
     try {
       statement.execute(sql)
@@ -32,7 +32,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   }
 
   def executeUpdate(sql: String, args: List[TypedValue[_, _]]) = {
-    Datastore.current(datastore)
+    Database.current(database)
     val ps = connection.prepareStatement(sql)
     try {
       args.zipWithIndex.foreach {
@@ -45,7 +45,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   }
 
   def executeInsert(sql: String, args: Seq[TypedValue[_, _]]) = {
-    Datastore.current(datastore)
+    Database.current(database)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     args.zipWithIndex.foreach { case (arg, index) =>
       arg.value match {
@@ -58,7 +58,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   }
 
   def executeInsertMultiple(sql: String, rows: Seq[Seq[TypedValue[_, _]]]) = {
-    Datastore.current(datastore)
+    Database.current(database)
     val ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     rows.foreach {
       case args => {
@@ -73,7 +73,7 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
   }
 
   def executeQuery(sql: String, args: Seq[TypedValue[_, _]]) = {
-    Datastore.current(datastore)
+    Database.current(database)
     val ps = connection.prepareStatement(sql)
     args.zipWithIndex.foreach {
       case (typed, index) => ps.setObject(index + 1, typed.value, typed.dataType.jdbcType)

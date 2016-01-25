@@ -1,10 +1,10 @@
 package org.scalarelational
 
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 
 import scala.concurrent._
 
-trait SessionSupport { this: Datastore =>
+trait SessionSupport { this: Database =>
   protected def executionContext = ExecutionContext.global
 
   protected val _session = new ThreadLocal[Option[Session]] {

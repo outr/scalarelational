@@ -73,7 +73,7 @@ class QueryResultsIterator[E, R](val rs: ResultSet, val query: Query[E, R]) exte
       dataType.converter.fromSQL(c, value.asInstanceOf[S])
     } catch {
       case t: Throwable => {
-        throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
+        throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.database.describe(query)}", t)
       }
     }
 

@@ -5,13 +5,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.scalarelational.SelectExpression
 import org.scalarelational.column.ColumnValue
 import org.scalarelational.column.property.{AutoIncrement, PrimaryKey}
-import org.scalarelational.h2.{H2Datastore, H2Memory}
+import org.scalarelational.h2.{H2Database, H2Memory}
 import org.scalarelational.instruction.Query
 import org.scalarelational.util.Time
 import org.scalatest.{Matchers, WordSpec}
 
 class AsyncSpec extends WordSpec with Matchers {
-  import AsyncDatastore._
+  import AsyncDatabase._
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -60,10 +60,10 @@ class AsyncSpec extends WordSpec with Matchers {
 
 case class AsyncUser(name: String, age: Int, id: Option[Int] = None)
   extends Entity[AsyncUser] {
-  def columns: List[ColumnValue[Any, Any]] = mapTo[AsyncUser](AsyncDatastore.users)
+  def columns: List[ColumnValue[Any, Any]] = mapTo[AsyncUser](AsyncDatabase.users)
 }
 
-object AsyncDatastore extends H2Datastore(mode = H2Memory("async_test")) {
+object AsyncDatabase extends H2Database(mode = H2Memory("async_test")) {
   object users extends MappedTable[AsyncUser]("users") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name")

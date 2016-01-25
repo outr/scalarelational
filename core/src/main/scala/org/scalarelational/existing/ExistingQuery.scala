@@ -4,7 +4,7 @@ import java.sql.ResultSet
 
 import org.scalarelational.Session
 import org.scalarelational.datatype.{DataTypes, TypedValue}
-import org.scalarelational.model.Datastore
+import org.scalarelational.model.Database
 
 import scala.annotation.tailrec
 
@@ -13,7 +13,7 @@ import scala.annotation.tailrec
  *
  * @author Matt Hicks <matt@outr.com>
  */
-class ExistingQuery[R](datastore: Datastore,
+class ExistingQuery[R](database: Database,
                        queryString: String,
                        resultConverter: ResultSet => R)
                       (implicit manifest: Manifest[R]) {

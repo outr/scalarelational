@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import org.scalarelational.column.Column
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey}
-import org.scalarelational.model.SQLDatastore
+import org.scalarelational.model.SQLDatabase
 import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
@@ -12,7 +12,7 @@ import org.scalatest.{Matchers, WordSpec}
   * @author Matt Hicks <matt@outr.com>
   */
 class ModelSpec extends WordSpec with Matchers {
-  import ModelDatastore._
+  import ModelDatabase._
 
   "Model" when {
     "checking hierarchical structure" should {
@@ -104,7 +104,7 @@ class ModelSpec extends WordSpec with Matchers {
   }
 }
 
-object ModelDatastore extends SQLDatastore {
+object ModelDatabase extends SQLDatabase {
   object t1 extends Table("t1") {
     val id = column[Int]("id", AutoIncrement, PrimaryKey)
     val name = column[String]("name")

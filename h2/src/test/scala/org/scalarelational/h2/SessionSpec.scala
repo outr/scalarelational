@@ -9,7 +9,7 @@ import org.scalatest.{Matchers, WordSpec}
 class SessionSpec extends WordSpec with Matchers {
   "Session" when {
     "not sticky" should {
-      import SessionDatastore._
+      import SessionDatabase._
 
       "not yet exist" in {
         hasSession should equal(false)
@@ -44,7 +44,7 @@ class SessionSpec extends WordSpec with Matchers {
     }
   }
   "sticky" should {
-    import StickySessionDatastore._
+    import StickySessionDatabase._
 
     "not yet exist" in {
       hasSession should equal(false)
@@ -82,14 +82,14 @@ class SessionSpec extends WordSpec with Matchers {
   }
 }
 
-object SessionDatastore extends H2Datastore {
+object SessionDatabase extends H2Database {
   object fruit extends Table("FRUIT") {
     val name = column[String]("name", Unique)
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
   }
 }
 
-object StickySessionDatastore extends H2Datastore with StickySessionSupport {
+object StickySessionDatabase extends H2Database with StickySessionSupport {
   override def sessionTimeout = 0.5   // 1 second timeout
 
   object fruit extends Table("FRUIT") {
