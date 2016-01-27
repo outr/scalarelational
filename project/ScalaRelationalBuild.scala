@@ -99,11 +99,11 @@ object Details {
 
 object Dependencies {
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
-  val h2database = "com.h2database" % "h2" % "1.4.190"
+  val h2database = "com.h2database" % "h2" % "1.4.191"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4-1206-jdbc42"
-  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.5" % "test"
+  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1207"
+  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
-  val logging = "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
+  val logging = "com.outr.scribe" %% "scribe-core" % "1.0.0"
 }

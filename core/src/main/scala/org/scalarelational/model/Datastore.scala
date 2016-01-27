@@ -3,7 +3,7 @@ package org.scalarelational.model
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-import com.typesafe.scalalogging.LazyLogging
+import com.outr.scribe.Logging
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.{DataType, TypedValue}
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}
@@ -17,7 +17,7 @@ import org.scalarelational.{PropertyContainer, Session, SessionSupport}
 import scala.concurrent.Future
 
 trait Datastore
-  extends LazyLogging
+  extends Logging
   with SessionSupport
   with DSLSupport
   with SQLContainer
