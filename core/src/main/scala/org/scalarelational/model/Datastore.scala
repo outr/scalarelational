@@ -174,7 +174,11 @@ trait Datastore
   protected def invoke[T](update: Update[T])(implicit session: Session): Int
   protected def invoke(delete: Delete)(implicit session: Session): Int
 
-  def dispose(): Unit = {}
+  def dispose(): Unit = {
+    dataSource.foreach(disposeDataSource)
+  }
+
+  protected def disposeDataSource(dataSource: DataSource): Unit = {}
 
   implicit class CallableInstructions(instructions: List[CallableInstruction]) {
     def result(implicit session: Session): Int = {

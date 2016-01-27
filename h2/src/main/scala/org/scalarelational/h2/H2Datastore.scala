@@ -85,17 +85,16 @@ abstract class H2Datastore private() extends SQLDatastore {
     }
   }
 
-  private def createFunctions(b: StringBuilder): Unit =
-    functions.foreach {
-      case f => b.append(s"""CREATE ALIAS IF NOT EXISTS ${f.name} FOR "${f.obj.getClass.getName.replaceAll("[$]", "")}.${f.methodName}";\r\n\r\n""")
-    }
+  private def createFunctions(b: StringBuilder): Unit = functions.foreach {
+    case f => b.append(s"""CREATE ALIAS IF NOT EXISTS ${f.name} FOR "${f.obj.getClass.getName.replaceAll("[$]", "")}.${f.methodName}";\r\n\r\n""")
+  }
 
-  override def dispose(): Unit = {
-    super.dispose()
+  override protected def disposeDataSource(dataSource: DataSource): Unit = {
+    super.disposeDataSource(dataSource)
 
-    dataSource.foreach {
-      case pool: JdbcConnectionPool => pool.dispose()
-      case _ =>
+    dataSource match {
+      case ds: JdbcConnectionPool => ds.dispose()
+      case _ => // Ignore
     }
   }
 }
