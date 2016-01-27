@@ -32,8 +32,6 @@ abstract class H2Datastore private() extends SQLDatastore {
   val dbPassword = Var("sa")
   val trigger = Channel[TriggerEvent]()
 
-  override def supportsBatchInsertResponse: Boolean = false
-
   private var functions = Set.empty[H2Function]
 
   // Update the data source if the mode changes
