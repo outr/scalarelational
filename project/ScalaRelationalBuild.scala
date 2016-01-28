@@ -83,10 +83,10 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.0-SNAPSHOT"
+  val version = "1.3.0"
   val url = "http://outr.com"
-  val licenseType = "MIT"
-  val licenseURL = "http://opensource.org/licenses/MIT"
+  val licenseType = "Apache 2.0"
+  val licenseURL = "http://opensource.org/licenses/Apache-2.0"
   val projectURL = "https://github.com/darkfrog26/scalarelational"
   val repoURL = "https://github.com/darkfrog26/scalarelational.git"
   val developerId = "darkfrog"
