@@ -7,7 +7,27 @@ import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
 class H2DatabaseSpec extends WordSpec with Matchers {
+  import CoffeeHouseDatabase._
 
+  "Tables" when {
+    "using CoffeeHouseDatabase" should {
+      "define non-null suppliers" in {
+        Option(suppliers) shouldNot be(None)
+      }
+      "define non-null coffees" in {
+        Option(coffees) shouldNot be(None)
+      }
+      "define suppliers.id with `supId`" in {
+        suppliers.id.name should be("supId")
+      }
+      "define suppliers.name" in {
+        suppliers.name.name should be("name")
+      }
+      "define coffees.id with `cofId`" in {
+        coffees.id.name should be("cofId")
+      }
+    }
+  }
 }
 
 object CoffeeHouseDatabase extends H2Database {
