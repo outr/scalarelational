@@ -8,26 +8,11 @@ object ScalaRelationalBuild extends Build {
     id = "root",
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
-   .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
+   .aggregate(core, h2)
   lazy val core = project("core").withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
-  lazy val macros = project("macros").withDependencies(scalaTest).dependsOn(core)
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
-  lazy val mariadb = project("mariadb").withDependencies(mariadbdatabase).dependsOn(core, core % "test->test")
-  lazy val postgresql = project("postgresql").withDependencies(postgresqldatabase).dependsOn(core, core % "test->test")
-    .configs(PGSslTest)
-    .settings(inConfig(PGSslTest)(Defaults.testTasks): _*)
-    .settings(
-      testOptions in Test := Seq(Tests.Filter(pgRegFilter)),
-      testOptions in PGSslTest := Seq(Tests.Filter(pgSslFilter))
-     )
-  lazy val PGSslTest = config("pgssl") extend Test
-  def pgRegFilter(name: String): Boolean = (name endsWith "Spec") && !pgSslFilter(name)
-  def pgSslFilter(name: String):Boolean = name endsWith "SslSpec"
-
-  lazy val mapper = project("mapper").withDependencies(scalaTest).dependsOn(core, macros, h2 % "test->test")
-  lazy val versioning = project("versioning").withDependencies(scalaTest).dependsOn(core, h2 % "test->test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
@@ -83,7 +68,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.0"
+  val version = "2.0.0-SNAPSHOT"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -100,10 +85,8 @@ object Details {
 object Dependencies {
   val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
   val h2database = "com.h2database" % "h2" % "1.4.191"
-  val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1207"
-  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
   val logging = "com.outr.scribe" %% "scribe-core" % "1.0.0"
+  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }
