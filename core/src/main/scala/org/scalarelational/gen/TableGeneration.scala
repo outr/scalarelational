@@ -15,18 +15,21 @@ object TableGeneration {
 
     val tpe = weakTypeOf[T]
     val members = tpe.decls
-    val fields = members.filter(m => m.asTerm.isAccessor)
-
-    println(s"Type: $tpe")
-    println(s"Fields: $fields")
-    println(s"Fields: ${fields.map(m => s"$m (${m.asMethod.returnType})").mkString("\n")}")
+    val fields = members.filter(m => m.asTerm.isVal)
+    val columnNames = fields.map(f => TermName(simpleName(f.fullName)))
+    val columnsMapped = fields.map(f => q"${TermName(simpleName(f.fullName))} -> ${simpleName(f.fullName)}")
 
     val table = q"""
       new $tpe {
-        override val id: org.scalarelational.column.Column[Int] = new org.scalarelational.column.Column[Int]("id", null)
+        override val columns: Vector[Column[_]] = Vector(..$columnNames)
+        override protected val columnNameMap: Map[Column[_], String] = Map(..$columnsMapped)
       }
     """
-
     c.Expr[T](table)
+  }
+
+  def simpleName(fullName: String): String = fullName.lastIndexOf('.') match {
+    case -1 => fullName
+    case position => fullName.substring(position + 1)
   }
 }

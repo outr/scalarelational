@@ -10,13 +10,20 @@ import scala.language.implicitConversions
   * `table` method.
   */
 trait Table {
+  def columns: Vector[Column[_]]
+  protected def columnNameMap: Map[Column[_], String]
+
   /**
-    * Creates a Column around the ColumnType with a blank `name` if not defined by the type that will be derived from
-    * the field during Macro generation of the table.
+    * Creates a Column around the ColumnType for this table.
     *
     * @param ct the column type of the column
     * @tparam T the Scala type returned by the database
     * @return Column[T]
     */
-  implicit def columnType2Column[T](ct: ColumnType[T]): Column[T] = Column[T](ct.columnName.getOrElse(""), ct)
+  implicit def columnType2Column[T](ct: ColumnType[T]): Column[T] = Column[T](ct)(this)
+
+  /**
+    * Get the column name for the supplied column within this table.
+    */
+  def columnName[T](column: Column[T]): String = column.columnType.columnName.getOrElse(columnNameMap(column))
 }
