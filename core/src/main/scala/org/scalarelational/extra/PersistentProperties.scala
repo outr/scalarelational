@@ -1,10 +1,10 @@
 package org.scalarelational.extra
 
-import pl.metastack.metarx.Opt
-import org.scalarelational.column.property.{PrimaryKey, Unique, AutoIncrement}
+import org.scalarelational.Session
+import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
-import org.scalarelational.Session
+import pl.metastack.metarx.Opt
 
 /**
  * Persistent Properties allows key/value pairs to be persisted to a table for
@@ -60,6 +60,15 @@ trait PersistentProperties extends Datastore {
       ch.silentAttach {
         case Some(value) => this(key) = value.toString
         case None        => remove(key)
+      }
+      ch
+    }
+
+    def longProperty(key: String)(implicit session: Session): Opt[Long] = {
+      val ch = new Opt[Long](get(key).map(_.toLong))
+      ch.silentAttach {
+        case Some(value) => this(key) = value.toString
+        case None => remove(key)
       }
       ch
     }
