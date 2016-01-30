@@ -2,6 +2,7 @@ package org.scalarelational.table
 
 import org.scalarelational.column.Column
 import org.scalarelational.column.types.ColumnType
+import org.scalarelational.table.property.{TableProperty, TablePropertyKey}
 
 import scala.language.implicitConversions
 
@@ -10,8 +11,11 @@ import scala.language.implicitConversions
   * `table` method.
   */
 trait Table {
+  def properties: Set[TableProperty]
   def columns: Vector[Column[_]]
   protected def columnNameMap: Map[Column[_], String]
+
+  private lazy val propertiesByKey = properties.map(p => p.key -> p).toMap
 
   /**
     * Creates a Column around the ColumnType for this table.
@@ -20,10 +24,12 @@ trait Table {
     * @tparam T the Scala type returned by the database
     * @return Column[T]
     */
-  implicit def columnType2Column[T](ct: ColumnType[T]): Column[T] = Column[T](ct)(this)
+  implicit def columnType2Column[T](ct: ColumnType[T]): Column[T] = new Column[T](ct)(this)
 
   /**
     * Get the column name for the supplied column within this table.
     */
   def columnName[T](column: Column[T]): String = column.columnType.columnName.getOrElse(columnNameMap(column))
+
+  def property(key: TablePropertyKey): Option[TableProperty] = propertiesByKey.get(key)
 }

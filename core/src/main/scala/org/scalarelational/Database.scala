@@ -7,5 +7,5 @@ import org.scalarelational.table.property.TableProperty
 import scala.language.experimental.macros
 
 trait Database {
-  def table[T <: Table](props: TableProperty*): T = macro TableGeneration.create[T]
+  def table[T <: Table](name: String, props: TableProperty*): T = macro TableGeneration.create[T]
 }

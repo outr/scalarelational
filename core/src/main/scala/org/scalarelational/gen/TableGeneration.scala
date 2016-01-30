@@ -9,7 +9,7 @@ import scala.reflect.macros.blackbox
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 object TableGeneration {
   def create[T <: Table](c: blackbox.Context)
-                        (props: c.Expr[TableProperty]*)
+                        (name: c.Expr[String], props: c.Expr[TableProperty]*)
                         (implicit t: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
 
@@ -20,7 +20,10 @@ object TableGeneration {
     val columnsMapped = fields.map(f => q"${TermName(simpleName(f.fullName))} -> ${simpleName(f.fullName)}")
 
     val table = q"""
+      import org.scalarelational.table.property._
+
       new $tpe {
+        override val properties: Set[TableProperty] = Set(TableName($name), ..$props)
         override val columns: Vector[Column[_]] = Vector(..$columnNames)
         override protected val columnNameMap: Map[Column[_], String] = Map(..$columnsMapped)
       }
