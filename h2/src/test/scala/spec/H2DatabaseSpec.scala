@@ -16,13 +16,22 @@ class H2DatabaseSpec extends WordSpec with Matchers {
         Option(suppliers) shouldNot be(None)
       }
       "verify suppliers table name" in {
-        suppliers.property(TableName) should be(Some(TableName("coffee_suppliers")))
+        suppliers.prop(TableName) should be(Some(TableName("coffee_suppliers")))
+      }
+      "verify reference to database in suppliers table" in {
+        suppliers.database should be(CoffeeHouseDatabase)
       }
       "define non-null coffees" in {
         Option(coffees) shouldNot be(None)
       }
       "verify coffees table name" in {
-        coffees.property(TableName) should be(Some(TableName("coffees")))
+        coffees.prop(TableName) should be(Some(TableName("coffees")))
+      }
+      "verify reference to database in coffees table" in {
+        coffees.database should be(CoffeeHouseDatabase)
+      }
+      "verify known tables" in {
+        tables should be(Vector(suppliers, coffees))
       }
     }
     "checking column naming" should {
@@ -67,8 +76,8 @@ class H2DatabaseSpec extends WordSpec with Matchers {
 }
 
 object CoffeeHouseDatabase extends H2Database {
-  val suppliers: Suppliers = table[Suppliers]("coffee_suppliers")
-  val coffees: Coffees = table[Coffees]("coffees")
+  val suppliers: Suppliers = table[Suppliers](TableName("coffee_suppliers"))
+  val coffees: Coffees = table[Coffees]()
 }
 
 trait Suppliers extends Table {

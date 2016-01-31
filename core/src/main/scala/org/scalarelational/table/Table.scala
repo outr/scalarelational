@@ -1,8 +1,9 @@
 package org.scalarelational.table
 
+import org.scalarelational.Database
 import org.scalarelational.column.Column
 import org.scalarelational.column.types.ColumnType
-import org.scalarelational.table.property.{TableProperty, TablePropertyKey}
+import org.scalarelational.table.property.{TableName, TableProperty, TablePropertyKey}
 
 import scala.language.implicitConversions
 
@@ -11,6 +12,7 @@ import scala.language.implicitConversions
   * `table` method.
   */
 trait Table {
+  def database: Database
   def properties: Set[TableProperty]
   def columns: Vector[Column[_]]
   protected def columnNameMap: Map[Column[_], String]
@@ -31,5 +33,12 @@ trait Table {
     */
   def columnName[T](column: Column[T]): String = column.columnType.columnName.getOrElse(columnNameMap(column))
 
-  def property(key: TablePropertyKey): Option[TableProperty] = propertiesByKey.get(key)
+  def prop(key: TablePropertyKey): Option[TableProperty] = {
+    val opt = propertiesByKey.get(key)
+    if (opt.isEmpty && key == TableName) {
+      Some(TableName(database.namesMap(this)))
+    } else {
+      opt
+    }
+  }
 }
