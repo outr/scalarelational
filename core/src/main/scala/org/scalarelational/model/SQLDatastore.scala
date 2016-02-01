@@ -90,7 +90,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     val (sql, args) = describe(query)
     SQLContainer.calling(query.table, InstructionType.Query, sql)
 
-    session.executeQuery(sql, args)
+    session.executeQuery(sql, args, query.fetchSize)
   }
 
   protected def invoke[T](insert: InsertSingle[T])
