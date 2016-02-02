@@ -15,6 +15,4 @@ trait Database {
   private[scalarelational] def namesMap: Map[Table, String] = macro TableGeneration.tablesMap
 
   def table[T <: Table](props: TableProperty*): T = macro TableGeneration.create[T]
-
-  def transaction[R](f: => R)(implicit session: Session[D]): R = session.withTransaction[R](f)
 }
