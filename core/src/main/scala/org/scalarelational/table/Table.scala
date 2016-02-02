@@ -3,7 +3,7 @@ package org.scalarelational.table
 import org.scalarelational.Database
 import org.scalarelational.column.Column
 import org.scalarelational.column.types.ColumnType
-import org.scalarelational.table.property.{TableName, TableProperty, TablePropertyKey}
+import org.scalarelational.table.property.{TableProperty, TablePropertyKey}
 
 import scala.language.implicitConversions
 
@@ -33,12 +33,5 @@ trait Table {
     */
   def columnName[T](column: Column[T]): String = column.columnType.columnName.getOrElse(columnNameMap(column))
 
-  def prop(key: TablePropertyKey): Option[TableProperty] = {
-    val opt = propertiesByKey.get(key)
-    if (opt.isEmpty && key == TableName) {
-      Some(TableName(database.namesMap(this)))
-    } else {
-      opt
-    }
-  }
+  def prop(key: TablePropertyKey): Option[TableProperty] = propertiesByKey.get(key)
 }

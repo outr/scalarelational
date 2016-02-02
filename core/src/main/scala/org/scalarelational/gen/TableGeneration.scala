@@ -14,23 +14,23 @@ object TableGeneration {
     val members = c.prefix.actualType.decls
     val fields = members.filter(m => m.asTerm.isVal && m.asTerm.info.baseType(typeOf[Table].typeSymbol) != NoType)
     val tableNames = fields.map(f => TermName(simpleName(f.fullName)))
-    val tablesMapped = fields.map(f => q"${TermName(simpleName(f.fullName))} -> ${simpleName(f.fullName)}")
 
     c.Expr[Vector[Table]](q"Vector(..$tableNames)")
   }
 
-  def tablesMap(c: blackbox.Context): c.Expr[Map[Table, String]] = {
-    import c.universe._
-
-    val members = c.prefix.actualType.decls
-    val fields = members.filter(m => m.asTerm.isVal && m.asTerm.info.baseType(typeOf[Table].typeSymbol) != NoType)
-    val tablesMapped = fields.map(f => q"${TermName(simpleName(f.fullName))} -> ${simpleName(f.fullName)}")
-
-    c.Expr[Map[Table, String]](q"Map(..$tablesMapped)")
-  }
+  // TODO: see if we can re-add this
+//  def tablesMap(c: blackbox.Context): c.Expr[Map[Table, String]] = {
+//    import c.universe._
+//
+//    val members = c.prefix.actualType.decls
+//    val fields = members.filter(m => m.asTerm.isVal && m.asTerm.info.baseType(typeOf[Table].typeSymbol) != NoType)
+//    val tablesMapped = fields.map(f => q"${TermName(simpleName(f.fullName))} -> ${simpleName(f.fullName)}")
+//
+//    c.Expr[Map[Table, String]](q"Map(..$tablesMapped)")
+//  }
 
   def create[T <: Table](c: blackbox.Context)
-                        (props: c.Expr[TableProperty]*)
+                        (name: c.Expr[String], props: c.Expr[TableProperty]*)
                         (implicit t: c.WeakTypeTag[T]): c.Expr[T] = {
     import c.universe._
 
@@ -45,7 +45,7 @@ object TableGeneration {
 
       new $tpe {
         override def database = ${c.prefix}
-        override val properties: Set[TableProperty] = Set(..$props)
+        override val properties: Set[TableProperty] = Set(TableName($name), ..$props)
         override val columns: Vector[Column[_]] = Vector(..$columnNames)
         override protected val columnNameMap: Map[Column[_], String] = Map(..$columnsMapped)
       }

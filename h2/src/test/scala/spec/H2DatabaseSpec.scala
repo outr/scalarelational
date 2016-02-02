@@ -76,8 +76,8 @@ class H2DatabaseSpec extends WordSpec with Matchers {
 }
 
 object CoffeeHouseDatabase extends H2Database {
-  val suppliers: Suppliers = table[Suppliers](TableName("coffee_suppliers"))
-  val coffees: Coffees = table[Coffees]()
+  val suppliers: Suppliers = table[Suppliers]("coffee_suppliers")
+  val coffees: Coffees = table[Coffees]("coffees")
 }
 
 trait Suppliers extends Table {

@@ -12,7 +12,5 @@ trait Database {
   def dataSource: DataSource
   def tables: Vector[Table] = macro TableGeneration.tables
 
-  private[scalarelational] def namesMap: Map[Table, String] = macro TableGeneration.tablesMap
-
-  def table[T <: Table](props: TableProperty*): T = macro TableGeneration.create[T]
+  def table[T <: Table](name: String, props: TableProperty*): T = macro TableGeneration.create[T]
 }
