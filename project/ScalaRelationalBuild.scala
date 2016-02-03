@@ -8,11 +8,12 @@ object ScalaRelationalBuild extends Build {
     id = "root",
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
-   .aggregate(core, h2)
-  lazy val core = project("core").withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
+   .aggregate(dsl, model, h2)
+  lazy val dsl = project("dsl").withDependencies(enumeratum, logging, scalaTest)
+  lazy val model = project("model").dependsOn(dsl).withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
-  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
+  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(model, model % "test->test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
