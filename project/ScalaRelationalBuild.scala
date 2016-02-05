@@ -1,5 +1,6 @@
 import sbt.Keys._
 import sbt._
+import scoverage.ScoverageKeys._
 
 object ScalaRelationalBuild extends Build {
   import Dependencies._
@@ -38,6 +39,7 @@ object ScalaRelationalBuild extends Build {
           Some("releases" at nexus + "service/local/staging/deploy/maven2")
         }
     },
+    coverageEnabled := true,
     publishArtifact in Test := false,
     pomExtra := <url>${Details.url}</url>
       <licenses>
