@@ -91,6 +91,6 @@ object Dependencies {
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
   val shapeless = "com.chuusai" %% "shapeless" % "2.2.5"
-  val logging = "com.outr.scribe" %% "scribe-core" % "1.0.0"
+  val logging = "com.outr.scribe" %% "scribe" % "1.1.0"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }
