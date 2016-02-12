@@ -15,14 +15,15 @@ import scala.annotation.tailrec
  */
 class ExistingQuery[R](datastore: Datastore,
                        queryString: String,
-                       resultConverter: ResultSet => R)
+                       resultConverter: ResultSet => R,
+                       fetchSize: Int = Datastore.DefaultFetchSize)
                       (implicit manifest: Manifest[R]) {
   def query(args: List[TypedValue[_, _]])(implicit session: Session): Stream[R] = {
     val namedArgs = args.collect {
       case arg if arg.isInstanceOf[NamedArgument] => arg.asInstanceOf[NamedArgument]
     }
     val query = applyNamed(queryString, namedArgs)
-    val results = session.executeQuery(query, args.filterNot(a => a.isInstanceOf[NamedArgument]))
+    val results = session.executeQuery(query, args.filterNot(a => a.isInstanceOf[NamedArgument]), fetchSize)
     new Iterator[R] {
       def hasNext = results.next()
       def next() = resultConverter(results)

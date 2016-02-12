@@ -72,9 +72,10 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     ps.getGeneratedKeys
   }
 
-  def executeQuery(sql: String, args: Seq[TypedValue[_, _]]) = {
+  def executeQuery(sql: String, args: Seq[TypedValue[_, _]], fetchSize: Int) = {
     Datastore.current(datastore)
     val ps = connection.prepareStatement(sql)
+    ps.setFetchSize(fetchSize)
     args.zipWithIndex.foreach {
       case (typed, index) => ps.setObject(index + 1, typed.value, typed.dataType.jdbcType)
     }

@@ -201,6 +201,7 @@ case class DataTypeInstance[T, S](dataType: DataType[T, S],
 }
 
 object Datastore {
+  val DefaultFetchSize: Int = 1000
   val DefaultVarCharLength: Int = 65535
   val DefaultBinaryLength: Int  = 1000
 

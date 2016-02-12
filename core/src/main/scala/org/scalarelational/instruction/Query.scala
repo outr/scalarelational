@@ -3,6 +3,7 @@ package org.scalarelational.instruction
 import org.scalarelational._
 import org.scalarelational.column.{ColumnAlias, ColumnLike}
 import org.scalarelational.instruction.query.{JoinSupport, SelectExpressions}
+import org.scalarelational.model.Datastore
 import org.scalarelational.op.Condition
 import org.scalarelational.result.{EnhancedIterator, QueryResult, QueryResultsIterator}
 import org.scalarelational.table.Table
@@ -19,10 +20,13 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 resultLimit: Int = -1,
                                 resultOffset: Int = -1,
                                 converter: QueryResult => Result,
-                                alias: Option[String] = None) extends WhereSupport[Query[Types, Result]]
+                                alias: Option[String] = None,
+                                fetchSize: Int = Datastore.DefaultFetchSize) extends WhereSupport[Query[Types, Result]]
                                                               with Joinable
                                                               with JoinSupport[Types, Result] {
   def apply[T, S](column: ColumnLike[T, S]): ColumnAlias[T, S] = ColumnAlias[T, S](column, alias, None, None)
+
+  def batchSize(size: Int): Query[Types, Result] = copy(fetchSize = fetchSize)
 
   def where(condition: Condition): Query[Types, Result] = copy[Types, Result](whereCondition = Option(condition))
 
@@ -38,7 +42,7 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
   def convert[NewResult](converter: QueryResult => NewResult): Query[Types, NewResult] = copy[Types, NewResult](converter = converter)
 
   def result(implicit session: Session): QueryResultsIterator[Types, Result] = new QueryResultsIterator(table.datastore.exec(this), this)
-  def converted(implicit session: Session): EnhancedIterator[Result] = new EnhancedIterator[Result](result.map(qr => converter(qr)))
+  def converted(implicit session: Session): EnhancedIterator[Result] = new EnhancedIterator[Result](result.map(converter))
   def async: Future[QueryResultsIterator[Types, Result]] = table.datastore.async { implicit session =>
     result
   }
