@@ -83,7 +83,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.0"
+  val version = "1.3.1-SNAPSHOT"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -105,5 +105,5 @@ object Dependencies {
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
-  val logging = "com.outr.scribe" %% "scribe-core" % "1.0.0"
+  val logging = "com.outr.scribe" %% "scribe" % "1.2.0"
 }
