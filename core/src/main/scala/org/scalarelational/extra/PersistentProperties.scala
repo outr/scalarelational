@@ -1,6 +1,6 @@
 package org.scalarelational.extra
 
-import org.scalarelational.column.property.{AutoIncrement, PrimaryKey, Unique}
+import org.scalarelational.column.property.{AutoIncrement, ColumnLength, PrimaryKey, Unique}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
 import pl.metastack.metarx.Opt
@@ -14,10 +14,13 @@ import pl.metastack.metarx.Opt
  * event-driven manner.
  */
 trait PersistentProperties extends Datastore {
+  protected val PersistentKeyLength = 120
+  protected val PersistentValueLength = 120
+
   object persistentProperties extends Table("PERSISTENT_PROPERTIES") {
     val id = column[Int]("id", PrimaryKey, AutoIncrement)
-    val key = column[String]("name", Unique)
-    val value = column[String]("value")
+    val key = column[String]("name", Unique, ColumnLength(PersistentKeyLength))
+    val value = column[String]("value", ColumnLength(PersistentValueLength))
   }
 
   object persistence {
