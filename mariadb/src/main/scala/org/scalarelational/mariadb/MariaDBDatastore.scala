@@ -3,8 +3,10 @@ package org.scalarelational.mariadb
 import javax.sql.DataSource
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-import org.scalarelational.instruction.CallableInstruction
+import org.scalarelational.Session
+import org.scalarelational.datatype.DataType
 import org.scalarelational.instruction.ddl.DropTable
+import org.scalarelational.instruction.{CallableInstruction, InstructionType, Merge}
 import org.scalarelational.model._
 import pl.metastack.metarx.Opt
 
@@ -26,8 +28,8 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
     dataSourceProperty := dataSource
   }
 
-  /* MariaDB does not support the `MERGE INTO` syntax.*/
-  override def supportsMerge: Boolean = false
+  /* MariaDB does not support the `MERGE INTO` syntax but overrides the invocation to use INSERT ON DUPLICATE UPDATE.*/
+  override def supportsMerge: Boolean = true
   /* This is kind of abitrary, but `DataSource.DefaultVarCharLength` does not
    * work here as it is the row size limit for MariaDB */
   override def DefaultVarCharLength: Int = 200
@@ -59,5 +61,29 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
     source.setPort(config.port)
     source.setProfileSQL(config.profileSQL)
     dataSourceProperty := source
+  }
+
+  override protected def invoke(merge: Merge)(implicit session: Session): Int = {
+    val table = merge.table
+    val columnNames = merge.values.map(_.column.name).mkString(", ")
+    val columnValues = merge.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any, Any]].typed(cv.toSQL))
+    val placeholder = columnValues.map(v => "?").mkString(", ")
+
+    val sets = merge.values.map(cv => s"${cv.column.name}=?").mkString(", ")
+    val setArgs = merge.values.map(cv => cv.column.dataType.asInstanceOf[DataType[Any, Any]].typed(cv.toSQL))
+    val args = columnValues ::: setArgs
+
+    val insertString = s"INSERT INTO ${table.tableName} ($columnNames) VALUES ($placeholder) ON DUPLICATE KEY UPDATE $sets"
+    SQLContainer.calling(table, InstructionType.Insert, insertString)
+    val resultSet = session.executeInsert(insertString, args)
+    try {
+      if (resultSet.next()) {
+        resultSet.getInt(1)  // TODO This restricts the PKs on PostgreSQL to integers
+      } else {
+        -1
+      }
+    } finally {
+      resultSet.close()
+    }
   }
 }

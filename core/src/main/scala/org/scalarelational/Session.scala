@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.sql.{Blob, Connection, Statement}
+import java.sql.{Blob, Connection, SQLException, Statement}
 
 import org.scalarelational.datatype.TypedValue
 import org.scalarelational.model.Datastore
@@ -26,6 +26,8 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
     val statement = connection.createStatement()
     try {
       statement.execute(sql)
+    } catch {
+      case t: Throwable => throw new SQLException(s"Failed to execute statement for: $sql", t)
     } finally {
       statement.close()
     }
@@ -39,6 +41,8 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
         case (arg, index) => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
       }
       ps.executeUpdate()
+    } catch {
+      case t: Throwable => throw new SQLException(s"Failed to execute update for: $sql (args: ${args.mkString(", ")})", t)
     } finally {
       ps.close()
     }
@@ -53,8 +57,12 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
         case _ => ps.setObject(index + 1, arg.value, arg.dataType.jdbcType)
       }
     }
-    ps.executeUpdate()
-    ps.getGeneratedKeys
+    try {
+      ps.executeUpdate()
+      ps.getGeneratedKeys
+    } catch {
+      case t: Throwable => throw new SQLException(s"Failed to execute insert for: $sql (args: ${args.mkString(", ")})", t)
+    }
   }
 
   def executeInsertMultiple(sql: String, rows: Seq[Seq[TypedValue[_, _]]]) = {
@@ -68,8 +76,12 @@ case class Session(datastore: Datastore, var inTransaction: Boolean = false) {
         ps.addBatch()
       }
     }
-    ps.executeBatch()
-    ps.getGeneratedKeys
+    try {
+      ps.executeBatch()
+      ps.getGeneratedKeys
+    } catch {
+      case t: Throwable => throw new SQLException(s"Failed to execute update for: $sql (rows: ${rows.mkString(", ")})", t)
+    }
   }
 
   def executeQuery(sql: String, args: Seq[TypedValue[_, _]], fetchSize: Int) = {
