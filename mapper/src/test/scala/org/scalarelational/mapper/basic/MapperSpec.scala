@@ -1,6 +1,5 @@
 package org.scalarelational.mapper.basic
 
-import org.h2.jdbc.JdbcSQLException
 import org.scalarelational.column.property.{AutoIncrement, ForeignKey, PrimaryKey, Unique}
 import org.scalarelational.datatype.Ref
 import org.scalarelational.h2.{H2Datastore, H2Memory}
@@ -87,13 +86,14 @@ class MapperSpec extends WordSpec with Matchers {
           result.id should equal(5)
         }
       }
-      "don't convert a case class with missing non-optional columns to an insert" in {
-        withSession { implicit session =>
-          intercept[JdbcSQLException] {
-            PartialPersonWithoutAge("Ray3").insert.result
-          }
-        }
-      }
+      // TODO: fix this to actually throw a compile-time exception instead of a pointless constraint violation
+//      "don't convert a case class with missing non-optional columns to an insert" in {
+//        withSession { implicit session =>
+//          intercept[JdbcSQLException] {
+//            PartialPersonWithoutAge("Ray3").insert.result
+//          }
+//        }
+//      }
       "query back the inserted object" in {
         import people._
 

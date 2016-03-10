@@ -7,5 +7,5 @@ class TypedValue[T, S](val dataType: DataType[T, S], val value: T) {
     case _ => false
   }
 
-  override def hashCode(): Int = value.hashCode()
+  override def hashCode(): Int = if (value != null) value.hashCode() else super.hashCode()
 }
