@@ -10,7 +10,7 @@ object ScalaRelationalBuild extends Build {
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
    .aggregate(dsl, model, h2)
-  lazy val dsl = project("dsl").withDependencies(enumeratum, logging, scalaTest)
+  lazy val dsl = project("dsl").withDependencies(enumeratum, logging, powerscala, scalaTest)
   lazy val model = project("model").dependsOn(dsl).withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
@@ -90,6 +90,7 @@ object Dependencies {
   val h2database = "com.h2database" % "h2" % "1.4.191"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.6"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
-  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.2-SNAPSHOT"
+  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.2"
+  val powerscala = "org.powerscala" %% "powerscala-core" % "2.0.1-SNAPSHOT"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }

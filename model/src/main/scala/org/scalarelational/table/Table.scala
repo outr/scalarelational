@@ -1,5 +1,6 @@
 package org.scalarelational.table
 
+import org.powerscala.group.TypedGroup
 import org.scalarelational.Database
 import org.scalarelational.column.Column
 import org.scalarelational.column.types.ColumnType
@@ -12,6 +13,7 @@ import scala.language.implicitConversions
   * `table` method.
   */
 trait Table {
+  def `*`: TypedGroup[Column[_]]
   def database: Database
   def properties: Set[TableProperty]
   def columns: Vector[Column[_]]

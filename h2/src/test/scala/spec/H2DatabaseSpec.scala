@@ -1,5 +1,6 @@
 package spec
 
+import org.powerscala.group.TypedGroup6
 import org.scalarelational.column.Column
 import org.scalarelational.h2.H2Database
 import org.scalarelational.h2.column.types.{DecimalType, IntType, VarCharType}
@@ -70,6 +71,16 @@ class H2DatabaseSpec extends WordSpec with Matchers {
       }
       "define coffees.total" in {
         coffees.total.name should be("total")
+      }
+    }
+    "checking wildcard method" should {
+      "have proper supplier columns" in {
+        import suppliers._
+        suppliers.* should be(TypedGroup6(id, name, street, city, state, zip))
+      }
+      "have proper coffee columns" in {
+        import coffees._
+        coffees.* should be(TypedGroup6(id, name, supFk, price, sales, total))
       }
     }
   }

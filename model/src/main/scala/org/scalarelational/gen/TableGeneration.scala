@@ -42,8 +42,10 @@ object TableGeneration {
 
     val table = q"""
       import org.scalarelational.table.property._
+      import org.powerscala.group._
 
       new $tpe {
+        override def `*` = TypedGroup(..$columnNames)
         override def database = ${c.prefix}
         override val properties: Set[TableProperty] = Set(TableName($name), ..$props)
         override val columns: Vector[Column[_]] = Vector(..$columnNames)
