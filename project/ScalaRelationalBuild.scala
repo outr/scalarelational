@@ -10,7 +10,7 @@ object ScalaRelationalBuild extends Build {
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
    .aggregate(dsl, model, h2)
-  lazy val dsl = project("dsl").withDependencies(enumeratum, shapeless, logging, scalaTest)
+  lazy val dsl = project("dsl").withDependencies(enumeratum, logging, scalaTest)
   lazy val model = project("model").dependsOn(dsl).withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
@@ -29,7 +29,7 @@ object ScalaRelationalBuild extends Build {
       Resolver.sonatypeRepo("releases"),
       Resolver.typesafeRepo("releases")
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     publishTo <<= version {
       (v: String) =>
         val nexus = "https://oss.sonatype.org/"
@@ -81,16 +81,15 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.9"
-  val scalaVersion = "2.11.7"
+  val sbtVersion = "0.13.11"
+  val scalaVersion = "2.11.8"
 }
 
 object Dependencies {
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.5"
   val h2database = "com.h2database" % "h2" % "1.4.191"
-  val metaRx = "pl.metastack" %%  "metarx" % "0.1.4"
+  val metaRx = "pl.metastack" %%  "metarx" % "0.1.6"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
-  val shapeless = "com.chuusai" %% "shapeless" % "2.2.5"
-  val logging = "com.outr.scribe" %% "scribe" % "1.1.0"
+  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.2-SNAPSHOT"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }
