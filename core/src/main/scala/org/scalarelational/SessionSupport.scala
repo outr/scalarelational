@@ -42,13 +42,13 @@ trait SessionSupport { this: Datastore =>
 
   protected def commitTransaction(session: Session): Unit = {
     session.connection.commit()
-    session.connection.setAutoCommit(false)
+    session.connection.setAutoCommit(true)
     session.inTransaction = false
   }
 
   protected def rollbackTransaction(session: Session): Unit = {
     session.connection.rollback()
-    session.connection.setAutoCommit(false)
+    session.connection.setAutoCommit(true)
     session.inTransaction = false
   }
 
