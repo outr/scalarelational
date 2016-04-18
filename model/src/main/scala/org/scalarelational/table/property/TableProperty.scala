@@ -1,7 +1,7 @@
 package org.scalarelational.table.property
 
 trait TableProperty {
-  def key: TablePropertyKey
+  def key: TablePropertyKey[_ <: TableProperty]
 }
 
-class TablePropertyKey(val key: String)
+class TablePropertyKey[Prop <: TableProperty](val key: String)

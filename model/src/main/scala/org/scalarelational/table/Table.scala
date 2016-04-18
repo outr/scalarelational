@@ -19,7 +19,7 @@ trait Table {
   def columns: Vector[Column[_]]
   protected def columnNameMap: Map[Column[_], String]
 
-  private lazy val propertiesByKey = properties.map(p => p.key -> p).toMap
+  private lazy val propertiesByKey = Map[TablePropertyKey[_ <: TableProperty], TableProperty](properties.map(p => p.key -> p).toList: _*)
 
   /**
     * Creates a Column around the ColumnType for this table.
@@ -35,5 +35,5 @@ trait Table {
     */
   def columnName[T](column: Column[T]): String = column.columnType.columnName.getOrElse(columnNameMap(column))
 
-  def prop(key: TablePropertyKey): Option[TableProperty] = propertiesByKey.get(key)
+  def prop[Prop <: TableProperty](key: TablePropertyKey[Prop]): Option[Prop] = propertiesByKey.get(key).asInstanceOf[Option[Prop]]
 }

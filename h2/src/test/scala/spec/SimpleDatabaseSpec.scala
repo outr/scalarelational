@@ -13,7 +13,7 @@ class SimpleDatabaseSpec extends WordSpec with Matchers {
 
     "create the tables" in {
       db.withSession { implicit session =>
-        db.createTables().exec()
+        db.createTables(db.animals).exec()
       }
     }
     "insert a record" in {

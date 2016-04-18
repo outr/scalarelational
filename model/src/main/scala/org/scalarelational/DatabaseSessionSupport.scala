@@ -36,7 +36,7 @@ object DatabaseSessionSupport {
     map.get(database) match {
       case Some(dss) => dss.asInstanceOf[DatabaseSessionSupport[D]]
       case None => {
-        val dss = DatabaseSessionSupport[D](database)
+        val dss = new DatabaseSessionSupport[D](database)
         map += database -> dss
         dss
       }

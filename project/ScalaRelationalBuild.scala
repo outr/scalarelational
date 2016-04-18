@@ -9,9 +9,8 @@ object ScalaRelationalBuild extends Build {
     id = "root",
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
-   .aggregate(dsl, model, h2)
-  lazy val dsl = project("dsl").withDependencies(enumeratum, logging, powerscala, scalaTest)
-  lazy val model = project("model").dependsOn(dsl).withDependencies(enumeratum, logging, hikariCP, scalaTest, metaRx).settings(
+   .aggregate(model, h2)
+  lazy val model = project("model").withDependencies(enumeratum, logging, hikariCP, powerscala, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
   lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(model, model % "test->test")
@@ -22,7 +21,7 @@ object ScalaRelationalBuild extends Build {
     organization := Details.organization,
     scalaVersion := Details.scalaVersion,
     sbtVersion := Details.sbtVersion,
-    fork := true,
+    fork := false,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq(
       Resolver.sonatypeRepo("snapshots"),
