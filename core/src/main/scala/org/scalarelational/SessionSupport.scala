@@ -40,18 +40,6 @@ trait SessionSupport { this: Datastore =>
       true
     }
 
-  protected def commitTransaction(session: Session): Unit = {
-    session.connection.commit()
-    session.connection.setAutoCommit(true)
-    session.inTransaction = false
-  }
-
-  protected def rollbackTransaction(session: Session): Unit = {
-    session.connection.rollback()
-    session.connection.setAutoCommit(true)
-    session.inTransaction = false
-  }
-
   def withSession[Result](f: Session => Result): Result = {
     val (created, session) = createSession()
     try {
@@ -63,13 +51,18 @@ trait SessionSupport { this: Datastore =>
 
   def transaction[Result](f: Session => Result): Result =
     withSession { session =>
+      val originalAutoCommit = session.connection.getAutoCommit
       val created = createTransaction(session)
       try {
         val result: Result = f(session)
-        if (created) commitTransaction(session)
+        if (created) session.connection.commit()
         result
+      } catch { case t: Throwable =>
+        session.connection.rollback()
+        throw t
       } finally {
-        if (created) rollbackTransaction(session)
+        session.connection.setAutoCommit(originalAutoCommit)
+        session.inTransaction = false
       }
     }
 
