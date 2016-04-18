@@ -31,15 +31,6 @@ trait SessionSupport { this: Datastore =>
     _session.remove()
   }
 
-  protected def createTransaction(session: Session): Boolean =
-    if (session.inTransaction) {
-      false
-    } else {
-      session.connection.setAutoCommit(false)
-      session.inTransaction = true
-      true
-    }
-
   def withSession[Result](f: Session => Result): Result = {
     val (created, session) = createSession()
     try {
@@ -51,18 +42,26 @@ trait SessionSupport { this: Datastore =>
 
   def transaction[Result](f: Session => Result): Result =
     withSession { session =>
-      val originalAutoCommit = session.connection.getAutoCommit
-      val created = createTransaction(session)
-      try {
-        val result: Result = f(session)
-        if (created) session.connection.commit()
-        result
-      } catch { case t: Throwable =>
-        session.connection.rollback()
-        throw t
-      } finally {
-        session.connection.setAutoCommit(originalAutoCommit)
-        session.inTransaction = false
+      val alreadyInTransaction = session.inTransaction
+      if (alreadyInTransaction) {
+        f(session)
+      } else {
+        val originalAutoCommit = session.connection.getAutoCommit
+        try {
+          session.inTransaction = true
+          session.connection.setAutoCommit(false)
+          val r: Result = f(session)
+          session.connection.commit()
+          r
+        } catch {
+          case t: Throwable => {
+            session.connection.rollback()
+            throw t
+          }
+        } finally {
+          session.inTransaction = false
+          session.connection.setAutoCommit(originalAutoCommit)
+        }
       }
     }
 
