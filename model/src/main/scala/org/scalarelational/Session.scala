@@ -9,6 +9,8 @@ class Session[D <: Database](database: D) {
 
   def hasConnection: Boolean = _connection.nonEmpty
 
+  def inTransaction: Boolean = _inTransaction
+
   def connection: Connection = _connection match {
     case _ if disposed => throw new RuntimeException("Session is disposed.")
     case Some(c) => c
@@ -34,25 +36,25 @@ class Session[D <: Database](database: D) {
   }
 
   protected[scalarelational] def withTransaction[R](f: => R): R = {
-    val alreadyInTransaction = _inTransaction
-    try {
-      if (!alreadyInTransaction) {
+    val alreadyInTransaction = inTransaction
+    if (alreadyInTransaction) {
+      f
+    } else {
+      val originalAutoCommit = connection.getAutoCommit
+      try {
         _inTransaction = true
         connection.setAutoCommit(false)
-      }
-      f
-    } catch {
-      case t: Throwable => {
-        if (!alreadyInTransaction) {
-          connection.rollback()
-        }
-        throw t
-      }
-    } finally {
-      if (!alreadyInTransaction) {
-        _inTransaction = false
+        val r: R = f
         connection.commit()
-        connection.setAutoCommit(true)
+        r
+      } catch {
+        case t: Throwable => {
+          connection.rollback()
+          throw t
+        }
+      } finally {
+        _inTransaction = false
+        connection.setAutoCommit(originalAutoCommit)
       }
     }
   }

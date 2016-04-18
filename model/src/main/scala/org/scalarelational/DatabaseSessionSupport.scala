@@ -1,6 +1,6 @@
 package org.scalarelational
 
-class DatabaseSessionSupport[D <: Database](database: D) {
+class DatabaseSessionSupport[D <: Database] private(database: D) {
   private val sessionLocal = new ThreadLocal[Option[Session[D]]] {
     override def initialValue(): Option[Session[D]] = None
   }
@@ -24,7 +24,7 @@ class DatabaseSessionSupport[D <: Database](database: D) {
     }
   }
 
-  def transaction[R](f: => R): R = withSession { session =>
+  def withTransaction[R](f: => R): R = withSession { session =>
     session.withTransaction[R](f)
   }
 }
