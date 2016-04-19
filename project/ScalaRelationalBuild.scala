@@ -42,7 +42,7 @@ object ScalaRelationalBuild extends Build {
       Resolver.sonatypeRepo("releases"),
       Resolver.typesafeRepo("releases")
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     publishTo <<= version {
       (v: String) =>
         val nexus = "https://oss.sonatype.org/"
@@ -83,7 +83,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.1-SNAPSHOT"
+  val version = "1.3.1"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -93,17 +93,17 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.9"
-  val scalaVersion = "2.11.7"
+  val sbtVersion = "0.13.11"
+  val scalaVersion = "2.11.8"
 }
 
 object Dependencies {
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.3"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.5"
   val h2database = "com.h2database" % "h2" % "1.4.191"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "5.1.38"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1208"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.6"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.3.7"
-  val logging = "com.outr.scribe" %% "scribe" % "1.2.0"
+  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.2"
 }
