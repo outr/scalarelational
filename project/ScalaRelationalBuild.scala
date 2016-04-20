@@ -53,7 +53,7 @@ object ScalaRelationalBuild extends Build {
         }
     },
     publishArtifact in Test := false,
-    pomExtra := <url>${Details.url}</url>
+    pomExtra := <url>{Details.url}</url>
       <licenses>
         <license>
           <name>{Details.licenseType}</name>
