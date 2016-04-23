@@ -2,7 +2,6 @@ package org.scalarelational.mariadb
 
 import javax.sql.DataSource
 
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 import org.scalarelational.Session
 import org.scalarelational.datatype.DataType
 import org.scalarelational.instruction.ddl.DropTable
@@ -14,7 +13,6 @@ case class MariaDBConfig(host: String,
                          schema: String,
                          user: String,
                          password: String,
-                         profileSQL: Boolean = false,
                          port: Int = 3306)
 
 abstract class MariaDBDatastore private() extends SQLDatastore {
@@ -59,7 +57,6 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
     source.setUser(config.user)
     source.setPassword(config.password)
     source.setPort(config.port)
-    source.setProfileSQL(config.profileSQL)
     dataSourceProperty := source
   }
 
