@@ -105,6 +105,8 @@ class ModelSpec extends WordSpec with Matchers {
 }
 
 object ModelDatastore extends SQLDatastore {
+  override protected def catalog: Option[String] = None
+
   object t1 extends Table("t1") {
     val id = column[Int]("id", AutoIncrement, PrimaryKey)
     val name = column[String]("name")
