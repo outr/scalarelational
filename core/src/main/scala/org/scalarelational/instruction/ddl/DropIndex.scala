@@ -1,4 +1,4 @@
 package org.scalarelational.instruction.ddl
 
 
-case class DropIndex(indexName: String, ifExists: Boolean = false)
+case class DropIndex(tableName: String, indexName: String, ifExists: Boolean = false)

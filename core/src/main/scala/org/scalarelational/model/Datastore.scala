@@ -60,10 +60,16 @@ trait Datastore
 
   def dataSource: Option[DataSource]
 
+  /**
+    * The catalog name for the database. Should be defined to help filtering jdbc metadata if supported by the database.
+    */
+  protected def catalog: Option[String]
+
   def jdbcTables(implicit session: Session): Set[String] = {
     val s = session
     val meta = s.connection.getMetaData
-    val results = meta.getTables(None.orNull, "PUBLIC", "%", None.orNull)
+    val results = meta.getTables(catalog.orNull, "PUBLIC", "%", None.orNull)
+    val resultMeta = results.getMetaData
     try {
       new ResultSetIterator(results).map(_.getString("TABLE_NAME")).toSet
     } finally {

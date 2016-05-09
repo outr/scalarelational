@@ -37,6 +37,9 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLoggin
   config.values.attach(updateDataSource)
 
   private lazy val blobSQLType = new BlobSQLType("BYTEA")
+
+  override protected def catalog: Option[String] = None
+
   override def dataTypeForInstance[T, S](dataTypeInstance: DataTypeInstance[T, S]): DataType[T, S] = {
     if (dataTypeInstance.dataType.jdbcType == Types.BLOB) {
       dataTypeInstance.dataType.copy(sqlType = blobSQLType)

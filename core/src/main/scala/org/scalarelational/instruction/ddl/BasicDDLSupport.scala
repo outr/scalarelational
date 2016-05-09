@@ -161,6 +161,8 @@ trait BasicDDLSupport extends DDLSupport with Datastore {
       b.append("IF EXISTS ")
     }
     b.append(drop.indexName)
+    b.append(" ON ")
+    b.append(drop.tableName)
     List(CallableInstruction(b.toString()))
   }
 

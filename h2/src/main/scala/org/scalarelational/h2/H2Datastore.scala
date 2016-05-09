@@ -37,6 +37,8 @@ abstract class H2Datastore private() extends SQLDatastore {
   // Update the data source if the mode changes
   modeProperty.values.attach(updateDataSource)
 
+  override protected def catalog: Option[String] = None
+
   private def updateDataSource(mode: H2ConnectionMode): Unit = {
     dispose()  // Make sure to shut down the previous DataSource if possible
     dataSourceProperty := JdbcConnectionPool.create(

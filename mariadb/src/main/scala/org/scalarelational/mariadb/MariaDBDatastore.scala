@@ -40,6 +40,8 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
   // Update the data source if the mode changes
   config.values.attach(updateDataSource)
 
+  override protected def catalog: Option[String] = config.get.map(_.schema)
+
   override def ddl(drop: DropTable): List[CallableInstruction] =
     if (drop.cascade) {
       List(

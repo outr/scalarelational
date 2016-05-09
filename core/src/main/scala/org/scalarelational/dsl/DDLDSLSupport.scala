@@ -37,5 +37,6 @@ trait DDLDSLSupport extends DataTypeSupport {
   def dropColumn(column: Column[_, _]): List[CallableInstruction] = ddl(DropColumn(column.table.tableName, column.name))
   def dropColumn(tableName: String, columnName: String): List[CallableInstruction] = ddl(DropColumn(tableName, columnName))
 
-  def dropIndex(indexName: String): List[CallableInstruction] = ddl(DropIndex(indexName))
+  def dropIndex(table: Table, indexName: String): List[CallableInstruction] = ddl(DropIndex(table.tableName, indexName))
+  def dropIndex(tableName: String, indexName: String): List[CallableInstruction] = ddl(DropIndex(tableName, indexName))
 }
