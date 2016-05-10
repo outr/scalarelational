@@ -29,9 +29,13 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
 
   /* MariaDB does not support the `MERGE INTO` syntax but overrides the invocation to use INSERT ON DUPLICATE UPDATE.*/
   override def supportsMerge: Boolean = true
-  /* This is kind of abitrary, but `DataSource.DefaultVarCharLength` does not
-   * work here as it is the row size limit for MariaDB */
-  override def DefaultVarCharLength: Int = 200
+
+  /**
+    * Depending on the character set, the maximum length is either 255 (utf8) or
+    * 191 (utf8m4). Therefore, we will override the default limit set by
+    * [[Datastore.DefaultVarCharLength]].
+    */
+  override def DefaultVarCharLength: Int = 191
 
   Class.forName("com.mysql.jdbc.Driver")
 
