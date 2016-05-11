@@ -132,6 +132,13 @@ class MapperSpec extends WordSpec with Matchers {
           kay.surname should equal(Some("Konnors"))
         }
       }
+      "query back names to make sure no data was corrupted" in {
+        withSession { implicit session =>
+          val query = select(people.name) from people
+          val names = query.converted.toSet
+          names should equal(Set("John", "Kay", "Jane", "Baby", "Ray2"))
+        }
+      }
     }
     "more complex relationships" should {
       "persist records" in {

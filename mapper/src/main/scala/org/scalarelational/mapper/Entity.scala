@@ -1,6 +1,5 @@
 package org.scalarelational.mapper
 
-import org.scalarelational.column.property.PrimaryKey
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue}
 import org.scalarelational.compiletime.Macros
 import org.scalarelational.datatype.{Id, Ref}
@@ -51,10 +50,7 @@ trait Entity[Mapped] extends Id[Mapped] {
     val values = columns
     head.table match {
       case mt: MappedTable[Mapped] => {
-        var included: Set[ColumnLike[Any, Any]] = Set(head.asInstanceOf[ColumnLike[Any, Any]]) ++ tail.asInstanceOf[Seq[ColumnLike[Any, Any]]]
-        if (!included.exists(column => column.has(PrimaryKey))) {
-          included += mt.primaryKey.asInstanceOf[Column[Any, Any]]
-        }
+        val included = Set(head, mt.primaryKey) ++ tail
         val filtered = values.filter(cv => included.contains(cv.column))
         mt.updateColumnValues(filtered)
       }
