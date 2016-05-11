@@ -17,7 +17,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
   def query: Query[Vector[SelectExpression[_]], MappedType]
 
   def by[T, S](column: Column[T, S], value: T)
-           (implicit manifest: Manifest[MappedType], session: Session) = {
+           (implicit manifest: Manifest[MappedType], session: Session): Option[MappedType] = {
     val q = query where column === value
     q.converted.headOption
   }
@@ -26,7 +26,7 @@ abstract class MappedTable[MappedType](name: String, tableProperties: TablePrope
     val primaryKey = values.find(_.column.has(PrimaryKey))
       .getOrElse(throw new RuntimeException("Update must have a PrimaryKey value specified to be able to update."))
     val primaryColumn = primaryKey.column
-    val update = Update[Ref[MappedType]](this, values, null, Ref[MappedType])
+    val update = Update[Ref[MappedType]](this, values, None.orNull, Ref[MappedType])
     update where primaryColumn === primaryKey.value
   }
 

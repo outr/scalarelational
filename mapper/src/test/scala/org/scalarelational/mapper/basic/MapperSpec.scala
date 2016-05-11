@@ -119,6 +119,19 @@ class MapperSpec extends WordSpec with Matchers {
           jay should equal(Person("Jay", 30, None, Some(4)))
         }
       }
+      "update limiting the fields" in {
+        withSession { implicit session =>
+          Person("Kay", 40, Some("Konnors"), Some(4)).update(people.name, people.surname).result
+        }
+      }
+      "query back the limited updated object" in {
+        withSession { implicit session =>
+          val kay = (people.query where people.id === Some(4)).converted.head
+          kay.name should equal("Kay")
+          kay.age should equal(30)
+          kay.surname should equal(Some("Konnors"))
+        }
+      }
     }
     "more complex relationships" should {
       "persist records" in {
