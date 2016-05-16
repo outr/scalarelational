@@ -1,3 +1,4 @@
+/*
 package spec
 
 import org.powerscala.group.TypedGroup6
@@ -107,4 +108,4 @@ trait Coffees extends Table {
   val price: Column[BigDecimal] = DecimalType.default(0.0)
   val sales: Column[Int] = IntType.default(0)
   val total: Column[Int] = IntType.default(0)
-}
+}*/

@@ -9,11 +9,12 @@ object ScalaRelationalBuild extends Build {
     id = "root",
     base = file(".")
   ).settings(name := "ScalaRelational", publish := {})
-   .aggregate(model, h2)
+   .aggregate(core, model, h2)
+  lazy val core = project("core").withDependencies(enumeratum, logging, scalaTest)
   lazy val model = project("model").withDependencies(enumeratum, logging, hikariCP, powerscala, scalaTest, metaRx).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
   )
-  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(model, model % "test->test")
+  lazy val h2 = project("h2").withDependencies(h2database, scalaTest).dependsOn(core, core % "test->test")
 
   private def project(projectName: String) = Project(id = projectName, base = file(projectName)).settings(
     name := s"${Details.name}-$projectName",
@@ -85,11 +86,11 @@ object Details {
 }
 
 object Dependencies {
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.5"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.6"
   val h2database = "com.h2database" % "h2" % "1.4.191"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.6"
-  val enumeratum = "com.beachape" %% "enumeratum" % "1.3.6"
+  val enumeratum = "com.beachape" %% "enumeratum" % "1.4.4"
   val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.2"
-  val powerscala = "org.powerscala" %% "powerscala-core" % "2.0.1-SNAPSHOT"
+  val powerscala = "org.powerscala" %% "powerscala-core" % "2.0.1"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }

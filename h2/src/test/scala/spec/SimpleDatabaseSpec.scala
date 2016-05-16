@@ -1,19 +1,17 @@
 package spec
 
 import org.scalarelational._
-import org.scalarelational.column.Column
 import org.scalarelational.h2.H2Database
-import org.scalarelational.h2.column.types.{IntType, VarCharType}
-import org.scalarelational.table.Table
 import org.scalatest.{Matchers, WordSpec}
 
+/*
 class SimpleDatabaseSpec extends WordSpec with Matchers {
   "Simple Database" should {
     val db = SimpleDatabase
 
     "create the tables" in {
       db.withSession { implicit session =>
-        db.createTables(db.animals).exec()
+//        db.createTables(db.animals).exec()
       }
     }
     "insert a record" in {
@@ -62,4 +60,4 @@ trait Animals extends Table {
   val name: Column[String] = VarCharType.unique.ignoreCase
 }
 
-case class Animal(id: Int, name: String)
+case class Animal(id: Int, name: String)*/
