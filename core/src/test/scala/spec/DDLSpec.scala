@@ -36,7 +36,7 @@ class DDLSpec extends WordSpec with Matchers {
 
       val expected = "CREATE TABLE TEST(ID INTEGER PRIMARY KEY, NAME VARCHAR(255))"
 
-      val instruction = db.create.table("TEST")("ID".integer.primaryKey, "NAME".varchar(255))
+      val instruction = db.create.table("TEST", integer("ID").primaryKey, varchar("NAME", 255))
       instruction.sql should equal(expected)
       instruction.args should equal(Vector.empty)
     }
@@ -45,10 +45,11 @@ class DDLSpec extends WordSpec with Matchers {
 
       val expected = "CREATE TABLE IF NOT EXISTS test_table(id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200) NOT NULL UNIQUE, date TIMESTAMP)"
 
-      val instruction = db.create.table("test_table", ifNotExists = true)(
-        "id".integer.autoIncrement.primaryKey,
-        "name".varchar(200).notNull.unique,
-        "date".timestamp
+      val instruction = db.create.tableIfNotExists(
+        "test_table",
+        integer("id").autoIncrement.primaryKey,
+        varchar("name", 200).notNull.unique,
+        timestamp("date")
       )
       instruction.sql should equal(expected)
       instruction.args should equal(Vector.empty)

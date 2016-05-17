@@ -9,15 +9,22 @@ import org.scalarelational.instruction.{ColumnDescriptor, CreateTable}
 package object dsl {
   implicit class DatabaseDSLSupport[D <: Database](database: D) {
     object create {
-      def table(name: String, ifNotExists: Boolean = false)(columns: ColumnDescriptor[_]*): CreateTable[D] = {
-        CreateTable(database, name, ifNotExists, columns: _*)
+      def table(name: String, columns: ColumnDescriptor[_]*): CreateTable[D] = {
+        CreateTable(database, name, false, columns: _*)
+      }
+      def tableIfNotExists(name: String, columns: ColumnDescriptor[_]*): CreateTable[D] = {
+        CreateTable(database, name, true, columns: _*)
       }
     }
   }
-  implicit class BasicColumnTypes(name: String) {
-    def integer: ColumnDescriptor[Int] = ColumnDescriptor(name, IntType, Nil)
-    def varchar(size: Int): ColumnDescriptor[String] = ColumnDescriptor(name, VarCharType(size), Nil)
-    def timestamp: ColumnDescriptor[Timestamp] = ColumnDescriptor(name, TimestampType, Nil)
+  object integer {
+    def apply(name: String): ColumnDescriptor[Int] = ColumnDescriptor(name, IntType, Nil)
+  }
+  object varchar {
+    def apply(name: String, size: Int): ColumnDescriptor[String] = ColumnDescriptor(name, VarCharType(size), Nil)
+  }
+  object timestamp {
+    def apply(name: String): ColumnDescriptor[Timestamp] = ColumnDescriptor(name, TimestampType, Nil)
   }
   implicit class BasicParams[T](descriptor: ColumnDescriptor[T]) {
     def primaryKey: ColumnDescriptor[T] = descriptor.withParam(PrimaryKey)
