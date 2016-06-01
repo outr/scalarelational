@@ -10,7 +10,7 @@ class ColumnValue[T, S] private(val column: ColumnLike[T, S],
   def expression: ColumnLike[T, S] = column
   def toSQL: Any =
     try {
-      converterOverride.getOrElse(column.dataType).converter.toSQL(column, value)
+      converterOverride.getOrElse(column.dataType).converter.toSQL(value)
     } catch {
       case t: Throwable =>
         val targetClass = if (value != null) value.getClass else null

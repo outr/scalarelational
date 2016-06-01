@@ -1,13 +1,13 @@
 package org.scalarelational.result
 
-import org.scalarelational.ExpressionValue
+import org.scalarelational.{ExpressionValue, SelectExpression}
 import org.scalarelational.column.{Column, ColumnLike, ColumnValue}
 import org.scalarelational.fun.{SQLFunction, SQLFunctionValue}
 import org.scalarelational.table.Table
 
 import scala.language.existentials
 
-case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
+case class QueryResult(table: Option[Table], values: Vector[ExpressionValue[_]]) {
   def getByName[T](name: String): Option[T] = values.collectFirst {
     case cv: ColumnValue[_, _] if cv.column.name.equalsIgnoreCase(name) => cv.value.asInstanceOf[T]
   }
@@ -52,9 +52,17 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
     }.toMap
   }
 
+  def longName(expr: SelectExpression[_]): Option[String] =
+    expr match {
+      case c: Column[_, _] => Some(c.longName)
+      case f: SQLFunction[_, _] => f.alias
+      case c: ColumnLike[_, _] => Some(c.longName)
+      case _ => None
+    }
+
   def toFieldMapForTable(table: Table): Map[String, Any] = {
     values.collect {
-      case v if v.expression.longName.toLowerCase.startsWith(s"${table.tableName.toLowerCase}.") => {
+      case v if longName(v.expression).exists(_.toLowerCase.startsWith(s"${table.tableName.toLowerCase}.")) => {
         val name = v.expression match {
           case c: Column[_, _] => c.fieldName
           case f: SQLFunction[_, _] if f.alias.nonEmpty => f.alias.get
@@ -72,5 +80,5 @@ case class QueryResult(table: Table, values: Vector[ExpressionValue[_]]) {
     }.toMap
   }
 
-  override def toString: String = s"${table.tableName}(${values.mkString(", ")})"
+  override def toString: String = s"${table.map(_.tableName).getOrElse("<no table>")}(${values.mkString(", ")})"
 }

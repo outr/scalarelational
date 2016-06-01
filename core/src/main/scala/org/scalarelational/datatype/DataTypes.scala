@@ -21,8 +21,8 @@ object DataTypes {
       s"DECIMAL(${numericStorage.precision}, ${numericStorage.scale})"
     }
   }, new SQLConversion[BigDecimal, java.math.BigDecimal] {
-    override def toSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: BigDecimal) = value.underlying()
-    override def fromSQL(column: ColumnLike[BigDecimal, math.BigDecimal], value: math.BigDecimal) = BigDecimal(value)
+    override def toSQL(value: BigDecimal) = value.underlying()
+    override def fromSQL(value: math.BigDecimal) = BigDecimal(value)
   }))
   object BooleanType extends SimpleDataType[Boolean](Types.BOOLEAN, SQLType("BOOLEAN"))
   object BlobType extends SimpleDataType[Blob](Types.BLOB, new BlobSQLType("BLOB"))
@@ -41,7 +41,7 @@ object DataTypes {
   object TimestampType extends SimpleDataType[Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"))
 
   object LongTimestampType extends DataType[Long, Timestamp](Types.TIMESTAMP, SQLType("TIMESTAMP"), new SQLConversion[Long, Timestamp] {
-    override def toSQL(column: ColumnLike[Long, Timestamp], value: Long): Timestamp = new Timestamp(value)
-    override def fromSQL(column: ColumnLike[Long, Timestamp], value: Timestamp): Long = value.getTime
+    override def toSQL(value: Long): Timestamp = new Timestamp(value)
+    override def fromSQL(value: Timestamp): Long = value.getTime
   })
 }

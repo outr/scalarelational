@@ -12,7 +12,8 @@ import scala.concurrent.Future
 import scala.language.existentials
 
 case class Query[Types, Result](expressions: SelectExpressions[Types],
-                                table: Table,
+                                datastore: Datastore,
+                                table: Option[Table] = None,
                                 joins: List[Join] = Nil,
                                 whereCondition: Option[Condition] = None,
                                 grouping: List[SelectExpression[_]] = Nil,
@@ -41,9 +42,9 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
   def map[NewResult](converter: Result => NewResult): Query[Types, NewResult] = copy[Types, NewResult](converter = this.converter.andThen(converter))
   def convert[NewResult](converter: QueryResult => NewResult): Query[Types, NewResult] = copy[Types, NewResult](converter = converter)
 
-  def result(implicit session: Session): QueryResultsIterator[Types, Result] = new QueryResultsIterator(table.datastore.exec(this), this)
+  def result(implicit session: Session): QueryResultsIterator[Types, Result] = new QueryResultsIterator(datastore.exec(this), this)
   def converted(implicit session: Session): EnhancedIterator[Result] = new EnhancedIterator[Result](result.map(converter))
-  def async: Future[QueryResultsIterator[Types, Result]] = table.datastore.async { implicit session =>
+  def async: Future[QueryResultsIterator[Types, Result]] = datastore.async { implicit session =>
     result
   }
 }

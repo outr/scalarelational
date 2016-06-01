@@ -27,10 +27,12 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   private def expression2SQL(expression: SelectExpression[_]) = expression match {
     case c: ColumnLike[_, _] => c.longName
-    case f: SQLFunction[_, _] => f.alias match {
-      case Some(alias) => s"${f.functionType.sql}(${f.column.longName}) AS $alias"
-      case None => s"${f.functionType.sql}(${f.column.longName})"
-    }
+    case f: SQLFunction[_, _] =>
+      val columns = f.columns.map(_.longName).mkString(", ")
+      f.alias match {
+        case Some(alias) => s"${f.functionType.sql}($columns) AS $alias"
+        case None => s"${f.functionType.sql}($columns)"
+      }
   }
 
   def describe[E, R](query: Query[E, R]): (String, List[TypedValue[_, _]]) = {
@@ -39,6 +41,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     var args = List.empty[TypedValue[_, _]]
 
     // Generate SQL
+    val from = query.table.fold("")(" FROM " + _.tableName)
     val (joins, joinArgs) = joins2SQL(query.joins)
     args = args ::: joinArgs
     val (where, whereArgs) = where2SQL(query.whereCondition)
@@ -63,7 +66,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     } else {
       ""
     }
-    s"SELECT $columns FROM ${query.table.tableName}$joins$where$groupBy$orderBy$limit$offset" -> args
+    s"SELECT $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
   def exportTable(table: Table, file: File, drop: Boolean = true)
@@ -88,7 +91,9 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   protected def invoke[E, R](query: Query[E, R])(implicit session: Session) = {
     val (sql, args) = describe(query)
-    SQLContainer.calling(query.table, InstructionType.Query, sql)
+    query.table.foreach { table =>
+      SQLContainer.calling(table, InstructionType.Query, sql)
+    }
 
     session.executeQuery(sql, args, query.fetchSize)
   }
@@ -182,7 +187,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     case c: DirectCondition[_, _] => {
       val dataType = c.column.dataType.asInstanceOf[DataType[Any, Any]]
       val op = dataType.sqlOperator(c.column.asInstanceOf[ColumnLike[Any, Any]], c.value, c.operator)
-      args += dataType.typed(dataType.converter.toSQL(c.column.asInstanceOf[ColumnLike[Any, Any]], c.value))
+      args += dataType.typed(dataType.converter.toSQL(c.value))
       s"${c.column.longName} ${op.symbol} ?"
     }
     case c: LikeCondition[_, _] => {
@@ -197,7 +202,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
       c.values.foreach {
         case v => {
           val dataType = c.column.dataType.asInstanceOf[DataType[Any, Any]]
-          args += dataType.typed(dataType.converter.toSQL(c.column.asInstanceOf[ColumnLike[Any, Any]], v))
+          args += dataType.typed(dataType.converter.toSQL(v))
         }
       }
       val entries = c.operator match {

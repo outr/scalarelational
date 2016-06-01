@@ -59,7 +59,7 @@ class QueryResultsIterator[E, R](val rs: ResultSet, val query: Query[E, R]) exte
     out
   }
 
-  protected def columnValue[T, S](rs: ResultSet, index: Int, c: ColumnLike[T, S], dataType: DataType[T, S]): T = {
+  protected def columnValue[T, S](rs: ResultSet, index: Int, c: Option[ColumnLike[T, S]], dataType: DataType[T, S]): T = {
     val valueOption = Option(dataType.sqlType match {
       case t: BlobSQLType =>
         val binaryStream = rs.getBinaryStream(index + 1)
@@ -70,15 +70,15 @@ class QueryResultsIterator[E, R](val rs: ResultSet, val query: Query[E, R]) exte
     })
 
     def convert(value: AnyRef) = try {
-      dataType.converter.fromSQL(c, value.asInstanceOf[S])
+      dataType.converter.fromSQL(value.asInstanceOf[S])
     } catch {
       case t: Throwable => {
-        throw new RuntimeException(s"Error converting $value for column ${c.longName}. Query: ${query.table.datastore.describe(query)}", t)
+        throw new RuntimeException(s"Error converting $value for column ${c.map(_.longName)} (#$index). Query: ${query.table.map(_.datastore.describe(query))}", t)
       }
     }
 
     valueOption match {
-      case None if !c.optional => None.orNull.asInstanceOf[T]
+      case None if c.nonEmpty && !c.get.optional => None.orNull.asInstanceOf[T]
       case None => convert(None.orNull[AnyRef])
       case Some(value) => convert(value)
     }
@@ -88,12 +88,12 @@ class QueryResultsIterator[E, R](val rs: ResultSet, val query: Query[E, R]) exte
     expression match {
       case column: ColumnLike[_, _] => {
         val c = column.asInstanceOf[ColumnLike[T, S]]
-        val value = columnValue[T, S](rs, index, c, c.dataType)
+        val value = columnValue[T, S](rs, index, Some(c), c.dataType)
         ColumnValue[T, S](c, value, None)
       }
       case function: SQLFunction[_, _] => {
         val f = function.asInstanceOf[SQLFunction[T, S]]
-        val value = columnValue[T, S](rs, index, f.column.asInstanceOf[ColumnLike[T, S]], f.converter)
+        val value = columnValue[T, S](rs, index, None, f.converter)
         SQLFunctionValue[T, S](f, value)
       }
     }
