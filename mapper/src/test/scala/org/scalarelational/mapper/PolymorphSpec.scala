@@ -10,9 +10,6 @@ import org.scalarelational.h2.{H2Datastore, H2Memory}
 import org.scalarelational.instruction.Query
 import org.scalatest.{Matchers, WordSpec}
 
-/**
- * @author Tim Nieradzik <tim@kognit.io>
- */
 class PolymorphSpec extends WordSpec with Matchers {
   import PolymorphDatastore._
 
@@ -136,8 +133,8 @@ object PolymorphDatastore extends H2Datastore(mode = H2Memory("polymorph_test"))
 
   object content extends MappedTable[Content]("content") {
     object ListConverter extends SQLConversion[List[String], String] {
-      override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
-      override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
+      override def toSQL(value: List[String]): String = value.mkString("|")
+      override def fromSQL(value: String): List[String] = value.split('|').toList
     }
     implicit def listDataType: DataType[List[String], String] = new DataType[List[String], String](
       Types.VARCHAR,

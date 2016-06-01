@@ -450,6 +450,13 @@ trait AbstractTableSpec extends WordSpec with Matchers {
         orange(fruit) should equal(Fruit("Orange"))
       }
     }
+    "call Concat()" in {
+      withSession { implicit session =>
+        // TODO Concat should also take string literals
+        val x = (ds.select(Concat(fruitColors.color, fruitColors.color)) from fruitColors).converted.head
+        x should equal("OrangeOrange")
+      }
+    }
   }
   "TestCrossReferenceDatastore" should {
     val ds = testCrossReference
@@ -644,8 +651,8 @@ trait AbstractTestCrossReferenceDatastore extends Datastore {
 trait AbstractSpecialTypesDatastore extends Datastore {
   object lists extends Table("lists") {
     object ListConverter extends SQLConversion[List[String], String] {
-      override def toSQL(column: ColumnLike[List[String], String], value: List[String]): String = value.mkString("|")
-      override def fromSQL(column: ColumnLike[List[String], String], value: String): List[String] = value.split('|').toList
+      override def toSQL(value: List[String]): String = value.mkString("|")
+      override def fromSQL(value: String): List[String] = value.split('|').toList
     }
     implicit def listDataType = new DataType[List[String], String](Types.VARCHAR, SQLType("VARCHAR(1024)"), ListConverter)
 

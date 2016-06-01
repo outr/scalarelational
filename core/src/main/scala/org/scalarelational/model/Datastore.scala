@@ -118,11 +118,11 @@ trait Datastore
 
   private[scalarelational] final def exec[E, R](query: Query[E, R])(implicit session: Session): ResultSet = {
     val table = query.table
-    val q = SQLContainer.beforeInvoke(table, query)
+    val q = table.fold(query)(SQLContainer.beforeInvoke(_, query))
     try {
       invoke[E, R](q)
     } finally {
-      SQLContainer.afterInvoke(table, q)
+      table.foreach(SQLContainer.afterInvoke(_, q))
     }
   }
   private[scalarelational] final def exec[T](insert: InsertSingle[T])

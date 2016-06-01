@@ -14,7 +14,8 @@ case class MariaDBConfig(host: String,
                          schema: String,
                          user: String,
                          password: String,
-                         port: Int = 3306)
+                         port: Int = 3306,
+                         serverTimezone: Option[String] = None)
 
 abstract class MariaDBDatastore private() extends SQLDatastore {
   protected def this(mariadbConfig: MariaDBConfig) = {
@@ -60,7 +61,8 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
   def updateDataSource(config: MariaDBConfig): Unit = {
     dispose() // Make sure to shut down the previous DataSource if possible
     val source = new MysqlDataSource()
-    source.setURL("jdbc:mysql://" + config.host + "/" + config.schema)
+    source.setURL("jdbc:mysql://" + config.host + "/" + config.schema +
+      config.serverTimezone.fold("")("?serverTimezone=" + _))
     source.setUser(config.user)
     source.setPassword(config.password)
     source.setPort(config.port)

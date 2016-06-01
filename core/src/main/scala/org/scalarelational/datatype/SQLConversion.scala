@@ -1,34 +1,30 @@
 package org.scalarelational.datatype
 
-import org.scalarelational.column.ColumnLike
-
-
 trait SQLConversion[T, S] {
-  def toSQL(column: ColumnLike[T, S], value: T): S
-  def fromSQL(column: ColumnLike[T, S], value: S): T
+  def toSQL(value: T): S
+  def fromSQL(value: S): T
 }
 
 object SQLConversion {
   def identity[T]: SQLConversion[T, T] = new SQLConversion[T, T] {
-    override def toSQL(column: ColumnLike[T, T], value: T): T = value
-
-    override def fromSQL(column: ColumnLike[T, T], value: T): T = value
+    override def toSQL(value: T): T = value
+    override def fromSQL(value: T): T = value
   }
 }
 
 class OptionSQLConversion[T, S](underlying: SQLConversion[T, S]) extends SQLConversion[Option[T], S] {
-  override def toSQL(column: ColumnLike[Option[T], S], value: Option[T]): S = value match {
+  override def toSQL(value: Option[T]): S = value match {
     case None => None.orNull.asInstanceOf[S]
-    case Some(t) => underlying.toSQL(column.asInstanceOf[ColumnLike[T, S]], t)
+    case Some(t) => underlying.toSQL(t)
   }
 
-  override def fromSQL(column: ColumnLike[Option[T], S], value: S): Option[T] = Option(value) match {
+  override def fromSQL(value: S): Option[T] = Option(value) match {
     case None => None
-    case Some(t) => Some(underlying.fromSQL(column.asInstanceOf[ColumnLike[T, S]], t))
+    case Some(t) => Some(underlying.fromSQL(t))
   }
 }
 
 class RefSQLConversion[T] extends SQLConversion[Ref[T], Int] {
-  override def toSQL(column: ColumnLike[Ref[T], Int], value: Ref[T]): Int = value.id
-  override def fromSQL(column: ColumnLike[Ref[T], Int], value: Int): Ref[T] = new Ref[T](value)
+  override def toSQL(value: Ref[T]): Int = value.id
+  override def fromSQL(value: Int): Ref[T] = new Ref[T](value)
 }

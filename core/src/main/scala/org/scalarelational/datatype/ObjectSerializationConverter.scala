@@ -17,7 +17,7 @@ object ObjectSerializationDataTypeCreator {
 }
 
 class ObjectSQLConverter[T] extends SQLConversion[T, Blob] {
-  override def toSQL(column: ColumnLike[T, Blob], value: T): Blob = {
+  override def toSQL(value: T): Blob = {
     val baos = new ByteArrayOutputStream()
     try {
       val oos = new ObjectOutputStream(baos)
@@ -33,7 +33,7 @@ class ObjectSQLConverter[T] extends SQLConversion[T, Blob] {
     }
   }
 
-  override def fromSQL(column: ColumnLike[T, Blob], value: Blob): T = {
+  override def fromSQL(value: Blob): T = {
     val ois = new ObjectInputStream(value.getBinaryStream)
     try {
       ois.readObject().asInstanceOf[T]

@@ -11,8 +11,8 @@ class EnumDataTypeCreator[T <: EnumEntry](implicit enumerated: Enum[T], manifest
 
   def create(): DataType[T, String] = new DataType[T, String](Types.VARCHAR, SQLType(s"VARCHAR($length)"), this)
 
-  override def toSQL(column: ColumnLike[T, String], value: T): String = value.entryName
-  override def fromSQL(column: ColumnLike[T, String], value: String): T = enumerated.withNameInsensitive(value)
+  override def toSQL(value: T): String = value.entryName
+  override def fromSQL(value: String): T = enumerated.withNameInsensitive(value)
 }
 
 object EnumDataTypeCreator {
