@@ -1,6 +1,7 @@
 package org.scalarelational.model
 
 import java.io.File
+`import java.net.URL
 import javax.sql.DataSource
 
 import org.scalarelational.column.ColumnLike
@@ -14,6 +15,7 @@ import org.scalarelational.{SelectExpression, Session}
 import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def this(dataSource: DataSource) {
@@ -84,9 +86,16 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     session.execute(command.toString())
   }
 
-  def importScript(file: File)(implicit session: Session): Boolean = {
-    val command = s"RUNSCRIPT FROM '${file.getCanonicalPath}'"
-    session.execute(command)
+  def importScript(scriptFile: URL)(implicit session: Session): Boolean = {
+    val script = {
+      val source = Source.fromURL(scriptFile)
+      try {
+        source.mkString
+      } finally {
+        source.close()
+      }
+    }
+    session.execute(script)
   }
 
   protected def invoke[E, R](query: Query[E, R])(implicit session: Session) = {

@@ -1,6 +1,6 @@
 package org.scalarelational
 
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{BufferedReader, File, InputStreamReader}
 import java.sql.{Blob, Timestamp, Types}
 import java.util.stream.Collectors
 import javax.sql.rowset.serial.SerialBlob
@@ -375,9 +375,8 @@ trait AbstractTableSpec extends WordSpec with Matchers {
   "names" should {
     val ds = testDatastore
     import ds._
-    import names._
 
-    val queryAll = select(*) from names orderBy(name asc)
+    val queryAll = select(names.*) from names orderBy(names.name asc)
 
     "have no records in the table" in {
       withSession { implicit session =>
@@ -388,36 +387,49 @@ trait AbstractTableSpec extends WordSpec with Matchers {
     if (supportsMerge) {
       "merge 'John Doe' for an inserted record" in {
         withSession { implicit session =>
-          merge(name, name("John Doe"), age(21)).result
+          merge(names.name, names.name("John Doe"), names.age(21)).result
           val results = queryAll.result.toList
           results.size should equal(1)
           val result = results.head
-          result(name) should equal("John Doe")
-          result(age) should equal(21)
+          result(names.name) should equal("John Doe")
+          result(names.age) should equal(21)
         }
       }
       "merge 'John Doe' for an updated record" in {
         withSession { implicit session =>
-          merge(name, name("John Doe"), age(25)).result
+          merge(names.name, names.name("John Doe"), names.age(25)).result
           val results = queryAll.result.toList
           results.size should equal(1)
           val result = results.head
-          result(name) should equal("John Doe")
-          result(age) should equal(25)
+          result(names.name) should equal("John Doe")
+          result(names.age) should equal(25)
         }
       }
       "merge 'Jane Doe' for an inserted record" in {
         withSession { implicit session =>
-          merge(name, name("Jane Doe"), age(22)).result
+          merge(names.name, names.name("Jane Doe"), names.age(22)).result
           val results = queryAll.result.toList
           results.size should equal(2)
           val jane = results.head
-          jane(name) should equal("Jane Doe")
-          jane(age) should equal(22)
+          jane(names.name) should equal("Jane Doe")
+          jane(names.age) should equal(22)
           val john = results.tail.head
-          john(name) should equal("John Doe")
-          john(age) should equal(25)
+          john(names.name) should equal("John Doe")
+          john(names.age) should equal(25)
         }
+      }
+    }
+    "insert via a pre-existing SQL script" in {
+      withSession { implicit session =>
+        val script = ds.getClass.getClassLoader.getResource("insert_names.sql")
+        ds.importScript(script)
+      }
+    }
+    "verify SQL script executed properly" in {
+      withSession { implicit session =>
+        val query = ds.select(names.name) from names
+        val allNames = query.converted.toSet
+        allNames should equal(Set("Jane Doe", "John Doe", "Script Name 1", "Script Name 2"))
       }
     }
     // TODO: fix support for this in PostgreSQL and then uncomment
@@ -599,7 +611,7 @@ trait AbstractTableSpec extends WordSpec with Matchers {
   }
 }
 
-trait AbstractTestDatastore extends Datastore {
+trait AbstractTestDatastore extends SQLDatastore {
   object test extends Table("test_table") {
     val id = column[Option[Int], Int]("id", PrimaryKey, AutoIncrement)
     val name = column[String]("name", Unique, ColumnLength(200))
