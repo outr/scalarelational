@@ -43,15 +43,6 @@ object ScalaRelationalBuild extends Build {
       Resolver.typesafeRepo("releases")
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    publishTo <<= version {
-      (v: String) =>
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT")) {
-          Some("snapshots" at nexus + "content/repositories/snapshots")
-        } else {
-          Some("releases" at nexus + "service/local/staging/deploy/maven2")
-        }
-    },
     publishArtifact in Test := false,
     pomExtra := <url>{Details.url}</url>
       <licenses>
@@ -83,7 +74,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.3-SNAPSHOT"
+  val version = "1.3.3"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
