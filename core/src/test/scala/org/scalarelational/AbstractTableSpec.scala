@@ -429,7 +429,12 @@ trait AbstractTableSpec extends WordSpec with Matchers {
       withSession { implicit session =>
         val query = ds.select(names.name) from names
         val allNames = query.converted.toSet
-        allNames should equal(Set("Jane Doe", "John Doe", "Script Name 1", "Script Name 2"))
+        val expected = if (supportsMerge) {
+          Set("Jane Doe", "John Doe", "Script Name 1", "Script Name 2")
+        } else {
+          Set("Script Name 1", "Script Name 2")
+        }
+        allNames should equal(expected)
       }
     }
     // TODO: fix support for this in PostgreSQL and then uncomment
