@@ -74,7 +74,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.3"
+  val version = "1.3.4"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -89,12 +89,12 @@ object Details {
 }
 
 object Dependencies {
-  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.6"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "2.4.7"
   val h2database = "com.h2database" % "h2" % "1.4.192"
-  val mariadbdatabase = "mysql" % "mysql-connector-java" % "6.0.2"
-  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1208"
+  val mariadbdatabase = "mysql" % "mysql-connector-java" % "6.0.4"
+  val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1209"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   val metaRx = "pl.metastack" %%  "metarx" % "0.1.7"
-  val enumeratum = "com.beachape" %% "enumeratum" % "1.4.4"
-  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.3"
+  val enumeratum = "com.beachape" %% "enumeratum" % "1.4.14"
+  val logging = "com.outr.scribe" %% "scribe-slf4j" % "1.2.5"
 }
