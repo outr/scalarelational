@@ -4,6 +4,7 @@ import java.io.File
 import java.net.URL
 import javax.sql.DataSource
 
+import com.outr.props.Var
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction
@@ -12,7 +13,6 @@ import org.scalarelational.instruction.ddl.BasicDDLSupport
 import org.scalarelational.op._
 import org.scalarelational.table.{Table, TableAlias}
 import org.scalarelational.{SelectExpression, Session}
-import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -20,10 +20,10 @@ import scala.io.Source
 abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
   protected def this(dataSource: DataSource) {
     this()
-    dataSourceProperty := dataSource
+    dataSourceProperty := Some(dataSource)
   }
 
-  val dataSourceProperty = Opt[DataSource]()
+  val dataSourceProperty: Var[Option[DataSource]] = Var(None)
 
   def dataSource: Option[DataSource] = dataSourceProperty.get
 
@@ -68,7 +68,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     } else {
       ""
     }
-    s"SELECT $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
+    s"SELECT${if (query.distinctResults) " DISTINCT" else ""} $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
   def exportTable(table: Table, file: File, drop: Boolean = true)

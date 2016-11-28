@@ -7,14 +7,14 @@ import org.scalarelational.model.SQLDatastore
 
 trait HikariSupport extends SQLDatastore {
   // Automatically converts DataSources to be wrapped by HikariDataSource
-  dataSourceProperty.filterCycles.attach {
-    case Some(ds: HikariDataSource) => // Ignore HikariDataSource
+  dataSourceProperty.attach {
+    case Some(_: HikariDataSource) => // Ignore HikariDataSource
     case Some(ds) => {
       val config = new HikariConfig()
       config.setDataSource(ds)
 
       val hikari = new HikariDataSource(config)
-      dataSourceProperty := hikari
+      dataSourceProperty := Some(hikari)
     }
     case None => // Ignore no datasource being defined
   }

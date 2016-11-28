@@ -3,6 +3,7 @@ package org.scalarelational.postgresql
 import java.sql.Types
 import javax.sql.DataSource
 
+import com.outr.props.Var
 import org.postgresql.ds.PGSimpleDataSource
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}
@@ -12,29 +13,28 @@ import org.scalarelational.instruction.ddl.CreateColumn
 import org.scalarelational.model._
 import org.scalarelational.op.{Condition, DirectCondition, Operator, RegexCondition}
 import org.scalarelational.result.ResultSetIterator
-import pl.metastack.metarx.Opt
 
 import scala.collection.mutable.ListBuffer
 
 abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLogging {
   protected def this(pgConfig: PostgreSQL.Config) = {
     this()
-    config := pgConfig
+    config := Some(pgConfig)
   }
 
   override def supportsMerge: Boolean = false
 
   protected def this(dataSource: DataSource) = {
     this()
-    dataSourceProperty := dataSource
+    dataSourceProperty := Some(dataSource)
   }
 
   Class.forName("org.postgresql.Driver")
 
-  val config = Opt[PostgreSQL.Config]()
+  val config: Var[Option[PostgreSQL.Config]] = Var(None)
 
   // Update the data source if the mode changes
-  config.values.attach(updateDataSource)
+  config.attach(updateDataSource)
 
   private lazy val blobSQLType = new BlobSQLType("BYTEA")
 
@@ -48,7 +48,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLoggin
     }
   }
 
-  def updateDataSource(config: PostgreSQL.Config): Unit = {
+  def updateDataSource(configOption: Option[PostgreSQL.Config]): Unit = configOption.foreach { config =>
     dispose() // Make sure to shut down the previous DataSource if possible
 
     val source = new PGSimpleDataSource()
@@ -62,7 +62,7 @@ abstract class PostgreSQLDatastore private() extends SQLDatastore with SQLLoggin
       s.sslFactory.foreach { source.setSslfactory }
       s.sslFactoryArg.foreach { source.setSslFactoryArg }
     }
-    dataSourceProperty := source
+    dataSourceProperty := Some(source)
   }
 
   override protected def columnPropertiesSQL(container: ColumnPropertyContainer): List[String] = {

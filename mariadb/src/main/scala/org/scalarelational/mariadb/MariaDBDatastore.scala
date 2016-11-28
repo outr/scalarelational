@@ -3,12 +3,12 @@ package org.scalarelational.mariadb
 import javax.sql.DataSource
 
 import com.mysql.cj.jdbc.MysqlDataSource
+import com.outr.props.Var
 import org.scalarelational.Session
 import org.scalarelational.datatype.DataType
 import org.scalarelational.instruction.ddl.DropTable
 import org.scalarelational.instruction.{CallableInstruction, InstructionType, Merge}
 import org.scalarelational.model._
-import pl.metastack.metarx.Opt
 
 case class MariaDBConfig(host: String,
                          schema: String,
@@ -20,12 +20,12 @@ case class MariaDBConfig(host: String,
 abstract class MariaDBDatastore private() extends SQLDatastore {
   protected def this(mariadbConfig: MariaDBConfig) = {
     this()
-    config := mariadbConfig
+    config := Some(mariadbConfig)
   }
 
   protected def this(dataSource: DataSource) = {
     this()
-    dataSourceProperty := dataSource
+    dataSourceProperty := Some(dataSource)
   }
 
   /* MariaDB does not support the `MERGE INTO` syntax but overrides the invocation to use INSERT ON DUPLICATE UPDATE.*/
@@ -40,10 +40,10 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  val config = Opt[MariaDBConfig]()
+  val config: Var[Option[MariaDBConfig]] = Var(None)
 
   // Update the data source if the mode changes
-  config.values.attach(updateDataSource)
+  config.attach(updateDataSource)
 
   override protected def catalog: Option[String] = config.get.map(_.schema)
 
@@ -58,7 +58,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
       super.ddl(drop)
     }
 
-  def updateDataSource(config: MariaDBConfig): Unit = {
+  def updateDataSource(configOption: Option[MariaDBConfig]): Unit = configOption.foreach { config =>
     dispose() // Make sure to shut down the previous DataSource if possible
     val source = new MysqlDataSource()
     source.setURL("jdbc:mysql://" + config.host + "/" + config.schema +
@@ -66,7 +66,7 @@ abstract class MariaDBDatastore private() extends SQLDatastore {
     source.setUser(config.user)
     source.setPassword(config.password)
     source.setPort(config.port)
-    dataSourceProperty := source
+    dataSourceProperty := Some(source)
   }
 
   override protected def invoke(merge: Merge)(implicit session: Session): Int = {

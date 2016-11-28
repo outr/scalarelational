@@ -1,11 +1,11 @@
 package org.scalarelational.versioning
 
+import com.outr.props.Var
 import org.scalarelational.extra.PersistentProperties
 import org.scalarelational.util.Time
-import pl.metastack.metarx._
 
 trait VersioningSupport extends PersistentProperties {
-  def version: Opt[Int] =
+  def version: Var[Option[Int]] =
     withSession { implicit session =>
       persistence.intProperty("databaseVersion")
     }
@@ -35,7 +35,7 @@ trait VersioningSupport extends PersistentProperties {
       if (latestVersion == 0) {
         // Make sure the value is created in the database
         logger.info(s"New database created. Setting version to latest (version $latestVersion) without running upgrades.")
-        version := latestVersion // New database created, we don't have to run upgrades
+        version := Some(latestVersion) // New database created, we don't have to run upgrades
       } else {
         logger.info(s"Current Version: ${version.get}, Latest Version: $latestVersion")
         (version.get.getOrElse(0) until latestVersion).foreach { currentVersion =>
@@ -45,13 +45,13 @@ trait VersioningSupport extends PersistentProperties {
             val upgrade = upgrades.getOrElse(nextVersion,
               throw new RuntimeException(s"No version registered for $nextVersion."))
             if (newDatabase && !upgrade.runOnNewDatabase) {
-              version := nextVersion
+              version := Some(nextVersion)
               logger.info(s"Skipping version $currentVersion to $nextVersion because it's a new database.")
             } else {
               val elapsed = Time.elapsed {
                 upgrade.upgrade(session)
               }
-              version := nextVersion
+              version := Some(nextVersion)
               logger.info(s"$nextVersion upgrade finished successfully in $elapsed seconds.")
             }
           }

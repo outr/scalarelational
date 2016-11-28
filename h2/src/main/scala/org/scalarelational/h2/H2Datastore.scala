@@ -2,13 +2,13 @@ package org.scalarelational.h2
 
 import javax.sql.DataSource
 
+import com.outr.props.{Channel, Var}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalarelational.Session
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
 import org.scalarelational.model._
 import org.scalarelational.table.Table
 import org.scalarelational.util.StringUtil
-import pl.metastack.metarx.{Channel, Opt, Var}
 
 abstract class H2Datastore private() extends SQLDatastore {
   protected def this(mode: H2ConnectionMode = H2Memory(StringUtil.randomString()),
@@ -17,32 +17,31 @@ abstract class H2Datastore private() extends SQLDatastore {
     this()
     dbUsername := username
     dbPassword := password
-    modeProperty := mode
+    modeProperty := Some(mode)
   }
 
   protected def this(dataSource: DataSource) = {
     this()
-    dataSourceProperty := dataSource
+    dataSourceProperty := Some(dataSource)
   }
 
   Class.forName("org.h2.Driver")
 
-  val modeProperty = Opt[H2ConnectionMode]()
-  val dbUsername = Var("sa")
-  val dbPassword = Var("sa")
-  val trigger = Channel[TriggerEvent]()
+  val modeProperty: Var[Option[H2ConnectionMode]] = Var(None)
+  val dbUsername: Var[String] = Var("sa")
+  val dbPassword: Var[String] = Var("sa")
+  val trigger: Channel[TriggerEvent] = Channel[TriggerEvent]()
 
   private var functions = Set.empty[H2Function]
 
   // Update the data source if the mode changes
-  modeProperty.values.attach(updateDataSource)
+  modeProperty.attach(updateDataSource)
 
   override protected def catalog: Option[String] = None
 
-  private def updateDataSource(mode: H2ConnectionMode): Unit = {
+  private def updateDataSource(modeOption: Option[H2ConnectionMode]): Unit = modeOption.foreach { mode =>
     dispose()  // Make sure to shut down the previous DataSource if possible
-    dataSourceProperty := JdbcConnectionPool.create(
-      mode.url, dbUsername.get, dbPassword.get)
+    dataSourceProperty := Some(JdbcConnectionPool.create(mode.url, dbUsername.get, dbPassword.get))
   }
 
   def function[F](obj: AnyRef, methodName: String, functionName: Option[String] = None): H2Function = synchronized {

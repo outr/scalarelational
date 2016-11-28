@@ -30,14 +30,14 @@ class TransactionSpec extends WordSpec with Matchers {
       "insert 1" in {
         insertApple()
         withSession { implicit sess =>
-          assert((select(fruit.name) from fruit where fruit.name === "apple").converted.toList.length == 1)
+          (select(fruit.name) from fruit where fruit.name === "apple").converted.toList.length should be(1)
         }
       }
 
       "insert 2" in {
         insertOrange()
         withSession { implicit sess =>
-          assert((select(fruit.name) from fruit where fruit.name === "orange").converted.toList.length == 1)
+          (select(fruit.name) from fruit where fruit.name === "orange").converted.toList.length should be(1)
         }
       }
     }

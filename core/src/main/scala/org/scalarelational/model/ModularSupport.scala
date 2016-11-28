@@ -1,8 +1,8 @@
 package org.scalarelational.model
 
+import com.outr.props.Channel
 import org.scalarelational.datatype.DataTypeSupport
 import org.scalarelational.instruction._
-import pl.metastack.metarx.Channel
 
 import scala.collection.mutable.ArrayBuffer
 

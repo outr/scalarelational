@@ -1,9 +1,9 @@
 package org.scalarelational.extra
 
+import com.outr.props.Var
 import org.scalarelational.column.property.{AutoIncrement, ColumnLength, PrimaryKey, Unique}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table
-import pl.metastack.metarx.Opt
 
 /**
  * Persistent Properties allows key/value pairs to be persisted to a table for
@@ -49,31 +49,31 @@ trait PersistentProperties extends Datastore {
         where (persistentProperties.key === name)).result
     }
 
-    def stringProperty(key: String): Opt[String] = {
-      val ch = new Opt[String](get(key))
-      ch.silentAttach {
+    def stringProperty(key: String): Var[Option[String]] = {
+      val v = Var[Option[String]](get(key))
+      v.attach {
         case Some(value) => this(key) = value
         case None => remove(key)
       }
-      ch
+      v
     }
 
-    def intProperty(key: String): Opt[Int] = {
-      val ch = new Opt[Int](get(key).map(_.toInt))
-      ch.silentAttach {
+    def intProperty(key: String): Var[Option[Int]] = {
+      val v = Var[Option[Int]](get(key).map(_.toInt))
+      v.attach {
         case Some(value) => this(key) = value.toString
         case None => remove(key)
       }
-      ch
+      v
     }
 
-    def longProperty(key: String): Opt[Long] = {
-      val ch = new Opt[Long](get(key).map(_.toLong))
-      ch.silentAttach {
+    def longProperty(key: String): Var[Option[Long]] = {
+      val v = Var[Option[Long]](get(key).map(_.toLong))
+      v.attach {
         case Some(value) => this(key) = value.toString
         case None => remove(key)
       }
-      ch
+      v
     }
   }
 }
