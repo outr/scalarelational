@@ -22,15 +22,13 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 resultOffset: Int = -1,
                                 converter: QueryResult => Result,
                                 alias: Option[String] = None,
-                                distinctResults: Boolean = false,
+                                distinct: Boolean = false,
                                 fetchSize: Int = Datastore.DefaultFetchSize) extends WhereSupport[Query[Types, Result]]
                                                               with Joinable
                                                               with JoinSupport[Types, Result] {
   def apply[T, S](column: ColumnLike[T, S]): ColumnAlias[T, S] = ColumnAlias[T, S](column, alias, None, None)
 
   def batchSize(size: Int): Query[Types, Result] = copy(fetchSize = fetchSize)
-
-  def distinct: Query[Types, Result] = copy(distinctResults = true)
 
   def where(condition: Condition): Query[Types, Result] = copy[Types, Result](whereCondition = Option(condition))
 

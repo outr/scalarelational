@@ -68,7 +68,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     } else {
       ""
     }
-    s"SELECT${if (query.distinctResults) " DISTINCT" else ""} $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
+    s"SELECT${if (query.distinct) " DISTINCT" else ""} $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
   def exportTable(table: Table, file: File, drop: Boolean = true)
