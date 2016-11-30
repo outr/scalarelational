@@ -27,15 +27,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
 
   def dataSource: Option[DataSource] = dataSourceProperty.get
 
-  private def expression2SQL(expression: SelectExpression[_]) = expression match {
-    case c: ColumnLike[_, _] => c.longName
-    case f: SQLFunction[_, _] =>
-      val columns = f.columns.map(_.longName).mkString(", ")
-      f.alias match {
-        case Some(alias) => s"${f.functionType.sql}($columns) AS $alias"
-        case None => s"${f.functionType.sql}($columns)"
-      }
-  }
+  private def expression2SQL(expression: SelectExpression[_]): String = expression.toSQL
 
   def describe[E, R](query: Query[E, R]): (String, List[TypedValue[_, _]]) = {
     val columns = query.expressions.vector.map(expression2SQL).mkString(", ")
@@ -68,7 +60,7 @@ abstract class SQLDatastore protected() extends Datastore with BasicDDLSupport {
     } else {
       ""
     }
-    s"SELECT${if (query.distinct) " DISTINCT" else ""} $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
+    s"SELECT $columns$from$joins$where$groupBy$orderBy$limit$offset" -> args
   }
 
   def exportTable(table: Table, file: File, drop: Boolean = true)

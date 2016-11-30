@@ -57,4 +57,6 @@ trait ColumnLike[T, S] extends SelectExpression[T] with ColumnPropertyContainer 
   def in(range: Seq[T]) = RangeCondition(this, Operator.In, range)
 
   def ===(column: ColumnLike[T, S]) = ColumnCondition(this, Operator.Equal, column)
+
+  override def toSQL: String = longName
 }

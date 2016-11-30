@@ -11,6 +11,14 @@ case class SQLFunction[T, S](functionType: FunctionType,
                              converter: DataType[T, S],
                              alias: Option[String] = None) extends SelectExpression[T] {
   def as(alias: String): SQLFunction[T, S] = copy[T, S](alias = Some(alias))
+
+  override def toSQL: String = {
+    val columns = this.columns.map(_.toSQL).mkString(", ")
+    alias match {
+      case Some(a) => s"${functionType.sql}($columns) AS $a"
+      case None => s"${functionType.sql}($columns)"
+    }
+  }
 }
 
 trait FunctionType {

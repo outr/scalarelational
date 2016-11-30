@@ -14,21 +14,21 @@ trait DSLSupport {
   import DSLSupport._
 
   def select[E](e1: SelectExpression[E]): SelectQueryPart[E, E] = {
-    SelectQueryPart(SingleExpression(e1), singleValueConverter[E], distinct = false)
+    SelectQueryPart(SingleExpression(e1), singleValueConverter[E])
   }
   def select[E1, E2](e1: SelectExpression[E1], e2: SelectExpression[E2]): SelectQueryPart[(E1, E2), (E1, E2)] = {
-    SelectQueryPart(TwoExpressions(e1, e2), tuple2Converter[E1, E2], distinct = false)
+    SelectQueryPart(TwoExpressions(e1, e2), tuple2Converter[E1, E2])
   }
   def select[E1, E2, E3](e1: SelectExpression[E1],
                          e2: SelectExpression[E2],
                          e3: SelectExpression[E3]): SelectQueryPart[(E1, E2, E3), (E1, E2, E3)] = {
-    SelectQueryPart(ThreeExpressions(e1, e2, e3), tuple3Converter[E1, E2, E3], distinct = false)
+    SelectQueryPart(ThreeExpressions(e1, e2, e3), tuple3Converter[E1, E2, E3])
   }
   def select[E1, E2, E3, E4](e1: SelectExpression[E1],
                              e2: SelectExpression[E2],
                              e3: SelectExpression[E3],
                              e4: SelectExpression[E4]): SelectQueryPart[(E1, E2, E3, E4), (E1, E2, E3, E4)] = {
-    SelectQueryPart(FourExpressions(e1, e2, e3, e4), tuple4Converter[E1, E2, E3, E4], distinct = false)
+    SelectQueryPart(FourExpressions(e1, e2, e3, e4), tuple4Converter[E1, E2, E3, E4])
   }
   def select[E1, E2, E3, E4, E5](e1: SelectExpression[E1],
                                  e2: SelectExpression[E2],
@@ -36,7 +36,7 @@ trait DSLSupport {
                                  e4: SelectExpression[E4],
                                  e5: SelectExpression[E5]
                                 ): SelectQueryPart[(E1, E2, E3, E4, E5), (E1, E2, E3, E4, E5)] = {
-    SelectQueryPart(FiveExpressions(e1, e2, e3, e4, e5), tuple5Converter[E1, E2, E3, E4, E5], distinct = false)
+    SelectQueryPart(FiveExpressions(e1, e2, e3, e4, e5), tuple5Converter[E1, E2, E3, E4, E5])
   }
   def select[E1, E2, E3, E4, E5, E6](e1: SelectExpression[E1],
                                      e2: SelectExpression[E2],
@@ -45,7 +45,7 @@ trait DSLSupport {
                                      e5: SelectExpression[E5],
                                      e6: SelectExpression[E6]
                                     ): SelectQueryPart[(E1, E2, E3, E4, E5, E6), (E1, E2, E3, E4, E5, E6)] = {
-    SelectQueryPart(SixExpressions(e1, e2, e3, e4, e5, e6), tuple6Converter[E1, E2, E3, E4, E5, E6], distinct = false)
+    SelectQueryPart(SixExpressions(e1, e2, e3, e4, e5, e6), tuple6Converter[E1, E2, E3, E4, E5, E6])
   }
   def select[E1, E2, E3, E4, E5, E6, E7](e1: SelectExpression[E1],
                                          e2: SelectExpression[E2],
@@ -56,7 +56,7 @@ trait DSLSupport {
                                          e7: SelectExpression[E7]
                                         ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7),
                                                            (E1, E2, E3, E4, E5, E6, E7)] = {
-    SelectQueryPart(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), tuple7Converter[E1, E2, E3, E4, E5, E6, E7], distinct = false)
+    SelectQueryPart(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), tuple7Converter[E1, E2, E3, E4, E5, E6, E7])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8](e1: SelectExpression[E1],
                                              e2: SelectExpression[E2],
@@ -68,7 +68,7 @@ trait DSLSupport {
                                              e8: SelectExpression[E8]
                                             ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8),
                                                                (E1, E2, E3, E4, E5, E6, E7, E8)] = {
-    SelectQueryPart(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8], distinct = false)
+    SelectQueryPart(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8, E9](e1: SelectExpression[E1],
                                                  e2: SelectExpression[E2],
@@ -81,7 +81,7 @@ trait DSLSupport {
                                                  e9: SelectExpression[E9]
                                                 ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8, E9),
                                                                    (E1, E2, E3, E4, E5, E6, E7, E8, E9)] = {
-    SelectQueryPart(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9], distinct = false)
+    SelectQueryPart(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9])
   }
   def select[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10](e1: SelectExpression[E1],
                                                       e2: SelectExpression[E2],
@@ -95,99 +95,11 @@ trait DSLSupport {
                                                       e10: SelectExpression[E10]
                                                      ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8, E9, E10),
                                                                         (E1, E2, E3, E4, E5, E6, E7, E8, E9, E10)] = {
-    SelectQueryPart(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10], distinct = false)
-  }
-
-  def selectDistinct[E](e1: SelectExpression[E]): SelectQueryPart[E, E] = {
-    SelectQueryPart(SingleExpression(e1), singleValueConverter[E], distinct = true)
-  }
-  def selectDistinct[E1, E2](e1: SelectExpression[E1], e2: SelectExpression[E2]): SelectQueryPart[(E1, E2), (E1, E2)] = {
-    SelectQueryPart(TwoExpressions(e1, e2), tuple2Converter[E1, E2], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3](e1: SelectExpression[E1],
-                         e2: SelectExpression[E2],
-                         e3: SelectExpression[E3]): SelectQueryPart[(E1, E2, E3), (E1, E2, E3)] = {
-    SelectQueryPart(ThreeExpressions(e1, e2, e3), tuple3Converter[E1, E2, E3], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4](e1: SelectExpression[E1],
-                             e2: SelectExpression[E2],
-                             e3: SelectExpression[E3],
-                             e4: SelectExpression[E4]): SelectQueryPart[(E1, E2, E3, E4), (E1, E2, E3, E4)] = {
-    SelectQueryPart(FourExpressions(e1, e2, e3, e4), tuple4Converter[E1, E2, E3, E4], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5](e1: SelectExpression[E1],
-                                 e2: SelectExpression[E2],
-                                 e3: SelectExpression[E3],
-                                 e4: SelectExpression[E4],
-                                 e5: SelectExpression[E5]
-                                ): SelectQueryPart[(E1, E2, E3, E4, E5), (E1, E2, E3, E4, E5)] = {
-    SelectQueryPart(FiveExpressions(e1, e2, e3, e4, e5), tuple5Converter[E1, E2, E3, E4, E5], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5, E6](e1: SelectExpression[E1],
-                                     e2: SelectExpression[E2],
-                                     e3: SelectExpression[E3],
-                                     e4: SelectExpression[E4],
-                                     e5: SelectExpression[E5],
-                                     e6: SelectExpression[E6]
-                                    ): SelectQueryPart[(E1, E2, E3, E4, E5, E6), (E1, E2, E3, E4, E5, E6)] = {
-    SelectQueryPart(SixExpressions(e1, e2, e3, e4, e5, e6), tuple6Converter[E1, E2, E3, E4, E5, E6], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5, E6, E7](e1: SelectExpression[E1],
-                                         e2: SelectExpression[E2],
-                                         e3: SelectExpression[E3],
-                                         e4: SelectExpression[E4],
-                                         e5: SelectExpression[E5],
-                                         e6: SelectExpression[E6],
-                                         e7: SelectExpression[E7]
-                                        ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7),
-    (E1, E2, E3, E4, E5, E6, E7)] = {
-    SelectQueryPart(SevenExpressions(e1, e2, e3, e4, e5, e6, e7), tuple7Converter[E1, E2, E3, E4, E5, E6, E7], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5, E6, E7, E8](e1: SelectExpression[E1],
-                                             e2: SelectExpression[E2],
-                                             e3: SelectExpression[E3],
-                                             e4: SelectExpression[E4],
-                                             e5: SelectExpression[E5],
-                                             e6: SelectExpression[E6],
-                                             e7: SelectExpression[E7],
-                                             e8: SelectExpression[E8]
-                                            ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8),
-    (E1, E2, E3, E4, E5, E6, E7, E8)] = {
-    SelectQueryPart(EightExpressions(e1, e2, e3, e4, e5, e6, e7, e8), tuple8Converter[E1, E2, E3, E4, E5, E6, E7, E8], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5, E6, E7, E8, E9](e1: SelectExpression[E1],
-                                                 e2: SelectExpression[E2],
-                                                 e3: SelectExpression[E3],
-                                                 e4: SelectExpression[E4],
-                                                 e5: SelectExpression[E5],
-                                                 e6: SelectExpression[E6],
-                                                 e7: SelectExpression[E7],
-                                                 e8: SelectExpression[E8],
-                                                 e9: SelectExpression[E9]
-                                                ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8, E9),
-    (E1, E2, E3, E4, E5, E6, E7, E8, E9)] = {
-    SelectQueryPart(NineExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9), tuple9Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9], distinct = true)
-  }
-  def selectDistinct[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10](e1: SelectExpression[E1],
-                                                      e2: SelectExpression[E2],
-                                                      e3: SelectExpression[E3],
-                                                      e4: SelectExpression[E4],
-                                                      e5: SelectExpression[E5],
-                                                      e6: SelectExpression[E6],
-                                                      e7: SelectExpression[E7],
-                                                      e8: SelectExpression[E8],
-                                                      e9: SelectExpression[E9],
-                                                      e10: SelectExpression[E10]
-                                                     ): SelectQueryPart[(E1, E2, E3, E4, E5, E6, E7, E8, E9, E10),
-    (E1, E2, E3, E4, E5, E6, E7, E8, E9, E10)] = {
-    SelectQueryPart(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10], distinct = true)
+    SelectQueryPart(TenExpressions(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10), tuple10Converter[E1, E2, E3, E4, E5, E6, E7, E8, E9, E10])
   }
 
   def select(expressions: List[SelectExpression[_]]): SelectQueryPart[scala.Vector[SelectExpression[_]], QueryResult] = {
-    SelectQueryPart[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), DefaultConverter, distinct = false)
-  }
-  def selectDistinct(expressions: List[SelectExpression[_]]): SelectQueryPart[scala.Vector[SelectExpression[_]], QueryResult] = {
-    SelectQueryPart[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), DefaultConverter, distinct = true)
+    SelectQueryPart[Vector[SelectExpression[_]], QueryResult](VariableExpressions(expressions.toVector), DefaultConverter)
   }
   def insert(values: ColumnValue[_, _]*): InsertSingle[Int] = {
     InsertSingle[Int](values.head.column.table, values, identity[Int])

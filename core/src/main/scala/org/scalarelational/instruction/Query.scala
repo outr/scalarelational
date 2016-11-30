@@ -22,7 +22,6 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
                                 resultOffset: Int = -1,
                                 converter: QueryResult => Result,
                                 alias: Option[String] = None,
-                                distinct: Boolean = false,
                                 fetchSize: Int = Datastore.DefaultFetchSize) extends WhereSupport[Query[Types, Result]]
                                                               with Joinable
                                                               with JoinSupport[Types, Result] {
