@@ -74,7 +74,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.5-SNAPSHOT"
+  val version = "1.3.5"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
