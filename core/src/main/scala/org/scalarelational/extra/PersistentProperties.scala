@@ -1,6 +1,6 @@
 package org.scalarelational.extra
 
-import com.outr.props.Var
+import com.outr.reactify.Var
 import org.scalarelational.column.property.{AutoIncrement, ColumnLength, PrimaryKey, Unique}
 import org.scalarelational.model.Datastore
 import org.scalarelational.table.Table

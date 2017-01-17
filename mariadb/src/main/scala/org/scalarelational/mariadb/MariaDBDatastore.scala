@@ -3,7 +3,7 @@ package org.scalarelational.mariadb
 import javax.sql.DataSource
 
 import com.mysql.cj.jdbc.MysqlDataSource
-import com.outr.props.Var
+import com.outr.reactify.Var
 import org.scalarelational.Session
 import org.scalarelational.datatype.DataType
 import org.scalarelational.instruction.ddl.DropTable

@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import com.outr.props.Var
+import com.outr.reactify.Var
 import com.outr.scribe.{Level, Logging}
 import org.scalarelational.instruction.InstructionType
 
@@ -10,6 +10,6 @@ trait SQLLogging extends SQLContainer with Logging {
   override protected def calling(instructionType: InstructionType, sql: String): Unit = {
     super.calling(instructionType, sql)
 
-    sqlLogLevel.get.foreach(logger.log(_, sql))
+    sqlLogLevel.get.foreach(logger.log(_, sql, "org.scalarelational.model.SQLLogging"))
   }
 }

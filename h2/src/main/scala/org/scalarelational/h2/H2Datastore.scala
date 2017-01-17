@@ -2,7 +2,7 @@ package org.scalarelational.h2
 
 import javax.sql.DataSource
 
-import com.outr.props.{Channel, Var}
+import com.outr.reactify.{Channel, Var}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalarelational.Session
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}
@@ -30,7 +30,7 @@ abstract class H2Datastore private() extends SQLDatastore {
   val modeProperty: Var[Option[H2ConnectionMode]] = Var(None)
   val dbUsername: Var[String] = Var("sa")
   val dbPassword: Var[String] = Var("sa")
-  val trigger: Channel[TriggerEvent] = Channel[TriggerEvent]()
+  val trigger: Channel[TriggerEvent] = Channel[TriggerEvent]
 
   private var functions = Set.empty[H2Function]
 

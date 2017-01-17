@@ -3,7 +3,7 @@ package org.scalarelational.postgresql
 import java.sql.Types
 import javax.sql.DataSource
 
-import com.outr.props.Var
+import com.outr.reactify.Var
 import org.postgresql.ds.PGSimpleDataSource
 import org.scalarelational.Session
 import org.scalarelational.column.property.{AutoIncrement, Default, Polymorphic, Unique}

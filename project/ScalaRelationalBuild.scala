@@ -7,7 +7,11 @@ object ScalaRelationalBuild extends Build {
   lazy val root = Project(
     id = "root",
     base = file(".")
-  ).settings(name := "ScalaRelational", publish := {})
+  ).settings(
+    name := "ScalaRelational",
+    publish := {},
+    crossScalaVersions := Details.scalaVersions
+  )
    .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
   lazy val core = project("core").withDependencies(enumeratum, logging, hikariCP, scalaTest, props).settings(
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _)
@@ -34,6 +38,7 @@ object ScalaRelationalBuild extends Build {
     version := Details.version,
     organization := Details.organization,
     scalaVersion := Details.scalaVersion,
+    crossScalaVersions := Details.scalaVersions,
     sbtVersion := Details.sbtVersion,
     fork := true,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
@@ -74,7 +79,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.5"
+  val version = "1.3.6-SNAPSHOT"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -84,8 +89,9 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.11"
-  val scalaVersion = "2.11.8"
+  val sbtVersion = "0.13.13"
+  val scalaVersion = "2.12.1"
+  val scalaVersions = List("2.12.1", "2.11.8")
 }
 
 object Dependencies {
@@ -93,8 +99,8 @@ object Dependencies {
   val h2database = "com.h2database" % "h2" % "1.4.193"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "6.0.5"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "9.4.1212"
-  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
-  val props = "com.outr" %%  "props" % "1.0.0"
-  val enumeratum = "com.beachape" %% "enumeratum" % "1.5.2"
-  val logging = "com.outr" %% "scribe-slf4j" % "1.2.6"
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  val props = "com.outr" %%  "reactify" % "1.3.3"
+  val enumeratum = "com.beachape" %% "enumeratum" % "1.5.6"
+  val logging = "com.outr" %% "scribe-slf4j" % "1.3.2"
 }

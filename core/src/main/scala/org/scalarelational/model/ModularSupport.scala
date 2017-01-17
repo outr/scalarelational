@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import com.outr.props.Channel
+import com.outr.reactify.Channel
 import org.scalarelational.datatype.DataTypeSupport
 import org.scalarelational.instruction._
 
@@ -29,11 +29,11 @@ trait ModularSupport extends SQLContainer with DataTypeSupport {
     val deleting = Processor[Delete]()
     val querying = Processor[Query[_, _]]()
 
-    val inserted = Channel[Insert[_]]()
-    val merged = Channel[Merge]()
-    val updated = Channel[Update[_]]()
-    val deleted = Channel[Delete]()
-    val queried = Channel[Query[_, _]]()
+    val inserted = Channel[Insert[_]]
+    val merged = Channel[Merge]
+    val updated = Channel[Update[_]]
+    val deleted = Channel[Delete]
+    val queried = Channel[Query[_, _]]
   }
 
   import handlers._
