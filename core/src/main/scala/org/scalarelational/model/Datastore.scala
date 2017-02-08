@@ -3,7 +3,7 @@ package org.scalarelational.model
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-import com.outr.scribe.Logging
+import scribe.Logging
 import org.scalarelational.column.property.ColumnProperty
 import org.scalarelational.datatype.{DataType, TypedValue}
 import org.scalarelational.dsl.{DDLDSLSupport, DSLSupport}

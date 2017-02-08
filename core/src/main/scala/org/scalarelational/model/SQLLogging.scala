@@ -1,7 +1,7 @@
 package org.scalarelational.model
 
 import com.outr.reactify.Var
-import com.outr.scribe.{Level, Logging}
+import scribe.{Level, Logging}
 import org.scalarelational.instruction.InstructionType
 
 trait SQLLogging extends SQLContainer with Logging {
