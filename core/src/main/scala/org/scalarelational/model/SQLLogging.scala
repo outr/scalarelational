@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import com.outr.reactify.Var
+import reactify.Var
 import scribe.{Level, Logging}
 import org.scalarelational.instruction.InstructionType
 

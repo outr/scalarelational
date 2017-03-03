@@ -2,7 +2,7 @@ package org.scalarelational.h2
 
 import javax.sql.DataSource
 
-import com.outr.reactify.{Channel, Var}
+import reactify.{Channel, Var}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalarelational.Session
 import org.scalarelational.h2.trigger.{TriggerEvent, TriggerType}

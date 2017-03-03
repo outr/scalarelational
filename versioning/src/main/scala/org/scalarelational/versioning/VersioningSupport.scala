@@ -1,6 +1,6 @@
 package org.scalarelational.versioning
 
-import com.outr.reactify.Var
+import reactify.Var
 import org.scalarelational.extra.PersistentProperties
 import org.scalarelational.util.Time
 

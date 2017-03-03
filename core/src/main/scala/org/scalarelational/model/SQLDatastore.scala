@@ -4,7 +4,7 @@ import java.io.File
 import java.net.URL
 import javax.sql.DataSource
 
-import com.outr.reactify.Var
+import reactify.Var
 import org.scalarelational.column.ColumnLike
 import org.scalarelational.datatype.{DataType, DataTypes, TypedValue}
 import org.scalarelational.fun.SQLFunction

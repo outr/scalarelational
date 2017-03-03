@@ -1,6 +1,6 @@
 package org.scalarelational.model
 
-import com.outr.reactify.Channel
+import reactify.Channel
 import org.scalarelational.datatype.DataTypeSupport
 import org.scalarelational.instruction._
 
