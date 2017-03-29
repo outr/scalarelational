@@ -10,6 +10,7 @@ object ScalaRelationalBuild extends Build {
   ).settings(
     name := "ScalaRelational",
     publish := {},
+    publishArtifact := false,
     crossScalaVersions := Details.scalaVersions
   )
    .aggregate(core, macros, h2, mariadb, postgresql, mapper, versioning)
