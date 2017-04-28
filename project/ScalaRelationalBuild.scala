@@ -40,7 +40,6 @@ object ScalaRelationalBuild extends Build {
     organization := Details.organization,
     scalaVersion := Details.scalaVersion,
     crossScalaVersions := Details.scalaVersions,
-    sbtVersion := Details.sbtVersion,
     fork := true,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
     resolvers ++= Seq(
@@ -80,7 +79,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.9"
+  val version = "1.3.10"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -90,7 +89,6 @@ object Details {
   val developerName = "Matt Hicks"
   val developerURL = "http://matthicks.com"
 
-  val sbtVersion = "0.13.13"
   val scalaVersion = "2.12.1"
   val scalaVersions = List("2.12.1", "2.11.8")
 }
@@ -100,8 +98,8 @@ object Dependencies {
   val h2database = "com.h2database" % "h2" % "1.4.194"
   val mariadbdatabase = "mysql" % "mysql-connector-java" % "6.0.6"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "42.0.0"
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-  val reactify = "com.outr" %%  "reactify" % "1.4.7"
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.3" % "test"
+  val reactify = "com.outr" %%  "reactify" % "1.5.3"
   val enumeratum = "com.beachape" %% "enumeratum" % "1.5.10"
   val logging = "com.outr" %% "scribe-slf4j" % "1.4.2"
 }
