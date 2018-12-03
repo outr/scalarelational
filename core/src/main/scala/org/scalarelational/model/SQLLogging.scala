@@ -10,6 +10,6 @@ trait SQLLogging extends SQLContainer with Logging {
   override protected def calling(instructionType: InstructionType, sql: String): Unit = {
     super.calling(instructionType, sql)
 
-    sqlLogLevel.get.foreach(logger.log(_, sql, "org.scalarelational.model.SQLLogging"))
+    sqlLogLevel.get.foreach(logger.log(_, sql, None))
   }
 }
