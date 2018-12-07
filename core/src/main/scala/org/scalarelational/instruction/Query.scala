@@ -44,12 +44,6 @@ case class Query[Types, Result](expressions: SelectExpressions[Types],
 
   def result(implicit session: Session): QueryResultsIterator[Types, Result] = new QueryResultsIterator(datastore.exec(this), this)
   def converted(implicit session: Session): EnhancedIterator[Result] = new EnhancedIterator[Result](result.map(converter))
-  def async: Future[QueryResultsIterator[Types, Result]] = datastore.async { implicit session =>
-    result
-  }
-  def future: Future[EnhancedIterator[Result]] = datastore.async { implicit session =>
-    converted
-  }
 }
 
 trait ResultConverter[Result] extends (QueryResult => Result)

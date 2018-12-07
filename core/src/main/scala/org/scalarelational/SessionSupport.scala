@@ -5,39 +5,46 @@ import org.scalarelational.model.Datastore
 import scala.concurrent._
 
 trait SessionSupport { this: Datastore =>
-  protected def executionContext = ExecutionContext.global
-
-  protected val _session = new ThreadLocal[Option[Session]] {
-    override def initialValue = None
+  protected val sessionLocal: ThreadLocal[SessionStore] = new ThreadLocal[SessionStore] {
+    override def initialValue(): SessionStore = new SessionStore()
   }
 
-  def hasSession: Boolean = _session.get().nonEmpty
+  def hasSession: Boolean = sessionLocal.get().session.nonEmpty
 
-  protected def createSession(): (Boolean, Session) =
-    _session.get() match {
-      case Some(session) => (false, session)
-      case None =>
-        val session = instantiateSession()
-        _session.set(Some(session))
-        (true, session)
+  protected def createSession(): (Boolean, SessionStore) = {
+    val store = sessionLocal.get()
+    val created = if (store.session.isEmpty) {
+      store.session = Some(instantiateSession())
+      true
+    } else {
+      false
     }
+    created -> store
+  }
 
   protected def instantiateSession(): Session = Session(this)
 
-  protected def disposeSession(session: Session): Unit = {
-    if (!hasSession) throw new RuntimeException(
-      s"No context currently exists in current thread...cannot dispose.")
-    session.dispose()
-    _session.remove()
+  protected def disposeSession(store: SessionStore): Unit = {
+    store.session.foreach(_.dispose())
+    store.session = None
   }
 
   def withSession[Result](f: Session => Result): Result = {
-    val (created, session) = createSession()
+    val (created, store) = createSession()
     try {
-      f(session)
+      f(store.session.get)
     } finally {
-      if (created) disposeSession(session)
+      if (created) disposeSession(store)
     }
+  }
+
+  def withAsyncSession[Result](f: Session => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
+    val (created, store) = createSession()
+    val future = f(store.session.get)
+    future.onComplete { _ =>
+      if (created) disposeSession(store)
+    }
+    future
   }
 
   def transaction[Result](f: Session => Result): Result =
@@ -73,5 +80,7 @@ trait SessionSupport { this: Datastore =>
     withSession { session =>
       f(session)
     }
-  )(executionContext)
+  )(scala.concurrent.ExecutionContext.global)
 }
+
+class SessionStore(var session: Option[Session] = None)
