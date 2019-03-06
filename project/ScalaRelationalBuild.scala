@@ -79,7 +79,7 @@ object ScalaRelationalBuild extends Build {
 object Details {
   val organization = "org.scalarelational"
   val name = "scalarelational"
-  val version = "1.3.14"
+  val version = "1.3.15"
   val url = "http://outr.com"
   val licenseType = "Apache 2.0"
   val licenseURL = "http://opensource.org/licenses/Apache-2.0"
@@ -94,9 +94,9 @@ object Details {
 }
 
 object Dependencies {
-  val hikariCP = "com.zaxxer" % "HikariCP" % "3.2.0"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "3.3.1"
   val h2database = "com.h2database" % "h2" % "1.4.197"
-  val mariadbdatabase = "mysql" % "mysql-connector-java" % "8.0.13"
+  val mariadbdatabase = "mysql" % "mysql-connector-java" % "8.0.15"
   val postgresqldatabase = "org.postgresql" % "postgresql" % "42.2.5"
   val scalaTest = "org.scalatest" %% "scalatest" % "3.0.5" % "test"
   val reactify = "com.outr" %%  "reactify" % "3.0.3"

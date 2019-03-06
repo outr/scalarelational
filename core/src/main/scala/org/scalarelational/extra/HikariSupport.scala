@@ -7,7 +7,7 @@ import org.scalarelational.model.SQLDatastore
 
 trait HikariSupport extends SQLDatastore {
   // Automatically converts DataSources to be wrapped by HikariDataSource
-  dataSourceProperty.attach {
+  dataSourceProperty.attachAndFire {
     case Some(_: HikariDataSource) => // Ignore HikariDataSource
     case Some(ds) => {
       val config = new HikariConfig()
